@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.env
+
+# Herramientas
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Datos y resultados (se regeneran con los scripts del repo)
+data/
+out/
+benchmarks/results/
+*.parquet
+*.csv
+!tests/**/*.csv
+
+# LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+
+# Enunciado original del curso (no se publica)
+Proyecto2_Enunciado-Compis.pdf
+
+# Editor / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
