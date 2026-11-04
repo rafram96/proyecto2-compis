@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "duckdb-etl-dsl"
+version = "0.1.0"
+description = "Compilador Lark de pipelines ETL a Python y SQL con motor DuckDB"
+requires-python = ">=3.11"
+dependencies = ["lark>=1.2,<2", "duckdb>=1.4,<2"]
+
+[project.scripts]
+etl-dsl = "etl_dsl.main:main"
+
+[tool.setuptools.packages.find]
+include = ["etl_dsl*"]
+
+[tool.setuptools.package-data]
+etl_dsl = ["*.lark"]

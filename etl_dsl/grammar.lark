@@ -1,0 +1,116 @@
+// ETL-DSL v0.2 — grammar for Lark (LALR parser)
+// Blocks are declared once. FLOW alone defines connections.
+// NULL semantics are enforced by the semantic analyzer, not by the parser.
+
+start: pipeline+
+
+pipeline: "PIPELINE" NAME "{" declaration+ flow "}"
+
+?declaration: input_decl
+            | output_decl
+            | source_decl
+            | sink_decl
+            | step_decl
+            | use_decl
+
+// Logical ports and concrete data connectors
+input_decl: "INPUT" NAME ":" table_schema ";"
+output_decl: "OUTPUT" NAME ":" table_type ";"
+source_decl: "SOURCE" NAME [":" table_schema] "=" connector ";"
+sink_decl: "SINK" NAME "=" connector ";"
+use_decl: "USE" NAME "AS" NAME ";"
+
+table_type: table_schema | "TABLE" -> unknown_table_schema
+table_schema: "TABLE" "[" field ("," field)* "]"
+field: NAME ":" scalar_type nullable?
+nullable: "?"
+scalar_type: BASE_TYPE
+
+connector: NAME "(" [arguments] ")"
+arguments: argument ("," argument)*
+argument: NAME ":" connector_literal
+?connector_literal: literal | "-" NUMBER -> negative_literal
+
+// Each STEP declares an operation but *not* its input connection
+step_decl: "STEP" NAME "=" operation
+?operation: filter_op | select_op | derive_op | aggregate_op
+          | join_op | sort_op | distinct_op | rename_op
+          | fill_null_op | drop_nulls_op
+
+filter_op: "FILTER" "{" "WHERE" expr ";" "}"
+select_op: "SELECT" "{" "COLUMNS" names ";" "}"
+derive_op: "DERIVE" "{" assignment+ "}"
+assignment: NAME "=" expr ";"
+
+aggregate_op: "AGGREGATE" "{" group_by? aggregation+ "}"
+group_by: "GROUP_BY" names ";"
+aggregation: AGG_FUNC "(" [expr] ")" "AS" NAME ";"
+
+join_op: "JOIN" "{" "TYPE" join_type ";" "ON" join_condition ("AND" join_condition)* ";" "}"
+join_type: JOIN_KIND
+join_condition: qualified_column EQ qualified_column
+
+sort_op: "SORT" "{" "BY" sort_key ("," sort_key)* ";" "}"
+sort_key: NAME sort_dir?
+sort_dir: SORT_DIRECTION
+
+distinct_op: "DISTINCT" "{" "COLUMNS" names ";" "}"
+rename_op: "RENAME" "{" rename_item+ "}"
+rename_item: NAME "AS" NAME ";"
+
+// NULL handling (never treat 0, empty string, NaN as NULL automatically)
+fill_null_op: "FILL_NULL" "{" assignment+ "}"
+drop_nulls_op: "DROP_NULLS" "{" "COLUMNS" names ";" "}"
+
+names: NAME ("," NAME)*
+
+// The FLOW graph is the *only* authoritative definition of data edges
+flow: "FLOW" "{" connection+ "}"
+connection: endpoint ("->" endpoint)+ ";"
+endpoint: NAME ("." NAME)?
+
+// Explicit boolean precedence: OR < AND < NOT < comparison < math
+?expr: or_expr
+?or_expr: and_expr ("OR" and_expr)*
+?and_expr: not_expr ("AND" not_expr)*
+?not_expr: "NOT" not_expr  -> not_op
+         | predicate
+?predicate: sum
+          | sum "IS" "NULL"       -> is_null
+          | sum "IS" "NOT" "NULL" -> is_not_null
+          | sum (EQ | COMP_OP) sum -> compare
+?sum: product (ADD_OP product)*
+?product: unary (MUL_OP unary)*
+?unary: "-" unary -> neg
+      | atom
+?atom: literal
+     | scalar_function
+     | qualified_column
+     | "(" expr ")"
+
+qualified_column: NAME ("." NAME)?
+scalar_function: SCALAR_FUNC "(" [expr ("," expr)*] ")"
+
+?literal: NUMBER -> number
+        | STRING -> string
+        | "TRUE" -> true
+        | "FALSE" -> false
+        | "NULL" -> null
+
+BASE_TYPE.2: /(?:INT|DECIMAL|STRING|BOOL|DATETIME|DATE)\b/
+JOIN_KIND.2: /(?:INNER|LEFT|RIGHT|FULL)\b/
+SORT_DIRECTION.2: /(?:ASC|DESC)\b/
+AGG_FUNC.2: /(?:COUNT|SUM|AVG|MIN|MAX)\b/
+SCALAR_FUNC.2: /(?:COALESCE|NULLIF|SAFE_DIVIDE|LOWER|UPPER|TRIM)\b/
+EQ.2: "=="
+COMP_OP: ">=" | "<=" | "!=" | ">" | "<"
+ADD_OP: "+" | "-"
+MUL_OP: "*" | "/"
+
+%import common.CNAME -> NAME
+%import common.NUMBER
+// JSON strings: reject invalid escapes before AST construction.
+STRING: /"(?:[^"\\\x00-\x1f]|\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4}))*"/
+%import common.WS
+%ignore WS
+%ignore /\/\/[^\n]*/

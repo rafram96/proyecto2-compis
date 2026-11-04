@@ -9,6 +9,9 @@ dist/
 venv/
 .env
 
+# Prototipo local anterior; el código mantenido está en etl_dsl/
+/Referencias/
+
 # Herramientas
 .pytest_cache/
 .mypy_cache/
@@ -19,6 +22,11 @@ htmlcov/
 # Datos y resultados (se regeneran con los scripts del repo)
 data/
 out/
+output/*
+!output/.gitkeep
+/input/*.duckdb
+/input/*.duckdb.wal
+/input/*.db
 benchmarks/results/
 *.parquet
 *.csv

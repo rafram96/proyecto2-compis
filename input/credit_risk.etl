@@ -1,0 +1,81 @@
+// Main ETL: SQLite -> cleansing / null handling -> aggregation -> Parquet
+PIPELINE credit_risk {
+    SOURCE clients = SQLITE(file: "bank.db", table: "clients");
+
+    STEP cleaned = FILL_NULL {
+        debt = 0;
+    }
+
+    STEP valid = FILTER {
+        WHERE income IS NOT NULL AND income > 0 AND debt >= 0;
+    }
+
+    STEP enriched = DERIVE {
+        debt_ratio = SAFE_DIVIDE(debt, income);
+        segment_label = COALESCE(segment, "UNKNOWN");
+    }
+
+    STEP flagged = DERIVE {
+        risk_flag = debt_ratio IS NULL;
+    }
+
+    STEP summary = AGGREGATE {
+        GROUP_BY segment_label;
+        COUNT() AS total_clients;
+        COUNT(debt_ratio) AS ratios_available;
+        AVG(debt_ratio) AS avg_debt_ratio;
+    }
+
+    SINK output = PARQUET(file: "summary.parquet");
+
+    FLOW {
+        clients -> cleaned -> valid -> enriched -> flagged -> summary -> output;
+    }
+}
+
+// A reusable pipeline with an explicitly typed interface
+PIPELINE clean_orders {
+    INPUT orders: TABLE[id: INT, customer_id: INT, amount: DECIMAL?, status: STRING?];
+
+    STEP non_null = DROP_NULLS {
+        COLUMNS id, customer_id;
+    }
+
+    STEP normalized = FILL_NULL {
+        status = "UNKNOWN";
+        amount = 0;
+    }
+
+    OUTPUT cleaned: TABLE[id: INT, customer_id: INT, amount: DECIMAL, status: STRING];
+
+    FLOW {
+        orders -> non_null -> normalized -> cleaned;
+    }
+}
+
+// Pipeline composition / two-input JOIN
+PIPELINE order_report {
+    SOURCE raw_orders = CSV(file: "orders.csv");
+    SOURCE customers = SQLITE(file: "bank.db", table: "customers");
+    USE clean_orders AS clean;
+
+    STEP customer_keys = RENAME {
+        id AS customer_key;
+    }
+
+    STEP joined = JOIN {
+        TYPE LEFT;
+        ON left.customer_id == right.customer_key;
+    }
+    STEP selected = SELECT {
+        COLUMNS customer_id, amount, status;
+    }
+    SINK output = CSV(file: "orders_clean.csv");
+
+    FLOW {
+        raw_orders -> clean.orders;
+        clean.cleaned -> joined.left;
+        customers -> customer_keys -> joined.right;
+        joined -> selected -> output;
+    }
+}
