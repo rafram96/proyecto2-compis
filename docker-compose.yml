@@ -1,0 +1,17 @@
+services:
+  etl:
+    build: .
+    image: etl-dsl:polars
+    volumes:
+      # Programas y datos de demo; los SINK escriben junto a cada .etl.
+      - ./input:/app/input
+      # Python generado por el compilador.
+      - ./output:/app/output
+      # Programas con errores para mostrar los diagnósticos.
+      - ./demo:/app/demo
+
+  tests:
+    image: etl-dsl:polars
+    build: .
+    command: ["python", "-m", "unittest", "discover", "-v"]
+    profiles: ["tests"]
