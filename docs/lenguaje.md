@@ -78,8 +78,8 @@ Se permiten llamadas anidadas. La gramática admite referencias `columna` o
 
 Las comparaciones directas con el literal `NULL` se parsean pero se rechazan en
 la validación: se debe escribir `IS NULL` o `IS NOT NULL`. La ejecución en
-DuckDB sigue la lógica de tres valores de SQL; `FILTER` conserva solo `TRUE`.
-`SAFE_DIVIDE(a,b)` se compila como `a / NULLIF(b,0)`.
+Polars sigue la lógica de tres valores de SQL; `FILTER` conserva solo `TRUE`.
+`SAFE_DIVIDE(a,b)` devuelve `NULL` cuando `b` es 0.
 
 `DERIVE` agrega columnas; `FILL_NULL` reemplaza nulos de columnas existentes.
 Sus asignaciones usan el esquema de entrada del bloque, sin depender de las
@@ -110,7 +110,7 @@ instancias de pipelines desconocidos, recursión entre pipelines, ciclos del flu
 enlaces repetidos y puertos inexistentes o usados en la dirección incorrecta.
 El chequeo de ciclos representa cada instancia `USE` como un nodo indivisible.
 
-## AST y destino DuckDB
+## AST y destino Polars
 
 Los nodos del AST son dataclasses inmutables y conservan línea y columna (base 1),
 así como offsets (base 0, extremo final exclusivo). Los literales decimales usan
@@ -119,15 +119,14 @@ para conservar precisión. El AST distingue tablas desconocidas de tablas tipada
 y conserva los conectores sin acceder a ellos.
 
 Los contratos se comprueban sobre los tipos del motor sin realizar casts:
-`INT` acepta enteros DuckDB; `DECIMAL` es una familia numérica que admite enteros,
-decimales y reales; `STRING` corresponde a `VARCHAR`, `BOOL` a `BOOLEAN`, `DATE`
-a `DATE` y `DATETIME` a la familia `TIMESTAMP`. No se fija precisión/escala en el
-DSL actual. Los nombres de columna se comprueban con su capitalización exacta
-antes de ejecutar SQL; se rechazan columnas de salida que difieran solo en
-mayúsculas porque DuckDB no las distingue. Las columnas sin `?` se verifican
+`INT` acepta enteros de Polars; `DECIMAL` es una familia numérica que admite
+enteros, decimales y reales; `STRING` corresponde a `String`, `BOOL` a `Boolean`,
+`DATE` a `Date` y `DATETIME` a `Datetime`. No se fija precisión/escala en el
+DSL actual. Los nombres de columna se comprueban con su capitalización exacta;
+se rechazan columnas de salida que difieran solo en mayúsculas, para que los
+resultados puedan escribirse también en DuckDB. Las columnas sin `?` se verifican
 contra los datos para rechazar nulos en `SOURCE`, `INPUT` y `OUTPUT` tipados.
-Los contratos exigen también las mismas columnas en el mismo orden. Esta gramática
-describe el DSL de ETL; no intenta reconocer toda la gramática SQL de DuckDB.
+Los contratos exigen también las mismas columnas en el mismo orden.
 
 Se usa `parser="lalr"`, `lexer="contextual"`, `propagate_positions=True` y
 `maybe_placeholders=False`, según la [API oficial de Lark](https://lark-parser.readthedocs.io/en/stable/classes.html).
@@ -156,5 +155,5 @@ artefactos de ejecuciones anteriores.
 `--format tokens` guarda `.tokens.json`;
 `--format check` solo valida. Se pueden cambiar las rutas con
 `python main.py otra_entrada --output otra_salida`. `--run` ejecuta los pipelines
-en DuckDB después de compilar. Los `.py` también pueden ejecutarse directamente,
-con el paquete `etl_dsl` instalado. Más detalles en [backend_duckdb.md](backend_duckdb.md).
+con Polars después de compilar. Los `.py` también pueden ejecutarse directamente,
+con el paquete `etl_dsl` instalado. Más detalles en [backend_polars.md](backend_polars.md).

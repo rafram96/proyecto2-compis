@@ -1,4 +1,8 @@
-# Backend Python + SQL DuckDB
+# Backend Python + SQL DuckDB (histórico)
+
+> Este backend ya no está en `main`: se reemplazó por Python + Polars, el destino
+> aprobado (ver [backend_polars.md](backend_polars.md)). El código se conserva en
+> el commit 4109895. DuckDB sigue disponible como conector de `SOURCE` y `SINK`.
 
 ## Compilación y ejecución
 
