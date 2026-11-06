@@ -16,6 +16,7 @@ COPY etl_dsl ./etl_dsl
 COPY scripts ./scripts
 COPY tests ./tests
 COPY input ./input
+COPY demo ./demo
 COPY main.py ./
 
 # Crea los datos de demo (si faltan), compila input/*.etl y ejecuta los pipelines.

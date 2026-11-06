@@ -27,6 +27,8 @@ python -m venv .venv
 # Inspeccionar el frontend
 .\.venv\Scripts\python.exe -m etl_dsl input\credit_risk.etl --format tree
 .\.venv\Scripts\python.exe -m etl_dsl input\duckdb.etl --format ast
+# IR antes y después de los pases de optimización
+.\.venv\Scripts\python.exe -m etl_dsl demo\optimizaciones.etl --format ir
 .\.venv\Scripts\python.exe -m unittest discover -v
 ```
 
@@ -49,7 +51,9 @@ se continúa con los demás. Los archivos con otras extensiones se omiten.
 ```
 
 La salida predeterminada es `.py`. Los formatos de inspección son `.ast.json`,
-`.tree.txt` y `.tokens.json`; `check` solo valida el frontend. El código generado
+`.ir.txt`, `.tree.txt` y `.tokens.json`; `check` solo valida el frontend.
+Por defecto se aplican todos los pases de optimización; `-O0` los desactiva y
+`--pases constantes,filtros` elige cuáles y en qué orden. El código generado
 importa `etl_dsl.runtime`, por lo que debe ejecutarse en un entorno donde esté
 instalado este proyecto. Los resultados generados se excluyen de Git.
 
@@ -131,7 +135,9 @@ proyecto2-compis/
 │   ├── visitor.py          # Constructor del AST y recorridos
 │   ├── type.py             # Tipos escalares del DSL
 │   ├── main.py             # Procesamiento de archivos y CLI
-│   ├── backend.py          # Generación de Python + Polars
+│   ├── ir.py               # IR: DAG de operadores y su formato textual
+│   ├── passes.py           # Pases de optimización sobre la IR
+│   ├── backend.py          # Generación de Python + Polars desde la IR
 │   ├── runtime.py          # Conectores y ejecución en Polars
 │   ├── sql.py              # Identificadores SQL para los conectores SQLite/DuckDB
 │   ├── grammar.lark        # Gramática
@@ -156,8 +162,12 @@ módulos estándar de Python llamados `ast` y `token`.
 - [Visitor](etl_dsl/visitor.py): `ASTBuilder` transforma el árbol concreto en AST;
   `NodeVisitor` y `walk` permiten recorrerlo. Las validaciones usan `walk`.
 - [Tipos](etl_dsl/type.py): catálogo `ScalarType` usado por el AST y su constructor.
-- [Backend](etl_dsl/backend.py): ordena `FLOW`, compila expresiones a Polars y
-  traduce `USE` a llamadas entre funciones Python.
+- [IR](etl_dsl/ir.py): baja el AST a un DAG de operadores por pipeline, en orden
+  topológico según `FLOW`, y lo imprime como texto (`--format ir`).
+- [Pases](etl_dsl/passes.py): plegado de constantes, fusión de filtros y
+  eliminación de pasos muertos (O4).
+- [Backend](etl_dsl/backend.py): genera Python desde la IR optimizada, compila
+  expresiones a Polars y traduce `USE` a llamadas entre funciones Python.
 - [Runtime](etl_dsl/runtime.py): resuelve el plan de Polars paso a paso y verifica columnas,
   contratos de entrada/salida y ambigüedad en JOIN.
 - [Validaciones](etl_dsl/validation.py): nombres duplicados, enlaces y puertos,
@@ -175,8 +185,7 @@ todas las transformaciones se ejecutan en Polars.
 Los contratos comprueban nombres, orden, familias de tipos y nulabilidad en
 ejecución. Los pasos son `LazyFrame` y solo se calculan en un `SINK` (o en un
 contrato que verifica nulos), así que Polars optimiza el plan completo. Quedan pendientes el
-análisis estático completo de tipos, la IR y los pases de optimización del
-proyecto. [docs/backend_polars.md](docs/backend_polars.md) describe este backend;
+análisis estático de tipos y los pases O1 (rangos) y O3 (joins). [docs/backend_polars.md](docs/backend_polars.md) describe este backend;
 [docs/backend_duckdb.md](docs/backend_duckdb.md), el backend DuckDB anterior (commit 4109895).
 
 La referencia de sintaxis y las decisiones para el backend están en

@@ -3,8 +3,35 @@
 ## Compilación y ejecución
 
 ```text
-.etl -> Lark -> AST -> validación -> Python con Polars (LazyFrame) -> SINK
+.etl -> Lark -> AST -> validación -> IR -> pases -> Python con Polars (LazyFrame) -> SINK
 ```
+
+## IR y optimización
+
+`ir.lower` baja el AST validado a un DAG por pipeline: un nodo por declaración
+(`SOURCE`, `INPUT`, `USE`, cada `STEP`, `SINK`, `OUTPUT`) con sus entradas
+resueltas desde `FLOW` y en orden topológico. Las expresiones se reutilizan del
+AST. `--format ir` imprime la IR antes y después de los pases:
+
+```text
+pipeline optimizaciones (raíz) {
+  %ventas    = SOURCE { CSV(file: "../input/orders.csv") : TABLE }
+  %pagadas   = FILTER(%ventas) { (amount < 1000) AND (status IS NOT NULL) }  // grandes + pagadas
+  %ordenadas = SORT(%pagadas) { amount DESC }
+  %resultado = SINK(%ordenadas) { CSV(file: "../output/optimizaciones.csv") }
+}
+```
+
+| Pase | Qué hace |
+| --- | --- |
+| `constantes` | Pliega `+ - *` y comparaciones entre literales; simplifica `AND`, `OR` y `NOT` con `TRUE`/`FALSE` respetando la lógica de tres valores. Un `FILTER` que queda en `TRUE` se elimina. La división no se pliega. |
+| `filtros` | Fusiona un `FILTER` con el `FILTER` anterior cuando este no tiene otros consumidores. |
+| `muertos` | Elimina pasos cuyo resultado no llega a ningún `SINK`, `OUTPUT` ni `USE`. Los `INPUT` se conservan porque son la interfaz del pipeline. |
+
+Todos se aplican por defecto. `-O0` los desactiva y `--pases a,b` elige cuáles y
+en qué orden. Las pruebas comprueban que los resultados con y sin pases son
+iguales. Un nodo fusionado conserva en `origin` las declaraciones que representa,
+y sus errores de ejecución citan ambas (`grandes+pagadas`).
 
 `python main.py` compila los programas de `input/` a `output/*.py`. La generación
 de código valida nombres de conectores y sus opciones, ordena las declaraciones
@@ -142,8 +169,9 @@ print(outputs["cleaned"].collect())
 
 ## Límites actuales
 
-La verificación estática de tipos, la IR y los pases propios de optimización
-siguen pendientes; hoy el backend recorre `FLOW` directamente desde el AST.
+La verificación estática de tipos y los pases O1 (rangos) y O3 (joins) siguen
+pendientes. Polars también optimiza el plan al ejecutarlo, por lo que el efecto
+de los pases propios se mide comparando `-O0` con la versión optimizada.
 La ejecución no es una transacción global entre todos los SINK: una salida ya
 escrita puede persistir si otro bloque falla después. Los artefactos de
 ejecuciones anteriores se conservan hasta que se vuelvan a generar.

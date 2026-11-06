@@ -1,8 +1,9 @@
-"""Compilación AST -> Python con Polars (LazyFrame), sin leer datos al compilar."""
-from graphlib import TopologicalSorter
+"""Compilación AST -> IR -> Python con Polars (LazyFrame), sin leer datos al compilar."""
 from pathlib import Path
 
 from . import ast as a
+from . import ir
+from .passes import DEFAULT, optimize
 from .validation import validate
 from .visitor import walk
 
@@ -107,11 +108,11 @@ def _connector(connector, *, sink=False):
 
 
 class PythonGenerator:
-    def __init__(self, program, filename):
-        self.program = program
+    def __init__(self, module, filename):
+        self.module = module
         self.filename = filename
-        self.pipelines = {p.name: p for p in program.pipelines}
-        self.functions = {p.name: f"pipeline_{i}" for i, p in enumerate(program.pipelines)}
+        self.pipelines = {p.name: p for p in module.pipelines}
+        self.functions = {p.name: f"pipeline_{i}" for i, p in enumerate(module.pipelines)}
         self.lines = []
 
     def emit(self, code):
@@ -126,50 +127,46 @@ class PythonGenerator:
     def pipeline(self, pipe):
         self.lines.extend(["", f"def {self.functions[pipe.name]}(rt, inputs=None):",
                            f"    # PIPELINE {pipe.name}", "    inputs = inputs or {}"])
-        declarations = {d.name: d for d in pipe.declarations}
-        variables = {d.name: f"t_{i}" for i, d in enumerate(pipe.declarations)}
-        incoming = {}
-        graph = {name: set() for name in declarations}
-        for chain in pipe.flow.connections:
-            for src, dst in zip(chain.endpoints, chain.endpoints[1:]):
-                incoming[(dst.name, dst.port)] = src
-                graph[dst.name].add(src.name)
+        variables = {node.name: f"t_{i}" for i, node in enumerate(pipe.nodes)}
 
-        def producer(endpoint):
-            value = variables[endpoint.name]
-            return value if endpoint.port is None else f"{value}[{endpoint.port!r}]"
+        def producer(ref):
+            value = variables[ref.node]
+            return value if ref.port is None else f"{value}[{ref.port!r}]"
 
         outputs = {}
-        for name in TopologicalSorter({n: sorted(v) for n, v in graph.items()}).static_order():
-            decl, var = declarations[name], variables[name]
-            label = f"{self.filename}:{decl.span.line}:{decl.span.column} {pipe.name}.{name}"
-            self.emit(f"# {name} (línea {decl.span.line})")
-            if isinstance(decl, a.Input):
-                self.emit(f"{var} = rt.input(inputs, {name!r}, {_schema(decl.schema)!r}, {label!r})")
-            elif isinstance(decl, a.Source):
+        for node in pipe.nodes:
+            var, decl = variables[node.name], node.payload
+            label = f"{self.filename}:{node.span.line}:{node.span.column} {pipe.name}.{'+'.join(node.origin)}"
+            if len(node.origin) > 1:
+                self.emit(f"# {' + '.join(node.origin)} (línea {node.span.line}; fusionados en la IR)")
+            else:
+                self.emit(f"# {node.name} (línea {node.span.line})")
+            if node.kind == "INPUT":
+                self.emit(f"{var} = rt.input(inputs, {node.name!r}, {_schema(decl.schema)!r}, {label!r})")
+            elif node.kind == "SOURCE":
                 driver, options = self.connector(decl.connector, label)
                 self.emit(f"{var} = rt.source({driver!r}, {options!r}, {_schema(decl.schema)!r}, {label!r})")
-            elif isinstance(decl, a.Use):
+            elif node.kind == "USE":
                 target = self.pipelines[decl.pipeline]
-                args = [f"{d.name!r}: {producer(incoming[(name, d.name)])}"
-                        for d in target.declarations if isinstance(d, a.Input)]
+                args = [f"{n.name!r}: {producer(node.input(n.name))}" for n in target.nodes if n.kind == "INPUT"]
                 self.emit(f"{var} = {self.functions[decl.pipeline]}(rt, {{{', '.join(args)}}})")
-            elif isinstance(decl, (a.Output, a.Sink)):
-                table = producer(incoming[(name, None)])
-                if isinstance(decl, a.Output):
+            elif node.kind in {"OUTPUT", "SINK"}:
+                table = producer(node.input())
+                if node.kind == "OUTPUT":
                     self.emit(f"{var} = rt.contract({table}, {_schema(decl.schema)!r}, {label!r})")
                 else:
                     driver, options = self.connector(decl.connector, label, sink=True)
                     self.emit(f"{var} = rt.sink({table}, {driver!r}, {options!r}, {label!r})")
-                outputs[name] = var
+                outputs[node.name] = var
             else:
-                self.operation(decl.operation, var, producer, incoming, name, label)
+                self.operation(node, var, lambda port=None: producer(node.input(port)), label)
         self.emit("return {" + ", ".join(f"{n!r}: {v}" for n, v in outputs.items()) + "}")
 
-    def operation(self, operation, var, producer, incoming, name, label):
+    def operation(self, node, var, producer, label):
+        operation = node.payload
         if isinstance(operation, a.Join):
-            left = producer(incoming[(name, "left")])
-            right = producer(incoming[(name, "right")])
+            left = producer("left")
+            right = producer("right")
             for side, table in [("left", left), ("right", right)]:
                 columns = [n.name for n in walk(operation) if isinstance(n, a.Column) and n.qualifier == side]
                 self.emit(f"rt.require_columns({table}, {columns!r}, {label!r})")
@@ -182,7 +179,7 @@ class PythonGenerator:
             self.emit(f"{var} = rt.step({left}.join({right}, left_on={left_on!r}, right_on={right_on!r}, "
                       f"how={operation.kind.lower()!r}, coalesce=False), {label!r})")
             return
-        table = producer(incoming[(name, None)])
+        table = producer()
         columns = [n.name for n in walk(operation) if isinstance(n, a.Column)]
         if any(n.qualifier for n in walk(operation) if isinstance(n, a.Column)):
             raise CompileError(f"{label}: solo JOIN admite calificadores left/right.")
@@ -232,17 +229,24 @@ class PythonGenerator:
         self.emit(f"{var} = rt.step({plan}, {label!r})")
 
 
-def compile_program(program: a.Program, *, filename="<string>", base_dir=".") -> str:
-    """Genera Python ejecutable. Los datos se abren únicamente al ejecutarlo."""
+def build_ir(program: a.Program, passes=DEFAULT) -> tuple[ir.Module, ir.Module]:
+    """Valida y baja el programa a IR; devuelve la IR antes y después de los pases."""
     issues = validate(program)
     if issues:
         raise CompileError("\n".join(f"{i.code}: {i.message}" for i in issues))
-    generator = PythonGenerator(program, str(filename))
-    for pipe in program.pipelines:
+    module = ir.lower(program)
+    try:
+        return module, optimize(module, passes)
+    except ValueError as exc:
+        raise CompileError(str(exc)) from exc
+
+
+def generate(module: ir.Module, *, filename="<string>", base_dir=".") -> str:
+    """IR -> Python ejecutable. Los datos se abren únicamente al ejecutarlo."""
+    generator = PythonGenerator(module, str(filename))
+    for pipe in module.pipelines:
         generator.pipeline(pipe)
-    used = {d.pipeline for p in program.pipelines for d in p.declarations if isinstance(d, a.Use)}
-    defaults = [p.name for p in program.pipelines if p.name not in used and
-                not any(isinstance(d, a.Input) for d in p.declarations)]
+    defaults = list(module.defaults)
     functions = ", ".join(f"{name!r}: {fn}" for name, fn in generator.functions.items())
     header = ['# Código generado por etl-dsl: Python + Polars (LazyFrame).',
               'import sys',
@@ -258,3 +262,9 @@ def compile_program(program: a.Program, *, filename="<string>", base_dir=".") ->
               "", 'if __name__ == "__main__":',
               f"    raise SystemExit(generated_main(PIPELINES, DEFAULT_PIPELINES, {str(Path(base_dir).resolve())!r}))", ""]
     return "\n".join(header + generator.lines + footer)
+
+
+def compile_program(program: a.Program, *, filename="<string>", base_dir=".", passes=DEFAULT) -> str:
+    """AST -> IR optimizada -> Python. `passes=()` equivale a -O0."""
+    _, optimized = build_ir(program, passes)
+    return generate(optimized, filename=filename, base_dir=base_dir)

@@ -1,0 +1,22 @@
+// Demo de los pases de O4. Comparar:
+//   python -m etl_dsl demo/optimizaciones.etl --format ir
+//   python -m etl_dsl demo/optimizaciones.etl --format ir -O0
+PIPELINE optimizaciones {
+    SOURCE ventas = CSV(file: "../input/orders.csv");
+
+    // constantes: 10 * 100 se pliega a 1000 y TRUE AND ... desaparece.
+    STEP grandes = FILTER { WHERE TRUE AND amount < 10 * 100; }
+    // filtros: se fusiona con el FILTER anterior.
+    STEP pagadas = FILTER { WHERE status IS NOT NULL; }
+    // constantes: un FILTER que siempre es TRUE se elimina.
+    STEP todo = FILTER { WHERE 1 < 2; }
+    STEP ordenadas = SORT { BY amount DESC; }
+    // muertos: no llega a ningún SINK.
+    STEP sin_uso = SELECT { COLUMNS id; }
+
+    SINK resultado = CSV(file: "../output/optimizaciones.csv");
+    FLOW {
+        ventas -> grandes -> pagadas -> todo -> ordenadas -> resultado;
+        ordenadas -> sin_uso;
+    }
+}

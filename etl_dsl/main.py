@@ -5,15 +5,17 @@ from pathlib import Path
 import sys
 
 from .ast import to_dict
-from .backend import compile_program
+from .backend import build_ir, compile_program
 from .diagnostics import ParseError
+from .ir import format_module
+from .passes import DEFAULT, PASSES
 from .parser import parse_tree
 from .scanner import scan
 from .validation import validate
 from .visitor import ASTBuilder
 
 
-def _analyze(path: Path, fmt: str, base_dir=None) -> str:
+def _analyze(path: Path, fmt: str, base_dir=None, passes=DEFAULT) -> str:
     source = path.read_text(encoding="utf-8-sig")
     tree = parse_tree(source, filename=str(path))
     program = ASTBuilder().transform(tree)
@@ -23,7 +25,14 @@ def _analyze(path: Path, fmt: str, base_dir=None) -> str:
             print(issue.format(source, str(path)), file=sys.stderr)
         raise ValueError(f"{path}: {len(issues)} error(es) de validación.")
     if fmt == "python":
-        return compile_program(program, filename=str(path), base_dir=base_dir or path.resolve().parent)
+        return compile_program(program, filename=str(path), base_dir=base_dir or path.resolve().parent,
+                               passes=passes)
+    if fmt == "ir":
+        before, after = build_ir(program, passes)
+        if not passes:
+            return format_module(before)
+        return (f"// IR antes de optimizar\n{format_module(before)}\n"
+                f"// IR después de: {', '.join(passes)}\n{format_module(after)}")
     if fmt == "ast":
         return json.dumps(to_dict(program), ensure_ascii=True, indent=2) + "\n"
     if fmt == "tokens":
@@ -39,8 +48,11 @@ def main(argv=None) -> int:
                         help="Archivo .etl o carpeta de programas (por defecto: input)")
     parser.add_argument("--output", "-o", type=Path,
                         help="Carpeta de salida (por defecto: output al procesar una carpeta)")
-    parser.add_argument("--format", choices=("python", "check", "ast", "tree", "tokens"), default="python",
+    parser.add_argument("--format", choices=("python", "check", "ast", "ir", "tree", "tokens"), default="python",
                         help="Salida del compilador (por defecto: python)")
+    parser.add_argument("-O0", dest="no_opt", action="store_true", help="Desactivar los pases de optimización")
+    parser.add_argument("--pases", help=f"Pases separados por comas, en orden (por defecto: {','.join(DEFAULT)}; "
+                                        f"disponibles: {', '.join(PASSES)})")
     parser.add_argument("--run", action="store_true", help="Ejecutar con Polars después de generar Python")
     parser.add_argument("--pipeline", action="append", help="PIPELINE a ejecutar con --run; repetible")
     parser.add_argument("--base-dir", type=Path, help="Base de rutas SOURCE/SINK (por defecto: carpeta del .etl)")
@@ -49,6 +61,13 @@ def main(argv=None) -> int:
         parser.error("--run requiere --format python")
     if args.pipeline and not args.run:
         parser.error("--pipeline requiere --run")
+    if args.no_opt and args.pases is not None:
+        parser.error("-O0 y --pases son excluyentes")
+    passes = () if args.no_opt else DEFAULT if args.pases is None else \
+        tuple(name.strip() for name in args.pases.split(",") if name.strip())
+    unknown = [name for name in passes if name not in PASSES]
+    if unknown:
+        parser.error(f"pases desconocidos: {', '.join(unknown)}; disponibles: {', '.join(PASSES)}")
     directory = args.input.is_dir()
     if not args.input.exists():
         print(f"No existe la entrada: {args.input}", file=sys.stderr)
@@ -61,11 +80,11 @@ def main(argv=None) -> int:
         return 1
     fmt = args.format
     output = args.output if args.output is not None else (Path("output") if directory or fmt == "python" else None)
-    suffixes = {"python": ".py", "ast": ".ast.json", "tree": ".tree.txt", "tokens": ".tokens.json"}
+    suffixes = {"python": ".py", "ast": ".ast.json", "ir": ".ir.txt", "tree": ".tree.txt", "tokens": ".tokens.json"}
     failures = 0
     for path in paths:
         try:
-            result = _analyze(path, fmt, args.base_dir)
+            result = _analyze(path, fmt, args.base_dir, passes)
             if output is not None and fmt != "check":
                 relative = path.relative_to(args.input) if directory else Path(path.name)
                 destination = output / relative.with_suffix(suffixes[fmt])
