@@ -64,7 +64,7 @@ class StructureTests(unittest.TestCase):
                 with redirect_stdout(StringIO()):
                     self.assertEqual(main([]), 0)
                 output = Path('output/demo.py').read_text(encoding='utf-8')
-                self.assertIn('SQL DuckDB', output)
+                self.assertIn('Polars', output)
                 compile(output, 'demo.py', 'exec')
             finally:
                 os.chdir(previous)
