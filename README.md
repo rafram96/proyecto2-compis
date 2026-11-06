@@ -1,12 +1,12 @@
-# DSL ETL para DuckDB
+# DSL ETL para Polars
 
-Compilador implementado en Python con Lark y motor de ejecución **DuckDB**.
-Genera Python legible con consultas SQL. Usa la sintaxis
+Compilador implementado en Python con Lark y motor de ejecución **Polars**.
+Genera Python legible con expresiones de Polars (`LazyFrame`). Usa la sintaxis
 ETL-DSL v0.2: bloques `PIPELINE`, operaciones declaradas con
 `STEP` y conexiones explícitas en `FLOW`.
 
-El destino elegido para el proyecto es **DuckDB**. [La propuesta inicial](docs/Propuesta_DSL.md) conserva la
-propuesta inicial con Polars; la sintaxis implementada corresponde a las
+El destino es **Python + Polars**, como en [la propuesta inicial](docs/Propuesta_DSL.md);
+la sintaxis implementada corresponde a las
 referencias v0.2, no al ejemplo de operadores `|>` de esa propuesta.
 
 ## Instalación y uso
@@ -15,10 +15,11 @@ Requiere Python 3.11 o posterior. En PowerShell:
 
 ```powershell
 python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -e .
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install -e . --no-deps
 # Compilar todos los programas: input/*.etl -> output/*.py
 .\.venv\Scripts\python.exe main.py
-# Crear datos locales de demo y ejecutar los programas en DuckDB
+# Crear datos locales de demo y ejecutar los programas con Polars
 .\.venv\Scripts\python.exe scripts\create_demo_data.py
 .\.venv\Scripts\python.exe main.py --run
 # Ejecutar directamente el Python ya generado
@@ -32,7 +33,7 @@ python -m venv .venv
 `main.py` procesa recursivamente los archivos `.etl` de `input/` y guarda el
 Python generado en `output/`, conservando las subcarpetas. Compilar no lee ni
 escribe datos de los conectores. `--run` ejecuta el código generado en una
-conexión DuckDB en memoria. Cada archivo
+proceso con Polars. Cada archivo
 se analiza como un programa independiente; las referencias `USE` se resuelven
 dentro del mismo archivo. Si alguno tiene errores, se informa el diagnóstico y
 se continúa con los demás. Los archivos con otras extensiones se omiten.
@@ -83,6 +84,21 @@ Path("output/duckdb.py").write_text(python, encoding="utf-8")
 error sintáctico. `parse_tree(text)` permite inspeccionar el árbol concreto de
 Lark. `validate(program)` devuelve diagnósticos estructurales sin acceder a datos.
 
+## Docker
+
+Imagen `python:3.12-slim` con las dependencias de `requirements.txt`:
+
+```powershell
+docker compose build
+# Crear datos de demo, compilar input/*.etl -> output/ y ejecutar
+docker compose run --rm etl
+# Correr las pruebas dentro del contenedor
+docker compose run --rm tests
+```
+
+`input/` y `output/` se montan como volúmenes, así que los resultados quedan en
+el repositorio local.
+
 ## Ejemplo
 
 ```text
@@ -115,9 +131,9 @@ proyecto2-compis/
 │   ├── visitor.py          # Constructor del AST y recorridos
 │   ├── type.py             # Tipos escalares del DSL
 │   ├── main.py             # Procesamiento de archivos y CLI
-│   ├── backend.py          # Generación de Python + SQL
-│   ├── runtime.py          # Conectores y ejecución en DuckDB
-│   ├── sql.py              # Delimitación de identificadores y literales
+│   ├── backend.py          # Generación de Python + Polars
+│   ├── runtime.py          # Conectores y ejecución en Polars
+│   ├── sql.py              # Identificadores SQL para los conectores SQLite/DuckDB
 │   ├── grammar.lark        # Gramática
 │   ├── validation.py       # Validaciones estructurales
 │   └── diagnostics.py      # Diagnósticos
@@ -140,9 +156,9 @@ módulos estándar de Python llamados `ast` y `token`.
 - [Visitor](etl_dsl/visitor.py): `ASTBuilder` transforma el árbol concreto en AST;
   `NodeVisitor` y `walk` permiten recorrerlo. Las validaciones usan `walk`.
 - [Tipos](etl_dsl/type.py): catálogo `ScalarType` usado por el AST y su constructor.
-- [Backend](etl_dsl/backend.py): ordena `FLOW`, compila expresiones a SQL y
+- [Backend](etl_dsl/backend.py): ordena `FLOW`, compila expresiones a Polars y
   traduce `USE` a llamadas entre funciones Python.
-- [Runtime](etl_dsl/runtime.py): ejecuta SQL con DuckDB y verifica columnas,
+- [Runtime](etl_dsl/runtime.py): resuelve el plan de Polars paso a paso y verifica columnas,
   contratos de entrada/salida y ambigüedad en JOIN.
 - [Validaciones](etl_dsl/validation.py): nombres duplicados, enlaces y puertos,
   entradas requeridas, ciclos en `FLOW` y `USE`, comparaciones directas con
@@ -153,13 +169,15 @@ módulos estándar de Python llamados `ast` y `token`.
 Se ejecutan las diez operaciones del DSL, con las funciones escalares y
 agregaciones de la gramática. Hay lectura de DuckDB, CSV, Parquet y SQLite;
 escritura de DuckDB, CSV y Parquet. SQLite se importa mediante `sqlite3`, sin
-descargar extensiones; todas las transformaciones se ejecutan en DuckDB.
+descargar extensiones, y DuckDB solo se usa como conector (sin `pyarrow`);
+todas las transformaciones se ejecutan en Polars.
 
 Los contratos comprueban nombres, orden, familias de tipos y nulabilidad en
-ejecución. Los pasos se materializan en tablas temporales. Quedan pendientes el
+ejecución. Los pasos son `LazyFrame` y solo se calculan en un `SINK` (o en un
+contrato que verifica nulos), así que Polars optimiza el plan completo. Quedan pendientes el
 análisis estático completo de tipos, la IR y los pases de optimización del
-proyecto. El backend y sus límites se describen en
-[docs/backend_duckdb.md](docs/backend_duckdb.md).
+proyecto. [docs/backend_duckdb.md](docs/backend_duckdb.md) describe el backend DuckDB
+anterior (rama `main`).
 
 La referencia de sintaxis y las decisiones para el backend están en
 [docs/lenguaje.md](docs/lenguaje.md). Los requisitos académicos están en
