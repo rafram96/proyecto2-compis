@@ -136,6 +136,7 @@ proyecto2-compis/
 │   ├── type.py             # Tipos escalares del DSL
 │   ├── main.py             # Procesamiento de archivos y CLI
 │   ├── ir.py               # IR: DAG de operadores y su formato textual
+│   ├── typecheck.py        # Esquemas inferidos y verificación de tipos
 │   ├── passes.py           # Pases de optimización sobre la IR
 │   ├── backend.py          # Generación de Python + Polars desde la IR
 │   ├── runtime.py          # Conectores y ejecución en Polars
@@ -164,6 +165,9 @@ módulos estándar de Python llamados `ast` y `token`.
 - [Tipos](etl_dsl/type.py): catálogo `ScalarType` usado por el AST y su constructor.
 - [IR](etl_dsl/ir.py): baja el AST a un DAG de operadores por pipeline, en orden
   topológico según `FLOW`, y lo imprime como texto (`--format ir`).
+- [Tipos](etl_dsl/typecheck.py): infiere el esquema de cada nodo de la IR y
+  reporta al compilar columnas inexistentes, tipos incompatibles y contratos
+  que no se cumplen.
 - [Pases](etl_dsl/passes.py): plegado de constantes, fusión de filtros y
   eliminación de pasos muertos (O4).
 - [Backend](etl_dsl/backend.py): genera Python desde la IR optimizada, compila
@@ -184,8 +188,8 @@ todas las transformaciones se ejecutan en Polars.
 
 Los contratos comprueban nombres, orden, familias de tipos y nulabilidad en
 ejecución. Los pasos son `LazyFrame` y solo se calculan en un `SINK` (o en un
-contrato que verifica nulos), así que Polars optimiza el plan completo. Quedan pendientes el
-análisis estático de tipos y los pases O1 (rangos) y O3 (joins). [docs/backend_polars.md](docs/backend_polars.md) describe este backend;
+contrato que verifica nulos), así que Polars optimiza el plan completo. Los tipos se
+verifican al compilar cuando los esquemas se conocen; quedan pendientes los pases O1 (rangos) y O3 (joins). [docs/backend_polars.md](docs/backend_polars.md) describe este backend;
 [docs/backend_duckdb.md](docs/backend_duckdb.md), el backend DuckDB anterior (commit 4109895).
 
 La referencia de sintaxis y las decisiones para el backend están en

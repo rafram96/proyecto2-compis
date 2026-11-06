@@ -3,8 +3,37 @@
 ## Compilación y ejecución
 
 ```text
-.etl -> Lark -> AST -> validación -> IR -> pases -> Python con Polars (LazyFrame) -> SINK
+.etl -> Lark -> AST -> validación -> IR -> tipos -> pases -> Python con Polars (LazyFrame) -> SINK
 ```
+
+## Verificación de tipos
+
+`typecheck.check` recorre la IR sin optimizar e infiere el esquema de salida de
+cada nodo: columnas en orden, tipo y nulabilidad. Los esquemas parten de los
+`SOURCE` anotados y de los `INPUT`; un `SOURCE` sin anotación tiene esquema
+desconocido. En ese caso se verifica lo que sí se puede saber (por ejemplo, un
+`SELECT` fija los nombres) y el resto queda a cargo del runtime. `--format ir`
+muestra el esquema inferido de cada nodo; `ANY` indica un tipo desconocido.
+
+| Código | Cuándo |
+| --- | --- |
+| `E_COLUMN` | Columna inexistente en una expresión, `SELECT`, `GROUP_BY`, `SORT`, `RENAME`, `FILL_NULL`, `DROP_NULLS` o `JOIN` |
+| `E_TYPE` | `WHERE` no es `BOOL`; aritmética o `SUM`/`AVG`/`SAFE_DIVIDE` sobre no números; `AND`/`OR`/`NOT` sobre no booleanos; `LOWER`/`UPPER`/`TRIM` sobre no textos; comparar o combinar en `COALESCE`, `NULLIF`, `FILL_NULL` o `JOIN` tipos distintos; contrato con un tipo incompatible |
+| `E_SCHEMA` | Un `OUTPUT` o un `INPUT` de `USE` recibe otras columnas u otro orden |
+| `E_DUPLICATE_COLUMN` | `DERIVE` asigna una columna que ya existe |
+| `E_AMBIGUOUS_COLUMNS` | La salida tendría dos columnas con el mismo nombre, también si solo difieren en mayúsculas |
+| `E_QUALIFIER` | `left.`/`right.` fuera de una condición de `JOIN` |
+
+`INT` y `DECIMAL` son compatibles entre sí: la combinación es `DECIMAL`, y `/`
+siempre produce `DECIMAL`. `SUM`, `AVG`, `MIN` y `MAX` sin `GROUP_BY` son
+anulables, porque una entrada vacía da `NULL`. Un JOIN `LEFT` vuelve anulables las
+columnas derechas, `RIGHT` las izquierdas y `FULL` ambas. La nulabilidad de los
+contratos se sigue verificando en ejecución con los datos.
+
+Se reportan todos los errores en una sola pasada. Una expresión con error queda
+con tipo desconocido, y una operación con error deja su salida desconocida, para
+que los pasos siguientes no repitan el mismo problema. `demo/tipos.etl` muestra
+dos errores detectados al compilar.
 
 ## IR y optimización
 
@@ -169,8 +198,9 @@ print(outputs["cleaned"].collect())
 
 ## Límites actuales
 
-La verificación estática de tipos y los pases O1 (rangos) y O3 (joins) siguen
-pendientes. Polars también optimiza el plan al ejecutarlo, por lo que el efecto
+Los pases O1 (rangos) y O3 (joins) y la poda de columnas siguen pendientes.
+El código generado conserva las verificaciones del runtime aunque el análisis
+estático ya haya probado algunas. Polars también optimiza el plan al ejecutarlo, por lo que el efecto
 de los pases propios se mide comparando `-O0` con la versión optimizada.
 La ejecución no es una transacción global entre todos los SINK: una salida ya
 escrita puede persistir si otro bloque falla después. Los artefactos de
