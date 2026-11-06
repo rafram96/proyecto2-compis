@@ -151,7 +151,7 @@ extensiones y se continúa después de errores en un archivo. El estado final es
 El código se genera solo después de validar el programa; no se eliminan
 artefactos de ejecuciones anteriores.
 
-`--format ast` guarda `.ast.json`; `--format tree` guarda `.tree.txt`;
+`--format ast` guarda `.ast.json`; `--format ir` guarda `.ir.txt`; `--format tree` guarda `.tree.txt`;
 `--format tokens` guarda `.tokens.json`;
 `--format check` solo valida. Se pueden cambiar las rutas con
 `python main.py otra_entrada --output otra_salida`. `--run` ejecuta los pipelines
