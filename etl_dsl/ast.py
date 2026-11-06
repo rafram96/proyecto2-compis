@@ -1,4 +1,4 @@
-"""AST inmutable del frontend. No contiene objetos ni conexiones de DuckDB."""
+"""AST inmutable del frontend. No contiene objetos de Polars ni conexiones."""
 from __future__ import annotations
 
 from dataclasses import dataclass, fields, is_dataclass

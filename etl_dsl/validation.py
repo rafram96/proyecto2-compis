@@ -1,4 +1,4 @@
-"""Validaciones independientes del catálogo de DuckDB y de los datos externos.
+"""Validaciones independientes del motor de ejecución y de los datos externos.
 
 No infiere esquemas ni comprueba tipos de expresiones/columnas.
 """

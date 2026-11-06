@@ -1,4 +1,4 @@
-"""Delimitación SQL compartida por el generador y el runtime DuckDB."""
+"""Delimitación SQL para los conectores SQLITE y DUCKDB del runtime."""
 from decimal import Decimal
 
 

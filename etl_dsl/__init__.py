@@ -1,4 +1,4 @@
-"""Compilador ETL para DuckDB: sintaxis, AST, validación y generación de Python."""
+"""Compilador ETL para Polars: sintaxis, AST, validación y generación de Python."""
 from .diagnostics import Diagnostic, ParseError
 from .parser import parse, parse_file, parse_tree
 from .scanner import scan

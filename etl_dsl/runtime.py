@@ -1,67 +1,81 @@
-"""Ejecución del Python generado: DuckDB realiza todas las transformaciones.
+"""Ejecución del Python generado: Polars realiza todas las transformaciones.
 
-Los pasos se materializan en tablas temporales inmutables para dar a cada rama
-una entrada estable. SQLite se importa con sqlite3, sin descargar extensiones.
+Cada paso es un LazyFrame inmutable; nada se calcula hasta un SINK o un
+contrato que necesite los datos, de modo que Polars optimiza el plan completo.
+SQLite se lee con sqlite3; las bases DuckDB se leen y escriben con el paquete
+duckdb, usado solo como conector (sin pyarrow).
 """
 from contextlib import closing
-from dataclasses import dataclass
 from pathlib import Path
 import argparse
+import re
 import sqlite3
 import sys
-from uuid import uuid4
 
-import duckdb
+import polars as pl
 
-from .sql import identifier as q, literal
-from .type import accepts_duckdb
+from .sql import identifier as q
+from .type import accepts_polars
 
 
 class ExecutionError(ValueError):
     pass
 
 
-@dataclass(frozen=True, slots=True)
-class Table:
-    name: str
-    fields: tuple[tuple[str, str], ...]
-    owner: str
+def _affinity(declared):
+    """Tipo Polars para una columna SQLite según su tipo declarado."""
+    declared = declared.upper()
+    if "BOOL" in declared:
+        return pl.Boolean
+    if "TIMESTAMP" in declared or "DATETIME" in declared:
+        return pl.Datetime
+    if declared == "DATE":
+        return pl.Date
+    if "INT" in declared:
+        return pl.Int64
+    if any(part in declared for part in ("CHAR", "CLOB", "TEXT")):
+        return pl.String
+    if "BLOB" in declared:
+        return pl.Binary
+    if any(part in declared for part in ("REAL", "FLOA", "DOUB", "NUM", "DEC")):
+        return pl.Float64
+    return pl.String
 
-    @property
-    def sql(self):
-        return q(self.name)
 
-    @property
-    def columns(self):
-        return tuple(name for name, _ in self.fields)
+_FROM_DUCKDB = {"BOOLEAN": pl.Boolean, "TINYINT": pl.Int8, "SMALLINT": pl.Int16, "INTEGER": pl.Int32,
+                "BIGINT": pl.Int64, "UTINYINT": pl.UInt8, "USMALLINT": pl.UInt16, "UINTEGER": pl.UInt32,
+                "UBIGINT": pl.UInt64, "FLOAT": pl.Float32, "DOUBLE": pl.Float64, "VARCHAR": pl.String,
+                "DATE": pl.Date, "TIMESTAMP": pl.Datetime("us"), "BLOB": pl.Binary}
 
 
-class DuckDBRuntime:
-    def __init__(self, base_dir=".", *, connection=None):
+def _from_duckdb(declared):
+    match = re.fullmatch(r"DECIMAL\((\d+),(\d+)\)", declared)
+    if match:
+        return pl.Decimal(int(match[1]), int(match[2]))
+    return _FROM_DUCKDB.get(declared)  # None: Polars infiere el tipo.
+
+
+def _to_duckdb(dtype):
+    if isinstance(dtype, pl.Decimal):
+        return f"DECIMAL({dtype.precision},{dtype.scale})"
+    if isinstance(dtype, pl.Datetime):
+        return "TIMESTAMP"
+    for name, candidate in _FROM_DUCKDB.items():
+        if dtype == candidate:
+            return name
+    return "VARCHAR"
+
+
+class PolarsRuntime:
+    def __init__(self, base_dir="."):
         self.base_dir = Path(base_dir).resolve()
-        self.connection = connection if connection is not None else duckdb.connect(":memory:")
-        self._owns_connection = connection is None
-        self._prefix = "etl_" + uuid4().hex
-        self._counter = 0
-        self._attached = {}
         self.written = []
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc, traceback):
-        if self._owns_connection:
-            self.connection.close()
-
-    def _name(self):
-        self._counter += 1
-        return f"{self._prefix}_{self._counter}"
-
-    def _execute(self, sql, label, parameters=None):
-        try:
-            return self.connection.execute(sql, parameters)
-        except duckdb.Error as exc:
-            raise ExecutionError(f"{label}: E_DUCKDB: {exc}") from exc
+        return None
 
     @staticmethod
     def _unique(columns, label):
@@ -69,49 +83,66 @@ class DuckDBRuntime:
         if len({name.casefold() for name in names}) != len(names):
             raise ExecutionError(f"{label}: E_AMBIGUOUS_COLUMNS: nombres de salida ambiguos: {names}.")
 
-    def query(self, sql: str, label="query") -> Table:
-        fields = tuple((row[0], row[1]) for row in self._execute("DESCRIBE " + sql, label).fetchall())
-        self._unique((name for name, _ in fields), label)
-        name = self._name()
-        self._execute(f"CREATE TEMP TABLE {q(name)} AS {sql}", label)
-        return Table(name, fields, self._prefix)
+    @staticmethod
+    def frame(table, label="frame"):
+        if isinstance(table, pl.DataFrame):
+            return table.lazy()
+        if not isinstance(table, pl.LazyFrame):
+            raise ExecutionError(f"{label}: la entrada debe ser un DataFrame o LazyFrame de Polars.")
+        return table
+
+    def schema(self, table, label="schema"):
+        try:
+            return self.frame(table, label).collect_schema()
+        except pl.exceptions.PolarsError as exc:
+            raise ExecutionError(f"{label}: E_POLARS: {exc}") from exc
+
+    def columns(self, table, label="columns"):
+        return tuple(self.schema(table, label).names())
+
+    def collect(self, table, label="collect"):
+        try:
+            return self.frame(table, label).collect()
+        except pl.exceptions.PolarsError as exc:
+            raise ExecutionError(f"{label}: E_POLARS: {exc}") from exc
+
+    def step(self, table, label="step"):
+        """Resuelve el esquema del plan sin ejecutarlo; detecta tipos y nombres inválidos."""
+        self._unique(self.columns(table, label), label)
+        return table
 
     def require_columns(self, table, columns, label):
-        if not isinstance(table, Table) or table.owner != self._prefix:
-            raise ExecutionError(f"{label}: la entrada debe pertenecer a este runtime DuckDB.")
-        missing = set(columns) - set(table.columns)
+        available = self.columns(table, label)
+        missing = set(columns) - set(available)
         if missing:
             raise ExecutionError(f"{label}: E_COLUMN: columnas inexistentes: {sorted(missing)}; "
-                                 f"disponibles: {list(table.columns)}.")
+                                 f"disponibles: {list(available)}.")
 
     def new_columns(self, table, columns, label):
-        self._unique([*table.columns, *columns], label)
+        self._unique([*self.columns(table, label), *columns], label)
 
     def disjoint(self, left, right, label):
-        self._unique([*left.columns, *right.columns], label)
+        self._unique([*self.columns(left, label), *self.columns(right, label)], label)
 
-    def rename(self, table, mapping, label):
+    def check_rename(self, table, mapping, label):
         self.require_columns(table, mapping, label)
-        names = [mapping.get(name, name) for name in table.columns]
-        self._unique(names, label)
-        columns = ", ".join(f"{q(name)} AS {q(mapping.get(name, name))}" for name in table.columns)
-        return self.query(f"SELECT {columns} FROM {table.sql}", label)
+        self._unique([mapping.get(name, name) for name in self.columns(table, label)], label)
 
     def contract(self, table, schema, label):
-        self.require_columns(table, (), label)
+        table = self.frame(table, label)
         if schema is None:
-            return table
+            return self.step(table, label)
         names = [name for name, _, _ in schema]
         self._unique(names, label)
-        if tuple(names) != table.columns:
-            raise ExecutionError(f"{label}: E_SCHEMA: se esperaba {names}, se obtuvo {list(table.columns)}.")
-        for (_, expected, _), (name, actual) in zip(schema, table.fields):
-            if not accepts_duckdb(expected, actual):
-                raise ExecutionError(f"{label}: E_TYPE: {name}: se esperaba {expected}, se obtuvo {actual}.")
+        actual = self.schema(table, label)
+        if tuple(names) != tuple(actual.names()):
+            raise ExecutionError(f"{label}: E_SCHEMA: se esperaba {names}, se obtuvo {actual.names()}.")
+        for name, expected, _ in schema:
+            if not accepts_polars(expected, actual[name]):
+                raise ExecutionError(f"{label}: E_TYPE: {name}: se esperaba {expected}, se obtuvo {actual[name]}.")
         required = [name for name, _, nullable in schema if not nullable]
         if required:
-            checks = ", ".join(f"COUNT(*) FILTER (WHERE {q(name)} IS NULL)" for name in required)
-            counts = self._execute(f"SELECT {checks} FROM {table.sql}", label).fetchone()
+            counts = self.collect(table.select(pl.col(required).null_count()), label).row(0)
             invalid = [name for name, count in zip(required, counts) if count]
             if invalid:
                 raise ExecutionError(f"{label}: E_NULL: columnas no anulables contienen NULL: {invalid}.")
@@ -126,104 +157,94 @@ class DuckDBRuntime:
         path = Path(value)
         return path.resolve() if path.is_absolute() else (self.base_dir / path).resolve()
 
-    def _attach(self, path, *, readonly, label):
-        key = str(path)
-        if key in self._attached:
-            alias, is_readonly = self._attached[key]
-            if is_readonly and not readonly:
-                raise ExecutionError(f"{label}: no se puede escribir una base adjunta como SOURCE de solo lectura.")
-            return alias
-        alias = self._name()
-        self._execute(f"ATTACH {literal(str(path))} AS {q(alias)} "
-                      f"({'READ_ONLY' if readonly else 'READ_WRITE'}, TYPE DUCKDB)", label)
-        self._attached[key] = (alias, readonly)
-        return alias
-
     def _sqlite(self, path, table, label):
         try:
             with closing(sqlite3.connect(path.as_uri() + "?mode=ro", uri=True)) as source:
                 fields = source.execute(f"PRAGMA table_info({q(table)})").fetchall()
                 if not fields:
                     raise ExecutionError(f"{label}: E_SQLITE: tabla inexistente o sin columnas: {table}.")
-                names = [field[1] for field in fields]
-                self._unique(names, label)
-
-                def affinity(declared):
-                    declared = declared.upper()
-                    if "BOOL" in declared:
-                        return "BOOLEAN"
-                    if "TIMESTAMP" in declared or "DATETIME" in declared:
-                        return "TIMESTAMP"
-                    if declared == "DATE":
-                        return "DATE"
-                    if "INT" in declared:
-                        return "BIGINT"
-                    if any(part in declared for part in ("CHAR", "CLOB", "TEXT")):
-                        return "VARCHAR"
-                    if "BLOB" in declared:
-                        return "BLOB"
-                    if any(part in declared for part in ("REAL", "FLOA", "DOUB", "NUM", "DEC")):
-                        return "DOUBLE"
-                    return "VARCHAR"
-
-                types = [affinity(field[2]) for field in fields]
-                name = self._name()
-                definitions = ", ".join(f"{q(col)} {typ}" for col, typ in zip(names, types))
-                self._execute(f"CREATE TEMP TABLE {q(name)} ({definitions})", label)
-                cursor = source.execute(f"SELECT * FROM {q(table)}")
-                insert = f"INSERT INTO {q(name)} VALUES ({', '.join('?' for _ in names)})"
-                while batch := cursor.fetchmany(1000):
-                    self.connection.executemany(insert, batch)
-                return Table(name, tuple(zip(names, types)), self._prefix)
-        except (sqlite3.Error, duckdb.Error) as exc:
+                schema = {field[1]: _affinity(field[2]) for field in fields}
+                self._unique(schema, label)
+                rows = source.execute(f"SELECT * FROM {q(table)}").fetchall()
+        except sqlite3.Error as exc:
             raise ExecutionError(f"{label}: E_SQLITE: {exc}") from exc
+        return pl.DataFrame(rows, schema=schema, orient="row", strict=False).lazy()
+
+    def _duckdb(self, path, options, label):
+        import duckdb
+
+        target = f"{q(options.get('schema', 'main'))}.{q(options['table'])}"
+        try:
+            with duckdb.connect(str(path), read_only=True) as con:
+                fields = con.execute(f"DESCRIBE SELECT * FROM {target}").fetchall()
+                rows = con.execute(f"SELECT * FROM {target}").fetchall()
+        except duckdb.Error as exc:
+            raise ExecutionError(f"{label}: E_DUCKDB: {exc}") from exc
+        schema = {name: _from_duckdb(typ) for name, typ, *_ in fields}
+        return pl.DataFrame(rows, schema=schema, orient="row", strict=False).lazy()
 
     def source(self, driver, options, schema, label):
         path = self._path(options["file"])
         if not path.is_file():
             raise ExecutionError(f"{label}: E_SOURCE: no existe el archivo {path}.")
-        if driver == "SQLITE":
-            table = self._sqlite(path, options["table"], label)
-        elif driver == "DUCKDB":
-            alias = self._attach(path, readonly=True, label=label)
-            table = self.query(f"SELECT * FROM {q(alias)}.{q(options.get('schema', 'main'))}.{q(options['table'])}", label)
-        elif driver == "CSV":
-            args = {"header": options.get("header", True), "delim": options.get("delimiter", ","),
-                    "nullstr": options.get("nullstr", ""), "allow_quoted_nulls": False}
-            sql_options = ", ".join(f"{key}={literal(value)}" for key, value in args.items())
-            table = self.query(f"SELECT * FROM read_csv({literal(str(path))}, {sql_options})", label)
-        elif driver == "PARQUET":
-            table = self.query(f"SELECT * FROM read_parquet({literal(str(path))})", label)
-        else:
-            raise ExecutionError(f"{label}: conector SOURCE no soportado: {driver}.")
+        try:
+            if driver == "SQLITE":
+                table = self._sqlite(path, options["table"], label)
+            elif driver == "DUCKDB":
+                table = self._duckdb(path, options, label)
+            elif driver == "CSV":
+                nullstr = options.get("nullstr", "")
+                # Con nullstr vacío, Polars distingue "" (texto vacío) de un campo ausente (NULL).
+                table = pl.scan_csv(path, has_header=options.get("header", True),
+                                    separator=options.get("delimiter", ","),
+                                    null_values=[nullstr] if nullstr else None,
+                                    infer_schema_length=10_000)
+            elif driver == "PARQUET":
+                table = pl.scan_parquet(path)
+            else:
+                raise ExecutionError(f"{label}: conector SOURCE no soportado: {driver}.")
+        except pl.exceptions.PolarsError as exc:
+            raise ExecutionError(f"{label}: E_SOURCE: {exc}") from exc
         return self.contract(table, schema, label)
 
+    def _duckdb_sink(self, frame, path, options, label):
+        import duckdb
+
+        schema = options.get("schema", "main")
+        target = f"{q(schema)}.{q(options['table'])}"
+        mode = options.get("mode", "error")
+        columns = ", ".join(q(name) for name in frame.columns)
+        try:
+            with duckdb.connect(str(path)) as con:
+                con.execute(f"CREATE SCHEMA IF NOT EXISTS {q(schema)}")
+                if mode != "append":
+                    definitions = ", ".join(f"{q(name)} {_to_duckdb(dtype)}"
+                                            for name, dtype in frame.schema.items())
+                    create = "CREATE OR REPLACE TABLE" if mode == "replace" else "CREATE TABLE"
+                    con.execute(f"{create} {target} ({definitions})")
+                # Insertar por nombre impide escribir datos en una columna distinta por posición.
+                insert = f"INSERT INTO {target} ({columns}) VALUES ({', '.join('?' for _ in frame.columns)})"
+                if frame.height:
+                    con.executemany(insert, frame.rows())
+        except duckdb.Error as exc:
+            raise ExecutionError(f"{label}: E_DUCKDB: {exc}") from exc
+
     def sink(self, table, driver, options, label):
+        frame = self.collect(table, label)
         path = self._path(options["file"])
         path.parent.mkdir(parents=True, exist_ok=True)
         if driver == "DUCKDB":
-            alias = self._attach(path, readonly=False, label=label)
-            schema = options.get("schema", "main")
-            self._execute(f"CREATE SCHEMA IF NOT EXISTS {q(alias)}.{q(schema)}", label)
-            target = f"{q(alias)}.{q(schema)}.{q(options['table'])}"
-            mode = options.get("mode", "error")
-            if mode == "append":
-                # BY NAME impide insertar datos en una columna distinta por posición.
-                self._execute(f"INSERT INTO {target} BY NAME SELECT * FROM {table.sql}", label)
-            else:
-                create = "CREATE OR REPLACE TABLE" if mode == "replace" else "CREATE TABLE"
-                self._execute(f"{create} {target} AS SELECT * FROM {table.sql}", label)
-        elif driver in {"CSV", "PARQUET"}:
-            settings = ["FORMAT " + driver]
-            if driver == "CSV":
-                settings.extend(["HEADER " + literal(options.get("header", True)),
-                                 "DELIMITER " + literal(options.get("delimiter", ",")),
-                                 "NULL " + literal(options.get("nullstr", ""))])
-            self._execute(f"COPY {table.sql} TO {literal(str(path))} ({', '.join(settings)})", label)
+            self._duckdb_sink(frame, path, options, label)
+        elif driver == "CSV":
+            frame.write_csv(path, include_header=options.get("header", True),
+                            separator=options.get("delimiter", ","),
+                            null_value=options.get("nullstr", ""))
+        elif driver == "PARQUET":
+            frame.write_parquet(path)
         else:
             raise ExecutionError(f"{label}: conector SINK no soportado: {driver}.")
         self.written.append(str(path))
-        return table
+        return frame.lazy()
 
 
 def run_pipelines(rt, pipelines, defaults, names=None, inputs=None):
@@ -237,18 +258,18 @@ def run_pipelines(rt, pipelines, defaults, names=None, inputs=None):
 
 
 def generated_main(pipelines, defaults, base_dir, argv=None):
-    parser = argparse.ArgumentParser(description="Pipeline ETL generado para DuckDB")
+    parser = argparse.ArgumentParser(description="Pipeline ETL generado para Polars")
     parser.add_argument("--pipeline", action="append", help="Nombre a ejecutar; repetible")
     parser.add_argument("--base-dir", default=base_dir, type=Path, help="Base de rutas de SOURCE/SINK")
     args = parser.parse_args(argv)
     try:
-        with DuckDBRuntime(args.base_dir) as rt:
+        with PolarsRuntime(args.base_dir) as rt:
             results = run_pipelines(rt, pipelines, defaults, args.pipeline)
             for name in results:
-                print(f"DUCKDB: PIPELINE {name} ejecutado.")
+                print(f"POLARS: PIPELINE {name} ejecutado.")
             for path in rt.written:
                 print(f"SINK: {path}")
         return 0
-    except (ExecutionError, duckdb.Error, OSError) as exc:
+    except (ExecutionError, pl.exceptions.PolarsError, OSError) as exc:
         print(exc, file=sys.stderr)
         return 1

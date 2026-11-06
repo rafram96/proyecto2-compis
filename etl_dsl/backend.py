@@ -1,9 +1,8 @@
-"""Compilación AST -> Python con SQL DuckDB, sin leer datos al compilar."""
+"""Compilación AST -> Python con Polars (LazyFrame), sin leer datos al compilar."""
 from graphlib import TopologicalSorter
 from pathlib import Path
 
 from . import ast as a
-from .sql import identifier as q, literal
 from .validation import validate
 from .visitor import walk
 
@@ -12,25 +11,65 @@ class CompileError(ValueError):
     pass
 
 
+def col(name: str) -> str:
+    return f"pl.col({name!r})"
+
+
+def literal(value) -> str:
+    if value is None or isinstance(value, (bool, int, str)):
+        return f"pl.lit({value!r})"
+    # Decimal(...) conserva la precisión del literal del programa fuente.
+    return f"pl.lit(Decimal({str(value)!r}))"
+
+
+BINARY = {"AND": "&", "OR": "|", "==": "==", "!=": "!=", ">": ">", "<": "<",
+          ">=": ">=", "<=": "<=", "+": "+", "-": "-", "*": "*", "/": "/"}
+AGGREGATES = {"AVG": "mean", "MIN": "min", "MAX": "max"}
+
+
 def expression(node: a.Expr) -> str:
     if isinstance(node, a.Literal):
         return literal(node.value)
     if isinstance(node, a.Column):
-        return (q(node.qualifier) + "." if node.qualifier else "") + q(node.name)
+        return col(node.name)
     if isinstance(node, a.UnaryExpr):
         operand = expression(node.operand)
-        if node.operator in {"IS NULL", "IS NOT NULL"}:
-            return f"({operand} {node.operator})"
-        return f"({node.operator} {operand})"
+        if node.operator == "IS NULL":
+            return f"{operand}.is_null()"
+        if node.operator == "IS NOT NULL":
+            return f"{operand}.is_not_null()"
+        return f"({'~' if node.operator == 'NOT' else '-'}{operand})"
     if isinstance(node, a.BinaryExpr):
-        op = "=" if node.operator == "==" else node.operator
-        return f"({expression(node.left)} {op} {expression(node.right)})"
+        return f"({expression(node.left)} {BINARY[node.operator]} {expression(node.right)})"
     if isinstance(node, a.Call):
         args = [expression(arg) for arg in node.arguments]
+        if node.name == "COALESCE":
+            return f"pl.coalesce({', '.join(args)})"
+        if node.name == "NULLIF":
+            return f"pl.when({args[0]} == {args[1]}).then(None).otherwise({args[0]})"
         if node.name == "SAFE_DIVIDE":
-            return f"({args[0]} / NULLIF({args[1]}, 0))"
-        return f"{node.name}({', '.join(args)})"
+            return f"pl.when({args[1]} != 0).then({args[0]} / {args[1]})"
+        if node.name == "LOWER":
+            return f"{args[0]}.str.to_lowercase()"
+        if node.name == "UPPER":
+            return f"{args[0]}.str.to_uppercase()"
+        if node.name == "TRIM":
+            # TRIM de SQL quita solo espacios, no otros caracteres en blanco.
+            return f"{args[0]}.str.strip_chars(' ')"
     raise CompileError(f"Expresión no soportada: {type(node).__name__}.")
+
+
+def aggregation(node: a.Aggregation) -> str:
+    """Agregaciones con semántica SQL: SUM de un grupo sin valores es NULL, no 0."""
+    if node.function == "COUNT":
+        value = "pl.len()" if node.expression is None else f"{expression(node.expression)}.count()"
+        return f"{value}.cast(pl.Int64).alias({node.alias!r})"
+    expr = expression(node.expression)
+    if node.function == "SUM":
+        value = f"pl.when({expr}.count() > 0).then({expr}.sum())"
+    else:
+        value = f"{expr}.{AGGREGATES[node.function]}()"
+    return f"{value}.alias({node.alias!r})"
 
 
 def _schema(schema):
@@ -57,11 +96,9 @@ def _connector(connector, *, sink=False):
         if key == "header":
             valid = isinstance(value, bool)
         else:
-            valid = isinstance(value, str) and (bool(value) or key == "nullstr")
+            valid = isinstance(value, str) and (bool(value) or key == "nullstr") and "\0" not in value
         if not valid:
             raise CompileError(f"{name}.{key}: tipo o valor de opción inválido.")
-        if isinstance(value, str):
-            literal(value)  # Rechazar NUL antes de generar código.
     if "delimiter" in options and len(options["delimiter"]) != 1:
         raise CompileError("CSV.delimiter debe contener un carácter.")
     if options.get("mode", "error") not in {"error", "replace", "append"}:
@@ -126,65 +163,73 @@ class PythonGenerator:
                     self.emit(f"{var} = rt.sink({table}, {driver!r}, {options!r}, {label!r})")
                 outputs[name] = var
             else:
-                operation = decl.operation
-                if isinstance(operation, a.Join):
-                    left = producer(incoming[(name, "left")])
-                    right = producer(incoming[(name, "right")])
-                    for side, table in [("left", left), ("right", right)]:
-                        columns = [n.name for n in walk(operation) if isinstance(n, a.Column) and n.qualifier == side]
-                        self.emit(f"rt.require_columns({table}, {columns!r}, {label!r})")
-                    self.emit(f"rt.disjoint({left}, {right}, {label!r})")
-                    conditions = " AND ".join(f"{expression(c.left)} = {expression(c.right)}" for c in operation.conditions)
-                    prefix = 'SELECT "left".*, "right".* FROM '
-                    tail = f' AS "right" ON {conditions}'
-                    self.emit(f"{var} = rt.query({prefix!r} + {left}.sql + "
-                              f"{' AS ' + q('left') + ' ' + operation.kind + ' JOIN '!r} + {right}.sql + {tail!r}, {label!r})")
-                    continue
-                table = producer(incoming[(name, None)])
-                columns = [n.name for n in walk(operation) if isinstance(n, a.Column)]
-                if any(n.qualifier for n in walk(operation) if isinstance(n, a.Column)):
-                    raise CompileError(f"{label}: solo JOIN admite calificadores left/right.")
-                if isinstance(operation, (a.Select, a.Distinct, a.DropNulls)):
-                    columns.extend(operation.columns)
-                elif isinstance(operation, a.Aggregate):
-                    columns.extend(operation.group_by)
-                elif isinstance(operation, a.Sort):
-                    columns.extend(k.name for k in operation.keys)
-                elif isinstance(operation, a.FillNull):
-                    columns.extend(item.name for item in operation.assignments)
-                self.emit(f"rt.require_columns({table}, {columns!r}, {label!r})")
-                prefix, suffix = "SELECT * FROM ", ""
-                if isinstance(operation, a.Filter):
-                    suffix = " WHERE " + expression(operation.predicate)
-                elif isinstance(operation, (a.Select, a.Distinct)):
-                    prefix = "SELECT " + ("DISTINCT " if isinstance(operation, a.Distinct) else "")
-                    prefix += ", ".join(q(c) for c in operation.columns) + " FROM "
-                elif isinstance(operation, a.Derive):
-                    self.emit(f"rt.new_columns({table}, {[i.name for i in operation.assignments]!r}, {label!r})")
-                    prefix = "SELECT *, " + ", ".join(f"{expression(i.expression)} AS {q(i.name)}" for i in operation.assignments) + " FROM "
-                elif isinstance(operation, a.FillNull):
-                    prefix = "SELECT * REPLACE (" + ", ".join(
-                        f"COALESCE({q(i.name)}, {expression(i.expression)}) AS {q(i.name)}"
-                        for i in operation.assignments) + ") FROM "
-                elif isinstance(operation, a.DropNulls):
-                    suffix = " WHERE " + " AND ".join(f"{q(c)} IS NOT NULL" for c in operation.columns)
-                elif isinstance(operation, a.Aggregate):
-                    items = [q(c) for c in operation.group_by]
-                    items.extend(f"{i.function}({expression(i.expression) if i.expression is not None else '*'}) AS {q(i.alias)}"
-                                 for i in operation.aggregations)
-                    prefix = "SELECT " + ", ".join(items) + " FROM "
-                    if operation.group_by:
-                        suffix = " GROUP BY " + ", ".join(q(c) for c in operation.group_by)
-                elif isinstance(operation, a.Sort):
-                    suffix = " ORDER BY " + ", ".join(f"{q(k.name)} {k.direction}" for k in operation.keys)
-                elif isinstance(operation, a.Rename):
-                    mapping = {item.name: item.alias for item in operation.items}
-                    self.emit(f"{var} = rt.rename({table}, {mapping!r}, {label!r})")
-                    continue
-                else:
-                    raise CompileError(f"Operación no soportada: {type(operation).__name__}.")
-                self.emit(f"{var} = rt.query({prefix!r} + {table}.sql + {suffix!r}, {label!r})")
+                self.operation(decl.operation, var, producer, incoming, name, label)
         self.emit("return {" + ", ".join(f"{n!r}: {v}" for n, v in outputs.items()) + "}")
+
+    def operation(self, operation, var, producer, incoming, name, label):
+        if isinstance(operation, a.Join):
+            left = producer(incoming[(name, "left")])
+            right = producer(incoming[(name, "right")])
+            for side, table in [("left", left), ("right", right)]:
+                columns = [n.name for n in walk(operation) if isinstance(n, a.Column) and n.qualifier == side]
+                self.emit(f"rt.require_columns({table}, {columns!r}, {label!r})")
+            self.emit(f"rt.disjoint({left}, {right}, {label!r})")
+            pairs = [(c.left, c.right) if c.left.qualifier == "left" else (c.right, c.left)
+                     for c in operation.conditions]
+            left_on = [l.name for l, _ in pairs]
+            right_on = [r.name for _, r in pairs]
+            # coalesce=False conserva las claves de ambos lados, como SELECT left.*, right.*.
+            self.emit(f"{var} = rt.step({left}.join({right}, left_on={left_on!r}, right_on={right_on!r}, "
+                      f"how={operation.kind.lower()!r}, coalesce=False), {label!r})")
+            return
+        table = producer(incoming[(name, None)])
+        columns = [n.name for n in walk(operation) if isinstance(n, a.Column)]
+        if any(n.qualifier for n in walk(operation) if isinstance(n, a.Column)):
+            raise CompileError(f"{label}: solo JOIN admite calificadores left/right.")
+        if isinstance(operation, (a.Select, a.Distinct, a.DropNulls)):
+            columns.extend(operation.columns)
+        elif isinstance(operation, a.Aggregate):
+            columns.extend(operation.group_by)
+        elif isinstance(operation, a.Sort):
+            columns.extend(k.name for k in operation.keys)
+        elif isinstance(operation, a.FillNull):
+            columns.extend(item.name for item in operation.assignments)
+        self.emit(f"rt.require_columns({table}, {columns!r}, {label!r})")
+        if isinstance(operation, a.Filter):
+            plan = f"{table}.filter({expression(operation.predicate)})"
+        elif isinstance(operation, a.Select):
+            plan = f"{table}.select({list(operation.columns)!r})"
+        elif isinstance(operation, a.Distinct):
+            plan = f"{table}.select({list(operation.columns)!r}).unique(maintain_order=True)"
+        elif isinstance(operation, a.Derive):
+            self.emit(f"rt.new_columns({table}, {[i.name for i in operation.assignments]!r}, {label!r})")
+            items = ", ".join(f"{expression(i.expression)}.alias({i.name!r})" for i in operation.assignments)
+            plan = f"{table}.with_columns({items})"
+        elif isinstance(operation, a.FillNull):
+            items = ", ".join(f"pl.coalesce({col(i.name)}, {expression(i.expression)}).alias({i.name!r})"
+                              for i in operation.assignments)
+            plan = f"{table}.with_columns({items})"
+        elif isinstance(operation, a.DropNulls):
+            plan = f"{table}.drop_nulls(subset={list(operation.columns)!r})"
+        elif isinstance(operation, a.Aggregate):
+            items = ", ".join(aggregation(i) for i in operation.aggregations)
+            if operation.group_by:
+                plan = f"{table}.group_by({list(operation.group_by)!r}, maintain_order=True).agg({items})"
+            else:
+                plan = f"{table}.select({items})"
+        elif isinstance(operation, a.Sort):
+            keys = [k.name for k in operation.keys]
+            descending = [k.direction == "DESC" for k in operation.keys]
+            # NULLS LAST en ambas direcciones, como el orden por defecto de SQL en DuckDB.
+            plan = (f"{table}.sort({keys!r}, descending={descending!r}, "
+                    f"nulls_last=True, maintain_order=True)")
+        elif isinstance(operation, a.Rename):
+            mapping = {item.name: item.alias for item in operation.items}
+            self.emit(f"rt.check_rename({table}, {mapping!r}, {label!r})")
+            plan = f"{table}.rename({mapping!r})"
+        else:
+            raise CompileError(f"Operación no soportada: {type(operation).__name__}.")
+        self.emit(f"{var} = rt.step({plan}, {label!r})")
 
 
 def compile_program(program: a.Program, *, filename="<string>", base_dir=".") -> str:
@@ -199,11 +244,15 @@ def compile_program(program: a.Program, *, filename="<string>", base_dir=".") ->
     defaults = [p.name for p in program.pipelines if p.name not in used and
                 not any(isinstance(d, a.Input) for d in p.declarations)]
     functions = ", ".join(f"{name!r}: {fn}" for name, fn in generator.functions.items())
-    header = ['# Código generado por etl-dsl: Python + SQL DuckDB.',
+    header = ['# Código generado por etl-dsl: Python + Polars (LazyFrame).',
               'import sys',
-              '# Evitar que archivos generados como duckdb.py oculten las dependencias.',
+              '# Evitar que archivos generados como polars.py oculten las dependencias.',
               'if __name__ == "__main__" and not sys.flags.safe_path:',
               '    del sys.path[0]',
+              'from decimal import Decimal',
+              '',
+              'import polars as pl',
+              '',
               'from etl_dsl.runtime import generated_main', '']
     footer = ["", f"PIPELINES = {{{functions}}}", f"DEFAULT_PIPELINES = {defaults!r}",
               "", 'if __name__ == "__main__":',

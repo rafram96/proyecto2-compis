@@ -1,4 +1,4 @@
-"""Tipos escalares y compatibilidad con los esquemas obtenidos desde DuckDB."""
+"""Tipos escalares y compatibilidad con los esquemas obtenidos desde Polars."""
 from enum import Enum
 
 
@@ -11,18 +11,17 @@ class ScalarType(str, Enum):
     DATETIME = "DATETIME"
 
 
-def accepts_duckdb(expected: str, actual: str) -> bool:
+def accepts_polars(expected: str, actual) -> bool:
     """Compatibilidad sin casts implícitos ni cambios de precisión en los datos.
 
     DECIMAL es la familia numérica del DSL v0.2, sin precisión/escala declarada.
     Incluye los reales inferidos por CSV/SQLite; se conserva el tipo del origen.
+    `actual` es un tipo de Polars (pl.DataType).
     """
-    integral = {"TINYINT", "SMALLINT", "INTEGER", "BIGINT", "HUGEINT", "UTINYINT",
-                "USMALLINT", "UINTEGER", "UBIGINT", "UHUGEINT"}
     if expected == "INT":
-        return actual in integral
+        return actual.is_integer()
     if expected == "DECIMAL":
-        return actual in integral | {"FLOAT", "DOUBLE"} or actual.startswith("DECIMAL(")
+        return actual.is_numeric()
     if expected == "DATETIME":
-        return actual.startswith("TIMESTAMP")
-    return actual == {"STRING": "VARCHAR", "BOOL": "BOOLEAN", "DATE": "DATE"}.get(expected)
+        return actual.base_type().__name__ == "Datetime"
+    return actual.base_type().__name__ == {"STRING": "String", "BOOL": "Boolean", "DATE": "Date"}.get(expected)
