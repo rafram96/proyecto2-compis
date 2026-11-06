@@ -176,8 +176,8 @@ Los contratos comprueban nombres, orden, familias de tipos y nulabilidad en
 ejecución. Los pasos son `LazyFrame` y solo se calculan en un `SINK` (o en un
 contrato que verifica nulos), así que Polars optimiza el plan completo. Quedan pendientes el
 análisis estático completo de tipos, la IR y los pases de optimización del
-proyecto. [docs/backend_duckdb.md](docs/backend_duckdb.md) describe el backend DuckDB
-anterior (rama `main`).
+proyecto. [docs/backend_polars.md](docs/backend_polars.md) describe este backend;
+[docs/backend_duckdb.md](docs/backend_duckdb.md), el backend DuckDB anterior (commit 4109895).
 
 La referencia de sintaxis y las decisiones para el backend están en
 [docs/lenguaje.md](docs/lenguaje.md). Los requisitos académicos están en
