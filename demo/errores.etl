@@ -1,0 +1,6 @@
+PIPELINE p {
+  SOURCE v = CSV(file: "v.csv");
+  STEP f = FILTER { WHERE monto == NULL; }
+  SINK s = CSV(file: "o.csv");
+  FLOW { v -> f -> x; }
+}

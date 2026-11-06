@@ -1,0 +1,3 @@
+PIPELINE p {
+  STEP f = FILTRO { WHERE x > 0; }
+}
