@@ -11,10 +11,10 @@ PIPELINE optimizaciones {
     // constantes: un FILTER que siempre es TRUE se elimina.
     STEP todo = FILTER { WHERE 1 < 2; }
     STEP ordenadas = SORT { BY amount DESC; }
-    // muertos: no llega a ningún SINK.
+    // código muerto: no llega a ningún SINK.
     STEP sin_uso = SELECT { COLUMNS id; }
 
-    SINK resultado = CSV(file: "../output/optimizaciones.csv");
+    SINK resultado = CSV(file: "../input/out/optimizaciones.csv");
     FLOW {
         ventas -> grandes -> pagadas -> todo -> ordenadas -> resultado;
         ordenadas -> sin_uso;
