@@ -55,7 +55,7 @@ pipeline optimizaciones (raíz) {
 | --- | --- |
 | `constantes` | Pliega `+ - *` y comparaciones entre literales; simplifica `AND`, `OR` y `NOT` con `TRUE`/`FALSE` respetando la lógica de tres valores. Un `FILTER` que queda en `TRUE` se elimina. La división no se pliega. |
 | `filtros` | Fusiona un `FILTER` con el `FILTER` anterior cuando este no tiene otros consumidores. |
-| `muertos` | Elimina pasos cuyo resultado no llega a ningún `SINK`, `OUTPUT` ni `USE`. Los `INPUT` se conservan porque son la interfaz del pipeline. |
+| `codigo_muerto` | Elimina pasos cuyo resultado no llega a ningún `SINK`, `OUTPUT` ni `USE`. Los `INPUT` se conservan porque son la interfaz del pipeline. |
 
 Todos se aplican por defecto. `-O0` los desactiva y `--pases a,b` elige cuáles y
 en qué orden. Las pruebas comprueban que los resultados con y sin pases son

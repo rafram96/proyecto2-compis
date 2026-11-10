@@ -4,7 +4,7 @@ O4 (optimizaciones clásicas):
 - constantes: pliega expresiones entre literales y simplifica AND/OR/NOT con
   TRUE/FALSE; un FILTER cuya condición queda en TRUE desaparece.
 - filtros: fusiona FILTER consecutivos en uno solo con AND.
-- muertos: elimina pasos cuyo resultado no llega a ningún SINK, OUTPUT ni USE.
+- codigo_muerto: elimina pasos cuyo resultado no llega a ningún SINK, OUTPUT ni USE.
 """
 from dataclasses import replace
 from decimal import Decimal
@@ -133,7 +133,7 @@ def dead(module: Module) -> Module:
     return replace(module, pipelines=tuple(pipelines))
 
 
-PASSES = {"constantes": constants, "filtros": filters, "muertos": dead}
+PASSES = {"constantes": constants, "filtros": filters, "codigo_muerto": dead}
 DEFAULT = tuple(PASSES)
 
 
