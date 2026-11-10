@@ -10,6 +10,17 @@ services:
       # Programas con errores para mostrar los diagnósticos.
       - ./demo:/app/demo
 
+  web:
+    image: etl-dsl:polars
+    build: .
+    # Escucha en todas las interfaces del contenedor; compose solo publica el puerto en este equipo.
+    command: ["sh", "-c", "python scripts/create_demo_data.py && python -m etl_dsl.web --host 0.0.0.0"]
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./input:/app/input
+      - ./demo:/app/demo
+
   tests:
     image: etl-dsl:polars
     build: .
