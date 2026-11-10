@@ -1,11 +1,11 @@
 """Análisis sintáctico LALR y API del frontend."""
 from pathlib import Path
 
-from lark import UnexpectedInput
+from lark import UnexpectedCharacters, UnexpectedInput
 
 from . import ast as a
 from .diagnostics import ParseError, unexpected_input
-from .scanner import get_lark
+from .scanner import describe_terminal, get_lark
 from .visitor import ASTBuilder
 
 
@@ -14,7 +14,9 @@ def parse_tree(source: str, *, filename: str = "<string>"):
     try:
         return get_lark().parse(source)
     except UnexpectedInput as exc:
-        raise unexpected_input(exc, source, filename) from exc
+        # Un carácter que no inicia ningún token es un error léxico; lo demás, sintáctico.
+        code = "E_LEXICAL" if isinstance(exc, UnexpectedCharacters) else "E_SYNTAX"
+        raise unexpected_input(exc, source, filename, code=code, describe=describe_terminal) from exc
 
 
 def parse(source: str, *, filename: str = "<string>") -> a.Program:

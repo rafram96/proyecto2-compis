@@ -3,6 +3,7 @@ from pathlib import Path
 
 from . import ast as a
 from . import ir
+from .diagnostics import Diagnostic
 from .passes import DEFAULT, optimize
 from .typecheck import TypeInfo, check
 from .validation import validate
@@ -129,7 +130,8 @@ class PythonGenerator:
         try:
             return _connector(connector, sink=sink)
         except ValueError as exc:
-            raise CompileError(f"{label}: E_CONNECTOR: {exc}") from exc
+            raise CompileError(f"{label}: E_CONNECTOR: {exc}",
+                               [Diagnostic("E_CONNECTOR", str(exc), connector.span)]) from exc
 
     def pipeline(self, pipe):
         self.lines.extend(["", f"def {self.functions[pipe.name]}(rt, inputs=None):",

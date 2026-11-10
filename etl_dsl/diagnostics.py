@@ -26,15 +26,29 @@ class ParseError(ValueError):
         super().__init__(diagnostic.format(source, filename))
 
 
-def unexpected_input(exc, source: str, filename: str, *, code="E_SYNTAX") -> ParseError:
-    """Normaliza errores de Lark para el scanner y el parser."""
+MAX_EXPECTED = 12
+
+
+def unexpected_input(exc, source: str, filename: str, *, code="E_SYNTAX", describe=str) -> ParseError:
+    """Normaliza errores de Lark para el scanner y el parser.
+
+    `describe` traduce el nombre de un terminal de Lark (SEMICOLON) a cómo se
+    escribe en el programa (";").
+    """
     eof = getattr(getattr(exc, "token", None), "type", None) == "$END"
     pos = len(source) if eof else max(0, exc.pos_in_stream)
     line = source.count("\n", 0, pos) + 1
     column = pos - source.rfind("\n", 0, pos)
-    expected = sorted(getattr(exc, "expected", None) or getattr(exc, "allowed", None) or ())
-    message = "Fin de archivo inesperado" if eof else "Símbolo inesperado"
-    if expected:
+    expected = sorted({describe(name) for name in
+                       getattr(exc, "expected", None) or getattr(exc, "allowed", None) or ()})
+    if eof:
+        message = "Fin de archivo inesperado"
+    elif code == "E_LEXICAL":
+        message = f"Carácter inesperado: {source[pos]!r}"
+    else:
+        message = f'Símbolo inesperado: "{getattr(exc, "token", "")!s}"'
+    # Una lista larga (p. ej., cualquier token) no orienta a quien escribe el programa.
+    if 0 < len(expected) <= MAX_EXPECTED:
         message += "; se esperaba: " + ", ".join(expected)
-    span = Span(line, column, line, column + 1, pos, pos)
+    span = Span(line, column, line, column + 1, pos, pos + 1)
     return ParseError(Diagnostic(code, message, span), source, filename)

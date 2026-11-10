@@ -146,7 +146,8 @@ def _connector_text(connector) -> str:
                                             for arg in connector.arguments) + ")"
 
 
-def _body(node: Node) -> str:
+def body_text(node: Node) -> str:
+    """Contenido de un nodo con la notación del DSL (condición, columnas, conector…)."""
     p = node.payload
     if node.kind == "SOURCE":
         return f"{_connector_text(p.connector)} : {_schema_text(p.schema)}"
@@ -199,7 +200,7 @@ def format_module(module: Module, schemas=None) -> str:
         for node in pipe.nodes:
             args = ", ".join((f"{port}=" if port else "") + _ref_text(ref) for port, ref in node.inputs)
             line = f"  {('%' + node.name).ljust(width)} = {node.kind}" + (f"({args})" if args else "")
-            body = _body(node)
+            body = body_text(node)
             if body:
                 line += " { " + body + " }"
             if schemas is not None and _inferred(node):

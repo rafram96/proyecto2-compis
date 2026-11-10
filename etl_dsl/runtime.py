@@ -67,8 +67,10 @@ def _to_duckdb(dtype):
 
 
 class PolarsRuntime:
-    def __init__(self, base_dir="."):
+    def __init__(self, base_dir=".", root=None):
+        """`root`, si se indica, es la única carpeta que SOURCE y SINK pueden usar."""
         self.base_dir = Path(base_dir).resolve()
+        self.root = None if root is None else Path(root).resolve()
         self.written = []
 
     def __enter__(self):
@@ -153,9 +155,12 @@ class PolarsRuntime:
             raise ExecutionError(f"{label}: falta enlazar INPUT {name}.")
         return self.contract(inputs[name], schema, label)
 
-    def _path(self, value):
+    def _path(self, value, label):
         path = Path(value)
-        return path.resolve() if path.is_absolute() else (self.base_dir / path).resolve()
+        path = path.resolve() if path.is_absolute() else (self.base_dir / path).resolve()
+        if self.root is not None and not path.is_relative_to(self.root):
+            raise ExecutionError(f"{label}: E_PATH: {value} está fuera de la carpeta de trabajo.")
+        return path
 
     def _sqlite(self, path, table, label):
         try:
@@ -184,7 +189,7 @@ class PolarsRuntime:
         return pl.DataFrame(rows, schema=schema, orient="row", strict=False).lazy()
 
     def source(self, driver, options, schema, label):
-        path = self._path(options["file"])
+        path = self._path(options["file"], label)
         if not path.is_file():
             raise ExecutionError(f"{label}: E_SOURCE: no existe el archivo {path}.")
         try:
@@ -231,7 +236,7 @@ class PolarsRuntime:
 
     def sink(self, table, driver, options, label):
         frame = self.collect(table, label)
-        path = self._path(options["file"])
+        path = self._path(options["file"], label)
         path.parent.mkdir(parents=True, exist_ok=True)
         if driver == "DUCKDB":
             self._duckdb_sink(frame, path, options, label)
