@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { restartCompiler } from "../compiler/client";
 import { editorDiagnostics } from "../compiler/diagnostics";
-import { programs } from "../data";
+import { examples } from "../content";
 import { Output } from "../components/CompilerOutput";
 import {
   createDocument,
@@ -22,7 +22,6 @@ import { downloadText } from "../workspace/files";
 import { useCompilation } from "../workspace/useCompilation";
 import type { Diagnostic } from "../compiler/types";
 const Editor = lazy(() => import("../editor/Editor"));
-const EXAMPLES = ["ventas.etl", "credit_risk.etl", "pendientes.etl"];
 
 export default function StudioPage() {
   const { workspace, notice, saved } = useWorkspace();
@@ -63,7 +62,9 @@ export default function StudioPage() {
   }
   function openExample(name: string) {
     try {
-      openDocument(createDocument(name, programs[name].source));
+      const example = examples.find((item) => item.name === name);
+      if (!example) throw new Error("Ejemplo no encontrado.");
+      openDocument(createDocument(example.name, example.code));
       setMessage(
         "Documento abierto. El anterior está en Borradores anteriores.",
       );
@@ -199,8 +200,11 @@ export default function StudioPage() {
               <option value="" disabled>
                 Elegir una copia…
               </option>
-              {EXAMPLES.map((name) => (
-                <option key={name}>{name}</option>
+              {examples.map((example) => (
+                <option key={example.slug} value={example.name}>
+                  {example.name}
+                  {example.expectation.ok ? "" : " · ejercicio inválido"}
+                </option>
               ))}
             </select>
           </label>
@@ -342,6 +346,13 @@ export default function StudioPage() {
                 : result?.result.ok
                   ? "Sin errores en las fases solicitadas. Los datasets se validan al ejecutar fuera del navegador."
                   : "Consulta la salida de la fase y el estado del compilador."}
+            </p>
+          )}
+          {diagnostics.some((d) => d.code === "E_NULL_COMPARISON") && (
+            <p>
+              <a href="/docs/null-contratos">
+                Cómo corregir comparaciones con NULL
+              </a>
             </p>
           )}
         </section>

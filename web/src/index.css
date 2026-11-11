@@ -545,3 +545,97 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
   .workspace .studio-formats button { min-height: 44px; }
   .workspace select { font-size: 16px; }
 }
+
+/* Catálogo y lectura: materiales Cauce, sin animaciones de entrada. */
+.resource-links { display: flex; gap: 20px; align-items: center; font-size: var(--fs-s); }
+.resource-links a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; }
+.resource-links a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.content-page { max-width: 1440px; margin-inline: auto; padding: 48px var(--margin) 80px; }
+.content-heading { margin-bottom: 32px; max-width: 780px; }
+.content-heading h1 { font-size: clamp(2rem, 3.4vw, 3.25rem); line-height: 1.12; margin-bottom: 20px; }
+.content-heading p { color: var(--muted-foreground); font-size: var(--fs-m); max-width: 65ch; }
+.content-page h2 { font-size: var(--fs-m); line-height: 1.3; }
+.content-page a { text-underline-offset: 4px; }
+.content-note { padding: 20px 24px; background: var(--surface); border-radius: 8px; max-width: 75ch; }
+.content-next { margin-top: 40px; }
+.example-list { margin-top: 40px; }
+.example-list article { display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; padding: 32px 0; border-bottom: 1px solid var(--border); }
+.example-list h2 { font-size: 1.5rem; margin-bottom: 12px; }
+.example-list h2 a { text-decoration: none; }
+.example-list h2 a:hover { text-decoration: underline; }
+.example-list p { max-width: 60ch; color: var(--muted-foreground); }
+.example-list article > div:last-child p { margin: 10px 0; font-size: var(--fs-s); }
+.example-status { color: var(--success); font-size: var(--fs-s); font-weight: 500; }
+.example-status[data-invalid="true"] { color: var(--warning); }
+.back-link { display: inline-block; padding-block: 10px; margin-bottom: 24px; }
+.example-layout { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr); gap: 64px; align-items: start; }
+.reading { min-width: 0; max-width: 75ch; }
+.reading > h2 { margin: 44px 0 16px; scroll-margin-top: 24px; }
+.reading > h2:first-child { margin-top: 0; }
+.reading h2 a { text-decoration: none; }
+.reading h2 a:hover { text-decoration: underline; }
+.reading p, .reading ul, .reading ol, .reading figure, .reading .reference-table { margin: 16px 0; }
+.reading li { margin-block: 8px; }
+.reading code:not(pre code) { overflow-wrap: anywhere; }
+.reading a { color: var(--primary); }
+.reading figure { margin-inline: 0; }
+.reading figcaption, .source-path { font-size: var(--fs-s); color: var(--muted-foreground); overflow-wrap: anywhere; }
+.reading .code-wrap { background: var(--card); padding: 20px; border-radius: 8px; font-size: var(--fs-s); line-height: 1.7; margin: 20px 0; overflow-x: auto; }
+.operation-list { display: flex; gap: 8px 16px; list-style: none; flex-wrap: wrap; padding: 0; color: var(--primary); }
+.example-context { padding: 28px; background: var(--surface); border-radius: 8px; min-width: 0; }
+.example-context h2 { margin: 28px 0 12px; }
+.example-context h2:first-child { margin-top: 0; }
+.example-context ul { padding-left: 20px; }
+.example-context li { margin-block: 12px; }
+.example-context p, .example-context li { overflow-wrap: anywhere; }
+.example-context .content-note { padding: 0; margin-top: 20px; font-size: var(--fs-s); }
+.open-example { margin: 28px 0; }
+.open-example .btn { font-size: var(--fs-s); white-space: normal; line-height: 1.4; transform: none; min-height: 48px; max-width: 100%; }
+.open-example > p { margin-top: 12px; font-size: var(--fs-s); }
+.reading-links { list-style: none; padding: 0 !important; }
+.reading-links a { padding-block: 8px; display: inline-block; }
+.docs-layout { display: grid; grid-template-columns: 245px minmax(0, 1fr); gap: 64px; align-items: start; }
+.docs-nav { display: flex; flex-direction: column; position: sticky; top: 24px; gap: 4px; }
+.docs-nav a { padding: 12px 16px; border-radius: 6px; font-size: var(--fs-s); text-decoration: none; }
+.docs-nav a:first-child { font-weight: 600; }
+.docs-nav a[aria-current="page"] { background: var(--surface-strong); }
+.docs-nav a:hover { background: var(--surface); }
+.docs-main { min-width: 0; max-width: 80ch; }
+.article-index { list-style: none; padding: 0; margin: 36px 0; }
+.article-index li { padding: 24px 0; border-bottom: 1px solid var(--border); }
+.article-index h2 { margin-bottom: 10px; }
+.article-index p { color: var(--muted-foreground); }
+.article-toc { display: flex; flex-direction: column; align-items: start; gap: 6px; margin-block: 32px 40px; font-size: var(--fs-s); }
+.article-toc a { padding-block: 6px; }
+.article-pagination { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 24px; margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); }
+.reference-table { overflow-x: auto; }
+.reference-table table { border-collapse: collapse; width: 100%; font-size: var(--fs-s); text-align: left; }
+.reference-table th, .reference-table td { padding: 12px; border-bottom: 1px solid var(--border); min-width: 130px; vertical-align: top; }
+.reference-table th { background: var(--surface); }
+@media (max-width: 1300px) {
+  .landing .nav-links { display: none; }
+}
+@media (max-width: 1100px) {
+  .example-layout, .docs-layout { gap: 32px; }
+  .docs-layout { grid-template-columns: 210px minmax(0, 1fr); }
+}
+@media (max-width: 860px) {
+  .nav { flex-wrap: wrap; gap: 12px; }
+  .resource-links { order: 4; width: 100%; gap: 24px; }
+  .resource-links a { min-height: 44px; }
+  .content-page { padding-top: 32px; }
+  .example-layout, .docs-layout, .example-list article { grid-template-columns: minmax(0, 1fr); }
+  .example-list article { gap: 20px; }
+  .example-context { padding: 20px; }
+  .docs-nav { position: static; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .docs-nav a:first-child, .docs-nav a:last-child { grid-column: 1 / -1; }
+  .docs-nav a { padding: 10px; min-height: 44px; display: flex; align-items: center; }
+  .reading .code-wrap { padding: 16px; }
+}
+
+.resource-links a[aria-current="page"] { color: var(--primary); text-decoration: underline; text-underline-offset: 6px; }
+.reading ul, .example-context ul { list-style: disc; padding-left: 24px; }
+.reading ol { list-style: decimal; padding-left: 24px; }
+.reading .operation-list, .example-context .reading-links { list-style: none; padding-left: 0; }
+.example-list article > div:last-child > a { text-decoration: underline; display: inline-flex; align-items: center; min-height: 44px; }
+.article-pagination a { display: inline-flex; align-items: center; min-height: 44px; }

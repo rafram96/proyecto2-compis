@@ -12,7 +12,7 @@ export const OPERATIONS = [
   ["FILL_NULL", "a = 0;"],
   ["DROP_NULLS", "COLUMNS a;"],
 ] as const;
-export const CLAUSES = ["WHERE", "COLUMNS", "GROUP_BY", "BY", "ON", "TYPE", "AS", "ASC", "DESC", "LEFT", "RIGHT", "INNER", "FULL"];
+export const CLAUSES = ["WHERE", "COLUMNS", "GROUP_BY", "BY", "ON", "TYPE", "AS", "ASC", "DESC", "LEFT", "RIGHT", "INNER", "FULL", "VERIFY", "MANY_TO_ONE"];
 export const LOGIC = ["AND", "OR", "NOT", "IS"];
 export const ATOMS = ["TRUE", "FALSE", "NULL"];
 export const TYPES = ["TABLE", "INT", "DECIMAL", "STRING", "BOOL", "DATE", "DATETIME"];

@@ -13,6 +13,7 @@ from uuid import uuid4
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--content-only", action="store_true", help="Recorrido de contenido, también en vite preview")
     parser.add_argument("--url", default="http://127.0.0.1:5173/")
     args = parser.parse_args()
     cli = shutil.which("playwright-cli")
@@ -23,9 +24,13 @@ def main():
     command = [cli, f"-s={session}"]
     try:
         subprocess.run([*command, "open", args.url], cwd=web, check=True, timeout=45)
-        for script, required in (("analysis.js", ('"compared":32', '"eliminated":true')),
-                                 ("workspace.js", ('"workspace":true', '"loadFailureRecovery":true'))):
-            code = (web / "tests/browser" / script).read_text(encoding="utf-8")
+        suites = [("analysis.js", ('"compared":32', '"eliminated":true')),
+                  ("workspace.js", ('"workspace":true', '"loadFailureRecovery":true')),
+                  ("content.js", ('"content":true', '"storageFailure":true'))]
+        if args.content_only:
+            suites = suites[-1:]
+        for script, required in suites:
+            code = (web / "tests/browser" / script).read_text(encoding="utf-8").strip().removesuffix(";")
             completed = subprocess.run([*command, "run-code", code], cwd=web, check=False,
                                        capture_output=True, text=True, timeout=150)
             (web / ".playwright-cli" / f"{script}.log").write_text(completed.stdout + completed.stderr, encoding="utf-8")
@@ -33,7 +38,11 @@ def main():
             print(completed.stderr, end="", flush=True)
             # playwright-cli puede informar errores del snippet con código de salida 0.
             if completed.returncode or "### Error" in completed.stdout or any(s not in completed.stdout for s in required):
+                subprocess.run([*command, "screenshot", f"--filename=.playwright-cli/{script}-failure.png"], cwd=web, timeout=15)
+                subprocess.run([*command, "snapshot"], cwd=web, timeout=15)
                 raise SystemExit(f"Falló {script}; revisar la salida de playwright-cli.")
+        if args.content_only:
+            return
         sys.path[:0] = [str(web.parent), str(web / "src/compiler")]
         from studio import compile_etl
         source = ('PIPELINE p { INPUT data: TABLE[x: INT?]; STEP f = FILTER { WHERE "😀" == "é" AND x\n'

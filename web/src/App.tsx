@@ -9,6 +9,8 @@ import { BuiltOn, Faq, Footer } from "./components/Faq";
 import { Studio } from "./components/Studio";
 import { startReveal } from "./lib/reveal";
 import { navigate, usePath } from "./lib/router";
+const ExamplesPage = lazy(() => import("./pages/ExamplesPage"));
+const DocsPage = lazy(() => import("./pages/DocsPage"));
 const StudioPage = lazy(() => import("./pages/StudioPage"));
 
 export default function App() {
@@ -46,8 +48,11 @@ export default function App() {
         navigate(url.pathname + url.search + url.hash);
       }}
     >
-      <a className="skip" href="#estudio">
-        Ir al estudio
+      <a
+        className="skip"
+        href={path === "/" || path === "/estudio" ? "#estudio" : "#contenido"}
+      >
+        Ir al contenido
       </a>
       <Nav inStudio={path === "/estudio"} />
       {path === "/" ? (
@@ -74,8 +79,22 @@ export default function App() {
         >
           <StudioPage />
         </Suspense>
+      ) : /^\/(ejemplos|docs)(\/[^/]+)?\/?$/.test(path) ? (
+        <Suspense
+          fallback={
+            <main className="content-page" id="contenido">
+              <p role="status">Abriendo contenido…</p>
+            </main>
+          }
+        >
+          {path.split("/")[1] === "ejemplos" ? (
+            <ExamplesPage key={path} slug={path.split("/")[2] || undefined} />
+          ) : (
+            <DocsPage key={path} slug={path.split("/")[2] || undefined} />
+          )}
+        </Suspense>
       ) : (
-        <main className="workspace not-found">
+        <main className="workspace not-found" id="contenido">
           <h1>Página no encontrada</h1>
           <p>
             Esta ruta no existe. Puedes volver al inicio o recuperar tu

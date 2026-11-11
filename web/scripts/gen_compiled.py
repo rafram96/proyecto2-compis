@@ -16,16 +16,14 @@ WEB = ROOT / "web"
 sys.path[:0] = [str(ROOT), str(WEB / "src" / "compiler")]
 
 from etl_dsl.passes import PASSES  # noqa: E402
+from gen_content import manifest  # noqa: E402
 from studio import FORMATS, compile_etl  # noqa: E402
 
 PASES = ["constantes", "filtros", "muertos"]
 # Ejemplos del estudio: nombre del archivo -> origen en el repo.
-PROGRAMS = {
-    "ventas.etl": WEB / "scripts/programs/ventas.etl",
-    "credit_risk.etl": ROOT / "input/credit_risk.etl",
-    "pendientes.etl": WEB / "scripts/programs/pendientes.etl",
-    "pendientes_ok.etl": None,  # pendientes.etl con la corrección que sugiere el diagnóstico
-}
+PROGRAMS = {entry["name"]: ROOT / entry["source"] for entry in manifest("examples")
+            if entry["name"] in {"ventas.etl", "credit_risk.etl", "pendientes.etl"}}
+PROGRAMS["pendientes_ok.etl"] = None  # Corrección derivada, nunca otra copia manual.
 
 
 def outputs(name: str, source: str, passes=None) -> dict:
@@ -52,7 +50,8 @@ def count_tests() -> int:
 def main() -> None:
     out: dict = {"optimizer": {}, "programs": {}}
     sources = {name: path.read_text(encoding="utf-8") for name, path in PROGRAMS.items() if path}
-    sources["pendientes_ok.etl"] = sources["pendientes.etl"].replace("== NULL", "IS NULL")
+    correction = next(entry["correction"] for entry in manifest("examples") if entry["name"] == "pendientes.etl")
+    sources["pendientes_ok.etl"] = sources["pendientes.etl"].replace(correction["from"], correction["to"])
 
     opt_src = (ROOT / "demo/optimizaciones.etl").read_text(encoding="utf-8")
     out["optimizer"]["source"] = opt_src

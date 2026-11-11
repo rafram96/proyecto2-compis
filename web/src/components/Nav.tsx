@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { usePath } from "../lib/router";
 import { toggleTheme, useTheme } from "../lib/theme";
 
 /** La marca: el agua que corre (~) y la punta de la flecha de FLOW (>). Igual que public/favicon.svg. */
@@ -67,12 +68,13 @@ function ThemeToggle() {
 }
 
 export function Nav({ inStudio = false }: { inStudio?: boolean }) {
+  const path = usePath();
   return (
     <nav className="nav" aria-label="Principal">
       <a className="wordmark" href="/#top" aria-label="Cauce, inicio">
         <Mark /> Cauce
       </a>
-      {!inStudio && (
+      {path === "/" && (
         <div className="nav-links">
           <a href="/#errores">Errores</a>
           <a href="/#optimizador">Optimizador</a>
@@ -80,6 +82,20 @@ export function Nav({ inStudio = false }: { inStudio?: boolean }) {
           <a href="/#preguntas">Preguntas</a>
         </div>
       )}
+      <div className="resource-links">
+        <a
+          href="/ejemplos"
+          aria-current={path.startsWith("/ejemplos") ? "page" : undefined}
+        >
+          Ejemplos
+        </a>
+        <a
+          href="/docs"
+          aria-current={path.startsWith("/docs") ? "page" : undefined}
+        >
+          Documentación
+        </a>
+      </div>
       <ThemeToggle />
       <a className="btn sm nav-cta" href={inStudio ? "/" : "/estudio"}>
         {inStudio ? "Volver al inicio" : "Abrir el estudio"}

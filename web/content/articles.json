@@ -1,0 +1,81 @@
+[
+  {
+    "slug": "primer-programa",
+    "title": "Tu primer programa",
+    "summary": "Elegir, compilar, corregir y conservar tu trabajo.",
+    "intro": "Empieza aquí si es tu primera visita al estudio.",
+    "sources": [{ "path": "docs/guia_estudio.md", "sections": [] }],
+    "examples": ["ventas", "corregir-nulos"],
+    "program": "ventas"
+  },
+  {
+    "slug": "estructura",
+    "title": "PIPELINE, STEP y FLOW",
+    "summary": "Declaraciones y conexiones para leer un programa completo.",
+    "intro": "Un STEP declara una operación; FLOW conecta sus entradas. Los bloques de referencia de este artículo son fragmentos incompletos. El programa completo al final sí compila.",
+    "sources": [
+      {
+        "path": "docs/lenguaje.md",
+        "sections": [
+          "Programa y declaraciones",
+          "Conexiones y composición",
+          "Garantía local de JOIN (C4)"
+        ]
+      }
+    ],
+    "examples": ["rangos", "join-verificado"],
+    "program": "join-verificado"
+  },
+  {
+    "slug": "operaciones",
+    "title": "Operaciones y expresiones",
+    "summary": "Las diez operaciones, funciones y precedencia del lenguaje.",
+    "intro": "La tabla describe el interior de cada STEP; sus entradas se conectan en FLOW. Los bloques de las tablas son fragmentos, no programas completos.",
+    "sources": [
+      { "path": "docs/lenguaje.md", "sections": ["Operaciones", "Expresiones"] }
+    ],
+    "examples": ["ventas", "riesgo-crediticio"],
+    "program": "ventas"
+  },
+  {
+    "slug": "null-contratos",
+    "title": "NULL, contratos y diagnósticos",
+    "summary": "Qué conoce el análisis y qué debe comprobar el runtime.",
+    "intro": "Usa IS NULL o IS NOT NULL, nunca == NULL. El ejercicio de corrección produce E_NULL_COMPARISON: pulsa el diagnóstico y sustituye status == NULL por status IS NULL. La lista de códigos de esta guía es una selección, no un catálogo exhaustivo. Los códigos de ejecución del runtime no son diagnósticos emitidos por el navegador.",
+    "sources": [
+      {
+        "path": "docs/semantica_estatica.md",
+        "sections": [
+          "Conocimiento representado",
+          "Diagnósticos, exposición y límites"
+        ]
+      },
+      { "path": "docs/backend_polars.md", "sections": ["Contratos"] }
+    ],
+    "examples": ["corregir-nulos", "rangos"],
+    "program": "rangos"
+  },
+  {
+    "slug": "conectores",
+    "title": "Conectores y compilación local",
+    "summary": "Archivos, opciones y frontera entre compilar y ejecutar.",
+    "intro": "La web compila sin leer datasets y no ejecuta pipelines. No certifica sus valores ni la existencia de un archivo. Para ejecutar el Python descargado necesitas el entorno del proyecto, etl_dsl, Polars y los archivos declarados. Estas opciones corresponden al runtime local, no a un servicio HTTP del navegador.",
+    "sources": [
+      { "path": "docs/backend_polars.md", "sections": ["Conectores"] }
+    ],
+    "examples": ["riesgo-crediticio", "join-verificado"],
+    "program": "join-verificado"
+  },
+  {
+    "slug": "composicion",
+    "title": "Composición con INPUT, OUTPUT y USE",
+    "summary": "Puertos tipados e instancias sin copiar transformaciones.",
+    "intro": "En el programa completo, clean_orders recibe orders y devuelve cleaned; order_report lo instancia como clean y conecta clean.orders y clean.cleaned. No puedes ejecutar un INPUT externo desde la web. Los bloques FLOW de referencia son fragmentos incompletos.",
+    "sources": [
+      { "path": "docs/lenguaje.md", "sections": ["Conexiones y composición"] },
+      { "path": "docs/semantica_estatica.md", "sections": ["OUTPUT y USE"] }
+    ],
+    "examples": ["riesgo-crediticio"],
+    "program": "riesgo-crediticio"
+  }
+]
