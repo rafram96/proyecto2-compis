@@ -155,3 +155,13 @@ web/src/
 ```
 
 Antes de cerrar la integración: paridad de análisis CLI/worker/servidor; ejecución real de un ejemplo hasta descarga; cancelación y timeout; reinicio del gestor; salida vacía y nulos/decimales; denegación de rutas fuera del trabajo; artefactos caducados; servicio desconectado con compilación local operativa. Las pruebas del DSL existentes siguen siendo la base; el servicio suma pruebas de contrato y de ciclo de ejecución.
+
+## Garantías de JOIN en el núcleo (C4)
+
+El worker compila `VERIFY MANY_TO_ONE` con el mismo análisis que CPython,
+contrato JSON 4 y pruebas de reescritura en IR. No ejecuta datasets ni valida
+integridad real. Las obligaciones CHECK_JOIN se ejecutan en PolarsRuntime al
+invocar el pipeline generado, también sin optimización. El futuro runner deberá
+conservarlas y sus dependencias; no debe confiar en una marca de integridad del
+cliente. C4 no introduce servidor ni cambios al ciclo HTTP propuesto.
+Ver [condiciones de corrección](optimizacion_joins.md).

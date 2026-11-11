@@ -170,12 +170,12 @@ módulos estándar de Python llamados `ast` y `token`.
 - [Tipos](etl_dsl/type.py): catálogo `ScalarType` usado por el AST y su constructor.
 - [IR](etl_dsl/ir.py): baja el AST a un DAG de operadores por pipeline, en orden
   topológico según `FLOW`, y lo imprime como texto (`--format ir`).
-- [Pases](etl_dsl/passes.py): rangos con pruebas, plegado de constantes, fusión de filtros y
+- [Pases](etl_dsl/passes.py): rangos (O1), JOIN verificados (O3), plegado de constantes, fusión de filtros y
   eliminación de pasos muertos (O4).
 - [Backend](etl_dsl/backend.py): genera Python desde la IR optimizada, compila
   expresiones a Polars y traduce `USE` a llamadas entre funciones Python.
 - [Runtime](etl_dsl/runtime.py): resuelve el plan de Polars paso a paso y verifica columnas,
-  contratos de entrada/salida y ambigüedad en JOIN.
+  contratos de entrada/salida, ambigüedad y garantías locales en JOIN.
 - [Validaciones](etl_dsl/validation.py): nombres duplicados, enlaces y puertos,
   entradas requeridas, ciclos en `FLOW` y `USE`, comparaciones directas con
   `NULL`, aridad de funciones y condiciones de JOIN.
@@ -190,8 +190,8 @@ todas las transformaciones se ejecutan en Polars.
 
 Los contratos comprueban nombres, orden, familias de tipos y nulabilidad en
 ejecución. Los pasos son `LazyFrame` y solo se calculan en un `SINK` (o en un
-contrato que verifica nulos), así que Polars optimiza el plan completo. Queda pendiente
-el pase O3 (joins). C2 y O1 (rangos) ya están implementados. [docs/backend_polars.md](docs/backend_polars.md) describe este backend;
+contrato que verifica nulos o la garantía de un JOIN). C2, O1 (rangos) y O3
+(joins con obligaciones verificables) están implementados. [docs/backend_polars.md](docs/backend_polars.md) describe este backend;
 [docs/backend_duckdb.md](docs/backend_duckdb.md), el backend DuckDB anterior (commit 4109895).
 
 La referencia de sintaxis y las decisiones para el backend están en
@@ -203,3 +203,14 @@ en ejecución. Reglas, conocimiento parcial y límites: [semántica estática](d
 
 El pase O1 `rangos` elimina predicados implicados por filtros previos y registra
 sus pruebas en la IR. [Reglas y demo](docs/optimizacion_rangos.md).
+
+### JOIN con garantía verificable (C4)
+
+`VERIFY MANY_TO_ONE;` en un INNER JOIN de clave simple exige unicidad derecha,
+claves no nulas del mismo dtype físico y referencia total desde la izquierda.
+El pase `joins`, activo por defecto antes de `muertos`, elimina la combinación
+de columnas solo si todos los consumidores inmediatos son SELECT del lado
+izquierdo. Las validaciones y ambas lecturas permanecen, incluso con -O0.
+
+Demo reproducible: `.venv/bin/python main.py demo/joins.etl --run --output /tmp/cauce-c4`.
+Contrato de análisis actual: versión 4. Reglas y límites: [C4](docs/optimizacion_joins.md).

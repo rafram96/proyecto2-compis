@@ -2,7 +2,7 @@
 
 Fecha de revisión: **11 de noviembre de 2026**.
 
-Este plan parte del código actual de `etl_dsl/`, `tests/` y `web/`, y lo contrasta con [el enunciado](Enunciado_DSL.md). Cubre el compilador y la continuación de la web. C1, C2 y C3 están implementados; las siguientes entregas continúan pendientes.
+Este plan parte del código actual de `etl_dsl/`, `tests/` y `web/`, y lo contrasta con [el enunciado](Enunciado_DSL.md). Cubre el compilador y la continuación de la web. C1, C2, C3 y C4 están implementados; las siguientes entregas continúan pendientes.
 
 Ampliación del plan: arquitectura de conexión, páginas adicionales y evaluación de edición visual, tomando como referencia el proyecto local `csharp-x86-compi/`. Se mantiene la libertad de adaptar sus ideas al dominio ETL. Esta ampliación documenta decisiones; no implementa todavía las páginas ni el editor por bloques.
 
@@ -21,15 +21,15 @@ La [definición de arquitectura de la aplicación](arquitectura_aplicacion.md) c
 | API de análisis compartida (C1) | ✅ | `etl_dsl.analyze` recibe texto sin archivos temporales y entrega artefactos seleccionables, errores parciales y contrato JSON versionado; CLI, puente web y demos la consumen. |
 | Tipos (C2) | ✅ | Inferencia conservadora de esquemas, tipos y nulabilidad en las diez operaciones; contratos OUTPUT/USE. Se mantienen chequeos de datos en ejecución. |
 | IR | ✅ | DAG por pipeline, orden topológico, puertos resueltos, origen de los nodos y formato textual: `ir.py`. Las expresiones reutilizan el AST. |
-| Anotaciones semánticas de la IR | 🟡 | Artefacto `schemas` de la IR original; hechos y pruebas O1 en `ir_after.module`. Unicidad y referencias siguen pendientes. |
-| Optimizaciones actuales | ✅ | `constantes`, `rangos`, `filtros` y `muertos`; selección por `--pases` y desactivación con `-O0`: `passes.py`. |
-| Optimizaciones basadas en hechos del dominio | 🟡 | O1 `rangos` implementado con pruebas y procedencia. O3 de eliminación de joins sigue pendiente. Los tres pases clásicos se agrupan como O4. |
+| Anotaciones semánticas de la IR | 🟡 | Artefacto `schemas` de la IR original; hechos y pruebas O1 en `ir_after.module`. C4 incorpora obligaciones locales de unicidad y referencia total. |
+| Optimizaciones actuales | ✅ | `constantes`, `rangos`, `filtros`, `joins` y `muertos`; selección por `--pases` y desactivación con `-O0`: `passes.py`. |
+| Optimizaciones basadas en hechos del dominio | 🟡 | O1 `rangos` implementado con pruebas y procedencia. O3 `joins` implementado mediante contratos verificables. Los tres pases clásicos se agrupan como O4. |
 | Generación de código | ✅ | Python legible con Polars desde la IR, expresiones y composición mediante `USE`: `backend.py`. |
 | Operaciones | ✅ | `FILTER`, `SELECT`, `DERIVE`, `AGGREGATE`, `JOIN`, `SORT`, `DISTINCT`, `RENAME`, `FILL_NULL`, `DROP_NULLS`. |
 | Conectores | ✅ | Lectura CSV, Parquet, SQLite y DuckDB; escritura CSV, Parquet y DuckDB: `runtime.py`. DuckDB es un conector; las transformaciones usan Polars. |
 | Ejecución | ✅ | `LazyFrame`, selección de pipelines, entradas externas mediante API Python y comprobaciones en ejecución. |
 | CLI | ✅ | Compilación individual y por carpetas, seis formatos, ejecución, selección de pases, rutas base y continuación del lote tras errores: `main.py`. |
-| Pruebas y entorno | ✅ | Suite `unittest`, dependencias, Docker y datos de demostración. Tras C3 pasan **105 pruebas Python**, más 4 del adaptador web. |
+| Pruebas y entorno | ✅ | Suite `unittest`, dependencias, Docker y datos de demostración. Tras C4 pasan **120 pruebas Python**, más 4 del adaptador web. |
 | Evaluación experimental | ⬜ | No se identificó un arnés de benchmarks, baselines manuales y resultados estadísticos reproducibles entre los archivos revisados. |
 
 **Distinción importante:** el compilador ya funciona de punta a punta por terminal. La brecha principal está en verificar propiedades de los datos antes de ejecutarlos y usarlas para optimizar.
@@ -123,16 +123,16 @@ El [plan inicial](planificacion.md) contiene decisiones anteriores: sintaxis en 
 
 ### C4. Optimización O3 de joins con garantías verificables — P0
 
-- [ ] Definir cómo expresar y comprobar unicidad y referencias entre tablas. Son una extensión nueva: no existen hoy declaraciones de estas garantías en la gramática.
-- [ ] Separar restricciones declaradas de hechos comprobados; una anotación sin validar no basta para cambiar resultados.
-- [ ] Analizar las columnas usadas por todos los consumidores de un JOIN.
-- [ ] Eliminar un `INNER JOIN` únicamente si no se usa ninguna columna del lado eliminado y se garantiza una coincidencia exacta por fila: referencia total, clave única y tratamiento compatible de nulos.
-- [ ] Mantener las comprobaciones que sustentan esas garantías, incluso cuando el JOIN se elimine; no borrar lecturas o validaciones con efectos observables sin justificarlo.
-- [ ] No generalizar inicialmente a joins externos ni a claves compuestas sin pruebas específicas.
+- [x] Definir cómo expresar y comprobar unicidad y referencias entre tablas. Extensión implementada: `VERIFY MANY_TO_ONE` local al JOIN.
+- [x] Separar restricciones declaradas de hechos comprobados; una anotación sin validar no basta para cambiar resultados.
+- [x] Analizar las columnas usadas por todos los consumidores de un JOIN.
+- [x] Eliminar un `INNER JOIN` únicamente si no se usa ninguna columna del lado eliminado y se garantiza una coincidencia exacta por fila: referencia total, clave única y tratamiento compatible de nulos.
+- [x] Mantener las comprobaciones que sustentan esas garantías, incluso cuando el JOIN se elimine; no borrar lecturas o validaciones con efectos observables sin justificarlo.
+- [x] No generalizar inicialmente a joins externos ni a claves compuestas sin pruebas específicas.
 
 **Dependencias:** C2 y modelo de hechos de C3. **Archivos:** gramática/AST si se agregan contratos, análisis semántico, runtime, IR y pases.
 
-**Criterio de cierre:** equivalencia con duplicados, referencias ausentes y nulos; esos casos deben impedir la eliminación o hacer fallar el contrato. Si O3 excede el alcance, seleccionar y justificar otra segunda optimización del dominio antes de dar el requisito por cubierto.
+**Cerrado:** `VERIFY MANY_TO_ONE` y pase `joins` con obligación ejecutable CHECK_JOIN, fronteras SELECT en todas las ramas, instantáneas materializadas y conservación de dependencias por muertos. Solo INNER con clave simple y lado derecho no observable. Contrato JSON 4. Ver [condiciones y límites](optimizacion_joins.md). Verificación: 120 pruebas Python (15 C4, 120 órdenes de pases), demos, 4 web, build y Pyodide con `playwright-cli`. C5 permanece pendiente; no se afirma mejora de rendimiento.
 
 ### C5. Evaluación reproducible — P1
 
@@ -206,9 +206,9 @@ El contrato del servicio y un primer recorrido con un dataset incluido pueden de
 
 ## 7. Pruebas y documentación para cerrar el proyecto
 
-- [x] Suite actual: `.venv/bin/python -m unittest discover` — **105 pruebas, OK**.
+- [x] Suite actual: `.venv/bin/python -m unittest discover` — **120 pruebas, OK**.
 - [x] Adaptador de diagnósticos: `cd web && npm test` — **4 pruebas, OK**.
-- [x] C1/C2/C3 en navegador: `.venv/bin/python web/scripts/verify_browser.py` — **32 comparaciones CPython/Pyodide, dos casos C2, prueba O1 y recorrido de corrección, OK**.
+- [x] C1/C2/C3/C4 en navegador: `.venv/bin/python web/scripts/verify_browser.py` — **32 comparaciones CPython/Pyodide, dos casos C2, prueba O1, eliminación O3 con obligaciones, abstenciones y recorrido de corrección, OK**.
 - [x] Build actual: `cd web && npm run build` — **OK**.
 - [x] Agregar pruebas de tipos/esquemas y de propagación de nulabilidad, especialmente en JOIN y `USE`.
 - [ ] Probar equivalencia por cada pase nuevo y casos donde debe abstenerse de optimizar.

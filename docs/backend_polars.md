@@ -27,7 +27,8 @@ pipeline optimizaciones (raíz) {
 | `constantes` | Pliega `+ - *` y comparaciones entre literales; simplifica `AND`, `OR` y `NOT` con `TRUE`/`FALSE` respetando la lógica de tres valores. Un `FILTER` que queda en `TRUE` se elimina. La división no se pliega. |
 | `rangos` | Elimina filtros o términos AND implicados por intervalos y ausencia de NULL; registra hechos y pruebas en la IR. |
 | `filtros` | Fusiona un `FILTER` con el `FILTER` anterior cuando este no tiene otros consumidores. |
-| `muertos` | Elimina pasos cuyo resultado no llega a ningún `SINK`, `OUTPUT` ni `USE`. Los `INPUT` se conservan porque son la interfaz del pipeline. |
+| `joins` | Sustituye INNER JOIN con VERIFY MANY_TO_ONE por CHECK_JOIN cuando todos los consumidores proyectan solo columnas izquierdas. Conserva lecturas y validaciones. |
+| `muertos` | Elimina pasos cuyo resultado no llega a ningún `SINK`, `OUTPUT` ni `USE`. Los `INPUT` se conservan como interfaz; CHECK_JOIN y JOIN con garantía son raíces con efectos. |
 
 Todos se aplican por defecto. `-O0` los desactiva y `--pases a,b` elige cuáles y
 en qué orden. Las pruebas comprueban que los resultados con y sin pases son
@@ -174,7 +175,7 @@ print(outputs["cleaned"].collect())
 La verificación estática C2 está implementada; sus reglas y límites se describen
 en [semantica_estatica.md](semantica_estatica.md). O1 (`rangos`) está implementado
 con las restricciones de [optimizacion_rangos.md](optimizacion_rangos.md);
-O3 (joins) sigue pendiente. Polars también optimiza el plan al ejecutarlo, por lo que el efecto
+O3 (`joins`) está implementado con [garantías verificadas](optimizacion_joins.md). Polars también optimiza el plan al ejecutarlo, por lo que el efecto
 de los pases propios se mide comparando `-O0` con la versión optimizada.
 La ejecución no es una transacción global entre todos los SINK: una salida ya
 escrita puede persistir si otro bloque falla después. Los artefactos de
@@ -187,3 +188,20 @@ Polars 2.1.0 y DuckDB 1.5.6 (ver `requirements.txt`).
 
 El backend anterior, Python + SQL DuckDB, está descrito en
 [backend_duckdb.md](backend_duckdb.md) y se conserva en el commit 4109895.
+
+## JOIN verificado y CHECK_JOIN (C4)
+
+`VERIFY MANY_TO_ONE` genera una llamada a `rt.verify_many_to_one` también con
+-O0. Materializa ambas entradas, compara dtypes físicos, rechaza claves nulas
+y duplicados derechos y ejecuta un anti join para detectar referencias ausentes.
+Devuelve snapshots usados por la operación siguiente: ninguna validación queda
+lazy ni se reabre la fuente para el resultado de este JOIN. Con -O0 se ejecuta
+el INNER JOIN sobre ellos (`coalesce=False`, `maintain_order='left'`).
+Con O3, CHECK_JOIN entrega la instantánea izquierda a los SELECT consumidores.
+Ambas entradas y sus contratos permanecen en la IR y son raíces de `muertos`.
+
+El runtime informa E_JOIN_KEY_TYPE, E_JOIN_NULL, E_JOIN_UNIQUE o E_JOIN_REFERENCE
+mediante ExecutionError con ubicación. Los chequeos SOURCE/INPUT/OUTPUT/USE
+conservan sus errores previos. La materialización y la pertenencia tienen coste;
+C4 no afirma mejoras de rendimiento. Condiciones, vacíos y limitaciones en
+[optimizacion_joins.md](optimizacion_joins.md).

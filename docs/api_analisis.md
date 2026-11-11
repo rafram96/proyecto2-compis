@@ -1,4 +1,4 @@
-# API de análisis compartida (C1/C2/C3)
+# API de análisis compartida (C1/C2/C3/C4)
 
 La CLI, el puente web y el generador de demostraciones usan la API pública `etl_dsl.analyze`. Recibe texto en memoria, sin crear un `.etl` temporal, leer conectores, ejecutar Python generado ni importar Polars/DuckDB.
 
@@ -21,11 +21,11 @@ print(json.dumps(payload, ensure_ascii=False))
 
 Los nombres válidos son `tokens`, `tree`, `ast`, `ir_before`, `ir_after`, `python` y `schemas`. Los errores de opciones del llamador lanzan `ValueError`. Los errores del programa se devuelven en `diagnostics`; las excepciones inesperadas de implementación no se ocultan como errores del usuario.
 
-## Contrato JSON versión 3
+## Contrato JSON versión 4
 
 | Campo | Significado |
 |---|---|
-| `contract_version` | Versión del contrato de análisis (`"3"`). No es una versión HTTP. |
+| `contract_version` | Versión del contrato de análisis (`"4"`). No es una versión HTTP. |
 | `compiler_version` | Versión del paquete compilador. |
 | `offset_encoding` | `unicode-codepoints`: offsets y columnas medidos en caracteres Unicode de Python. |
 | `filename` | Nombre lógico recibido; puede contener rutas o `:` y no se interpreta para abrir un archivo. |
@@ -100,3 +100,17 @@ continúa desactivando todos los pases. Ejemplos, reglas y límites de precisió
 [optimizacion_rangos.md](optimizacion_rangos.md). Verificación de C3: 105 pruebas
 Python, 4 web, build y Pyodide mediante `playwright-cli`, con el caso de eliminación
 de un filtro, su evidencia estructurada y el control sin optimización.
+
+## Extensión C4: garantías de JOIN
+
+La versión 4 agrega `Join.guarantee` al AST (`null` o JoinGuarantee con span),
+`Module.join_rewrites` (vacío antes de optimizar) y el operador interno CHECK_JOIN.
+Cada reescritura expone declaración/posición, prueba estática de proyección,
+consumidores, dependencias y obligaciones ejecutables. `schemas` conserva la IR
+original. `E_JOIN_GUARANTEE` es estructurado y apunta a la cláusula; un error
+estructural conserva los artefactos hasta AST, según el contrato existente.
+El orden predeterminado es `constantes,rangos,filtros,joins,muertos`. Los clientes
+TypeScript y snapshots aceptan `contract_version="4"`; el protocolo worker no cambia.
+`analyze` y `compile_program/build_ir` comparten las reglas y nunca leen datos.
+Las obligaciones se ejecutan solo al invocar el Python generado, incluso en -O0.
+Ver [reglas de C4 y reproducción](optimizacion_joins.md).

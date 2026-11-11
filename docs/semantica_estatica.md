@@ -114,4 +114,11 @@ Las operaciones posteriores sobre DURATION que no estén modeladas pierden el ti
 preciso; permanecen sujetas al runtime. No demuestra satisfacibilidad, filas no
 vacías, unicidad ni rangos. La refinación de filtros cubre las formas descritas,
 sin resolver implicaciones arbitrarias. C3 consume estas garantías para el pase [rangos](optimizacion_rangos.md).
-C4 sigue pendiente y la compilación no lee datasets. Las diez operaciones actuales tienen reglas y pruebas de comportamiento.
+C4 agrega [obligaciones locales de JOIN](optimizacion_joins.md); la compilación no lee datasets. Las diez operaciones actuales tienen reglas y pruebas de comportamiento.
+
+C4 distingue la declaración `JoinGuarantee` de la prueba estática de uso de
+columnas y de las obligaciones del runtime. No añade unicidad ni integridad a
+Schema: no se heredan a través de transformaciones. CHECK_JOIN, creado solo tras
+el análisis original, expone el esquema izquierdo a los SELECT. Los pases que
+vuelven a inferir esquemas reconocen ese operador; los intervalos C3 se reinician
+conservadoramente. El contrato público actual es versión 4.

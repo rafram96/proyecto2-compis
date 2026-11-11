@@ -165,3 +165,20 @@ Detecta columnas inexistentes sobre esquemas completos, predicados no booleanos,
 operandos incompatibles y contratos imposibles. Conserva conocimiento parcial
 cuando SOURCE no tiene contrato. Las [reglas semánticas](semantica_estatica.md)
 describen las diez operaciones y los chequeos que permanecen en ejecución.
+
+## Garantía local de JOIN (C4)
+
+Después de ON se admite `VERIFY MANY_TO_ONE;`, únicamente para INNER JOIN de
+clave simple. Exige clave derecha única, claves no nulas en ambos lados, dtype
+físico idéntico y referencia total desde la izquierda. El runtime verifica la
+garantía aun con -O0 y conserva el orden izquierdo. Los datos inválidos fallan
+con un código de contrato; nullable no implica coincidencia de NULL.
+La garantía pertenece a las entradas exactas del JOIN, después de sus operaciones.
+No es una declaración de integridad global ni una prueba estática.
+
+El pase `joins` elimina la combinación de columnas cuando todos los consumidores
+inmediatos son SELECT exclusivos del lado izquierdo, manteniendo ambas lecturas
+y la obligación. La clave derecha también cuenta como columna observable.
+OUTPUT y SINK no proyectan; USE directo constituye una barrera conservadora.
+Ejemplo completo: [demo/joins.etl](../demo/joins.etl). Reglas, errores y vacíos:
+[optimizacion_joins.md](optimizacion_joins.md).

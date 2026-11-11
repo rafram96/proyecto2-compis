@@ -14,7 +14,7 @@ permite quitar `monto IS NOT NULL` de un AND, conservando `monto < 1000`.
 La demo se compila sin que exista `ventas.csv`; para ejecutarla se necesita ese
 CSV con las columnas `id,monto` y los tipos/nulos que exige SOURCE.
 
-Los pases predeterminados son `constantes,rangos,filtros,muertos`. Rangos corre
+Desde C4 los pases predeterminados son `constantes,rangos,filtros,joins,muertos`. Rangos corre
 antes de fusionar filtros para conservar oportunidades y procedencia clara;
 también funciona solo o después de `filtros`, simplificando conjunciones dentro
 de un bloque fusionado. `-O0` desactiva todos los pases. No se cambian la gramática,
@@ -136,6 +136,6 @@ Se verifican también las 4 pruebas web, build de producción, demos regeneradas
 Pyodide mediante `playwright-cli`: 32 comparaciones CPython/WASM, diagnósticos C2,
 reescritura O1 con prueba estructurada, control -O0 y corrección en CodeMirror.
 
-Quedan fuera C4 (unicidad/referencias y eliminación de JOIN), C5 (mediciones),
+Quedan fuera de O1 la [eliminación de JOIN (C4)](optimizacion_joins.md), C5 (mediciones),
 propagación interprocedural de rangos, aritmética abstracta y umbrales con precisión
 arbitraria. La abstención conserva los predicados y sus verificaciones de ejecución.
