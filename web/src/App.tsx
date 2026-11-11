@@ -1,35 +1,31 @@
 import { useEffect } from "react";
 import { Nav } from "./components/Nav";
 import { Hero } from "./components/Hero";
+import { Errors } from "./components/Errors";
 import { Optimizer } from "./components/Optimizer";
-import { Phases, Connectors, Cta, Footer } from "./components/Sections";
+import { Language } from "./components/Language";
+import { Letter } from "./components/Letter";
+import { BuiltOn, Faq, Footer } from "./components/Faq";
+import { Studio } from "./components/Studio";
+import { startReveal } from "./lib/reveal";
 
 export default function App() {
-  useEffect(() => {
-    const els = document.querySelectorAll<HTMLElement>("[data-reveal]");
-    const io = new IntersectionObserver(
-      (entries) =>
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            e.target.classList.add("is-in");
-            io.unobserve(e.target);
-          }
-        }),
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
-    );
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
-  }, []);
-
+  useEffect(startReveal, []);
   return (
     <>
+      <a className="skip" href="#estudio">
+        Ir al estudio
+      </a>
       <Nav />
       <main>
         <Hero />
+        <Errors />
         <Optimizer />
-        <Phases />
-        <Connectors />
-        <Cta />
+        <Language />
+        <Letter />
+        <BuiltOn />
+        <Faq />
+        <Studio />
       </main>
       <Footer />
     </>

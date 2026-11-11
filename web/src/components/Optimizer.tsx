@@ -1,121 +1,142 @@
 import { useState } from "react";
-import data from "../data/compiled.json";
-import { highlight } from "./highlight";
+import { data, finalIR, pyBody } from "../data";
+import { Code } from "./Code";
 
-type Variant = { ir: string; py: string };
-const table = data as unknown as Record<string, Variant | string>;
-
-const PASSES = [
+/** Cuatro paradas: sin pases y luego cada pase sumado al anterior (salida real de demo/optimizaciones.etl). */
+const STOPS = [
   {
-    id: "constantes",
-    sentence: "Hace las cuentas antes de ejecutar.",
-    why: "10 * 100 pasa a 1000; TRUE AND … y 1 < 2 desaparecen del plan.",
-    bg: "var(--band-1)",
+    key: "000",
+    name: "Sin pases",
+    clause: "Primero, el plan tal cual.",
+    text: "Siete pasos, como están en el archivo. Es lo que imprime --format ir con -O0.",
   },
   {
-    id: "filtros",
-    sentence: "Une filtros seguidos en uno solo.",
-    why: "Tres FILTER consecutivos (grandes, pagadas, todo) quedan en un único paso.",
-    bg: "var(--band-2)",
+    key: "100",
+    name: "constantes",
+    clause: "Luego, las cuentas hechas.",
+    text: "10 * 100 ya es 1000 y TRUE AND desaparece. El paso todo filtraba con 1 < 2, que siempre se cumple: fuera.",
   },
   {
-    id: "muertos",
-    sentence: "Borra lo que nadie usa.",
-    why: "sin_uso no llega a ningún SINK: Polars ni se entera de que existió.",
-    bg: "var(--band-3)",
+    key: "110",
+    name: "filtros",
+    clause: "Después, dos filtros en uno.",
+    text: "grandes y pagadas pasan a ser un solo FILTER unido con AND. La IR anota qué se fusionó.",
   },
-] as const;
+  {
+    key: "111",
+    name: "muertos",
+    clause: "Al final, fuera lo que sobra.",
+    text: "sin_uso no llega a ningún SINK, así que nadie lo necesita. Quedan cuatro pasos.",
+  },
+];
 
-/** La IR impresa trae el bloque «antes» y el «después»; nos quedamos con el último. */
-const finalIR = (ir: string) => ir.split(/\/\/ IR después de[^\n]*\n/).pop()!.trim();
-const stepNames = (ir: string) => [...finalIR(ir).matchAll(/^\s+%(\w+)\s+=/gm)].map((m) => m[1]);
+const plan = (key: string) => finalIR(data.optimizer[key].ir);
+const stepOf = (line: string) => /^\s*%(\w+)\s+=/.exec(line)?.[1];
+const count = (key: string) => plan(key).split("\n").filter(stepOf).length;
 
-const base = table["000"] as Variant;
-const baseSteps = stepNames(base.ir);
+/** La IR de la parada actual con lo que cambió respecto de la anterior: tachado lo que se fue, marcado lo nuevo. */
+function diffPlan(i: number) {
+  const now = plan(STOPS[i].key).split("\n");
+  if (i === 0) return { code: now.join("\n"), marks: now.map(() => "") };
+  const before = new Map(plan(STOPS[i - 1].key).split("\n").map((l) => [stepOf(l), l] as const));
+  const byStep = new Map(now.map((l) => [stepOf(l), l] as const));
+  const lines: string[] = [];
+  const marks: string[] = [];
+  for (const old of plan(STOPS[i - 1].key).split("\n")) {
+    const s = stepOf(old);
+    if (!s) {
+      lines.push(old);
+      marks.push("");
+    } else if (byStep.has(s)) {
+      lines.push(byStep.get(s)!);
+      marks.push(byStep.get(s) === before.get(s) ? "" : "changed");
+    } else {
+      lines.push(old);
+      marks.push("gone");
+    }
+  }
+  return { code: lines.join("\n"), marks };
+}
 
 export function Optimizer() {
-  const [on, setOn] = useState([true, true, false]);
+  const [i, setI] = useState(0);
   const [tab, setTab] = useState<"ir" | "py">("ir");
-  const [tick, setTick] = useState(0);
-
-  const key = on.map((v) => (v ? "1" : "0")).join("");
-  const v = table[key] as Variant;
-  const steps = stepNames(v.ir);
-  const gone = baseSteps.filter((s) => !steps.includes(s));
-  const code = tab === "ir" ? finalIR(v.ir) : v.py.trim();
-
-  const toggle = (i: number) => {
-    setOn((s) => s.map((x, j) => (j === i ? !x : x)));
-    setTick((t) => t + 1);
-  };
+  const stop = STOPS[i];
+  const { code, marks } = diffPlan(i);
+  const p = i / (STOPS.length - 1);
 
   return (
     <section className="opt" id="optimizador" aria-labelledby="opt-t">
-      <div className="wrap">
-        <h2 id="opt-t" className="sr">Optimizador</h2>
-        <p className="statement" data-reveal>
-          Activa un pase y mira cómo cambia el plan. Es la salida real del compilador sobre un mismo pipeline.
-        </p>
-      </div>
-
-      <div className="bands" role="group" aria-label="Pases de optimización">
-        {PASSES.map((p, i) => (
-          <button
-            key={p.id}
-            className="band"
-            role="switch"
-            aria-checked={on[i]}
-            style={{ ["--bg-on" as string]: p.bg }}
-            onClick={() => toggle(i)}
-            data-reveal
-          >
-            <span className="sentence">{p.sentence}</span>
-            <span className="switch" data-ui aria-hidden="true" />
-            <span className="why">
-              <span>
-                <b>{p.id}.</b> {p.why}
-              </span>
-            </span>
-          </button>
-        ))}
-      </div>
-
-      <div className="lab">
-        <div className="lab-head" data-reveal>
-          <span className="lab-count" aria-live="polite">
-            {baseSteps.length} → {steps.length} pasos
-          </span>
-          <span className="lab-note">
-            {gone.length ? (
-              <>
-                Ya no aparecen en el plan: <b>{gone.join(", ")}</b>.
-              </>
-            ) : (
-              "Sin pases activos el plan conserva cada paso tal como lo escribiste (-O0)."
-            )}
-          </span>
+      <div className="opt-field words">
+        <h2 id="opt-t" className="sr">
+          El optimizador, pase por pase
+        </h2>
+        <div key={stop.key} className="xfade">
+          <p className="clause">{stop.clause}</p>
+          <p className="clause-text">{stop.text}</p>
         </div>
+      </div>
 
-        <div className="panes" data-reveal>
-          <div className="pane" data-ui>
-            <div className="pane-bar">
-              <span className="fix">optimizaciones.etl</span>
-            </div>
-            <pre>{highlight((table.source as string).split("\n").slice(4).join("\n").replace(/^ {4}/gm, ""))}</pre>
-          </div>
-          <div className="pane" data-ui>
-            <div className="pane-bar" role="tablist" aria-label="Salida del compilador">
+      <div className="opt-field stage">
+        <div className="pane" data-ui>
+          <div className="pane-bar">
+            <span className="pane-file">optimizaciones.etl</span>
+            <span className="pane-count" aria-live="polite">
+              {count(stop.key)} pasos
+            </span>
+            <div className="pane-tabs" role="tablist" aria-label="Salida del compilador">
               <button role="tab" aria-selected={tab === "ir"} onClick={() => setTab("ir")}>
                 Plan (IR)
               </button>
               <button role="tab" aria-selected={tab === "py"} onClick={() => setTab("py")}>
-                Python + Polars
+                Python
               </button>
             </div>
-            <pre key={`${tab}-${tick}`} className="swap" tabIndex={0}>
-              {highlight(code)}
-            </pre>
           </div>
+          <div key={`${stop.key}-${tab}`} className="xfade pane-body" tabIndex={0}>
+            {tab === "ir" ? <Code code={code} mark={(_, n) => marks[n]} /> : <Code code={pyBody(data.optimizer[stop.key].py)} />}
+          </div>
+        </div>
+      </div>
+
+      <div className="opt-slider">
+        <div className="slider">
+        <label className="sr" htmlFor="opt-range">
+          Pases aplicados
+        </label>
+        <div className="track" aria-hidden="true">
+          <span className="seg l">
+            <i style={{ width: `${Math.min(p, 0.5) * 200}%` }} />
+          </span>
+          <span className="seg r">
+            <i style={{ width: `${Math.max(p - 0.5, 0) * 200}%` }} />
+          </span>
+        </div>
+        <input
+          id="opt-range"
+          type="range"
+          min={0}
+          max={STOPS.length - 1}
+          step={1}
+          value={i}
+          onChange={(e) => setI(Number(e.target.value))}
+          aria-valuetext={`${stop.name}: ${count(stop.key)} pasos`}
+          style={{ ["--p" as string]: p }}
+        />
+        <div className="stops">
+          {STOPS.map((s, n) => (
+            <button
+              key={s.key}
+              type="button"
+              aria-current={n === i}
+              onClick={() => setI(n)}
+              data-side={n / (STOPS.length - 1) < 0.5 ? "l" : "r"}
+              style={{ ["--x" as string]: n / (STOPS.length - 1) }}
+            >
+              {s.name}
+            </button>
+          ))}
+        </div>
         </div>
       </div>
     </section>

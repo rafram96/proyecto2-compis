@@ -1,14 +1,19 @@
 import type { ReactNode } from "react";
+import { ATOMS, CLAUSES, CONNECTORS, DECLS, FUNCS, LOGIC, OPERATIONS, TYPES } from "../editor/words";
 
-const KW =
-  "PIPELINE|STEP|FLOW|SOURCE|SINK|USE|INPUT|OUTPUT|FILTER|SORT|SELECT|DERIVE|AGGREGATE|FILL_NULL|DROP_NULLS|WHERE|BY|COLUMNS|DESC|ASC|AND|OR|NOT|IS|NULL|TRUE|FALSE|AS|TABLE|pipeline|def|return|import|from|None";
-const FN = "CSV|PARQUET|SQLITE|DUCKDB|COUNT|AVG|COALESCE|SAFE_DIVIDE|filter|sort|select|source|step|sink|col|lit|is_not_null";
+/**
+ * Resaltador mínimo para fragmentos estáticos: el DSL, la IR impresa y el Python generado.
+ * El editor de verdad (CodeMirror) usa src/editor/etl.ts con el mismo vocabulario.
+ */
+const KW = [...DECLS, ...CLAUSES, ...LOGIC, ...OPERATIONS.map(([o]) => o), ...TYPES, "pipeline", "def", "return", "import", "from", "if", "raise", "not", "and"];
+const LIT = [...ATOMS, "True", "False", "None"];
+const FN = [...CONNECTORS, ...FUNCS, "filter", "sort", "select", "group_by", "agg", "source", "step", "sink", "col", "lit", "is_not_null", "is_null", "require_columns", "alias", "len"];
 const RE = new RegExp(
-  `(//[^\\n]*|#[^\\n]*)|("[^"\\n]*"|'[^'\\n]*')|\\b(${KW})\\b|\\b(${FN})\\b|(\\b\\d+(?:\\.\\d+)?\\b)`,
+  `(//[^\\n]*|#[^\\n]*)|("[^"\\n]*"|'[^'\\n]*')|(%\\w+)|\\b(${KW.join("|")})\\b|\\b(${FN.join("|")})\\b|\\b(${LIT.join("|")})\\b|(\\b\\d+(?:\\.\\d+)?\\b)`,
   "g",
 );
+const CLS = ["c", "s", "f", "k", "f", "n", "n"];
 
-/** Resaltador mínimo del DSL, la IR y el Python generado. */
 export function highlight(code: string): ReactNode[] {
   const out: ReactNode[] = [];
   let last = 0;
@@ -16,9 +21,9 @@ export function highlight(code: string): ReactNode[] {
   for (const m of code.matchAll(RE)) {
     const idx = m.index ?? 0;
     if (idx > last) out.push(code.slice(last, idx));
-    const cls = m[1] ? "c" : m[2] ? "s" : m[3] ? "k" : m[4] ? "f" : "n";
+    const group = m.slice(1).findIndex((g) => g !== undefined);
     out.push(
-      <span key={i++} className={cls}>
+      <span key={i++} className={CLS[group]}>
         {m[0]}
       </span>,
     );

@@ -57,6 +57,12 @@
   --chart-3: #0096c7;
   --chart-4: #48cae4;
   --chart-5: #90e0ef;
+
+  --mark-bg: #0077b6;
+  --on-motif: #ffffff;
+  --field-deep: #023e8a;
+  --track-motif: rgba(255, 255, 255, 0.38);
+  --squiggle: #b42318;
 }
 
 :root[data-theme="dark"] {
@@ -91,4 +97,10 @@
   --tile-4: #48cae4;
   --tile-4-ink: #0a1628;
   --tile-ink: #e6f6fb;
+
+  --mark-bg: #0077b6;
+  --on-motif: #ffffff;
+  --field-deep: #0f5f93;
+  --track-motif: rgba(255, 255, 255, 0.34);
+  --squiggle: #ff9b91;
 }
