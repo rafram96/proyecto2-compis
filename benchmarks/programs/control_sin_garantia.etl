@@ -1,0 +1,8 @@
+PIPELINE p {
+  INPUT ventas: TABLE[id: INT, cliente: INT?, monto: DECIMAL?, etiqueta: STRING?];
+  INPUT clientes: TABLE[clave: INT?, nombre: STRING, peso: INT?];
+  STEP union = JOIN { TYPE INNER; ON left.cliente == right.clave; }
+  STEP vista = SELECT { COLUMNS id, cliente, clave, monto, nombre; }
+  OUTPUT resultado: TABLE;
+  FLOW { ventas -> union.left; clientes -> union.right; union -> vista -> resultado; }
+}

@@ -1,0 +1,10 @@
+PIPELINE p {
+  INPUT ventas: TABLE[id: INT, cliente: INT?, monto: DECIMAL?, etiqueta: STRING?];
+  STEP limite = FILTER { WHERE monto >= 100 AND monto < 900; }
+  STEP redundante = FILTER { WHERE monto >= 0 AND monto <= 900; }
+  STEP vista = SELECT { COLUMNS id, monto; }
+  STEP presentes = FILTER { WHERE monto IS NOT NULL AND monto > 100; }
+  STEP orden = SORT { BY id; }
+  OUTPUT resultado: TABLE;
+  FLOW { ventas -> limite -> redundante -> vista -> presentes -> orden -> resultado; }
+}

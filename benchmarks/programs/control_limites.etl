@@ -1,0 +1,8 @@
+PIPELINE p {
+  INPUT ventas: TABLE[id: INT, cliente: INT?, monto: DECIMAL?, etiqueta: STRING?];
+  STEP cerrado = FILTER { WHERE monto >= 100; }
+  STEP abierto = FILTER { WHERE monto > 100; }
+  STEP orden = SORT { BY id; }
+  OUTPUT resultado: TABLE;
+  FLOW { ventas -> cerrado -> abierto -> orden -> resultado; }
+}

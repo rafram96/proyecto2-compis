@@ -1,0 +1,10 @@
+PIPELINE p {
+  INPUT ventas: TABLE[id: INT, cliente: INT?, monto: DECIMAL?, etiqueta: STRING?];
+  STEP grupos = AGGREGATE {
+    GROUP_BY etiqueta; SUM(monto) AS total; COUNT() AS n; COUNT(monto) AS presentes;
+  }
+  STEP global = AGGREGATE { SUM(monto) AS total; COUNT() AS n; COUNT(monto) AS presentes; }
+  OUTPUT resultado: TABLE;
+  OUTPUT totales: TABLE;
+  FLOW { ventas -> grupos -> resultado; ventas -> global -> totales; }
+}

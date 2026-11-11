@@ -1,0 +1,12 @@
+PIPELINE p {
+  INPUT ventas: TABLE[id: INT, cliente: INT?, monto: DECIMAL?, etiqueta: STRING?];
+  STEP primero = FILTER { WHERE TRUE AND monto < 10 * 90; }
+  STEP segundo = FILTER { WHERE etiqueta IS NOT NULL; }
+  STEP siempre = FILTER { WHERE 1 < 2; }
+  STEP calculo = DERIVE { ajustado = monto * (2 + 3); }
+  STEP sin_uso = DERIVE { descartado = monto * (3 + 4); }
+  STEP orden = SORT { BY id; }
+  OUTPUT resultado: TABLE;
+  FLOW { ventas -> primero -> segundo -> siempre -> calculo -> orden -> resultado;
+         calculo -> sin_uso; }
+}

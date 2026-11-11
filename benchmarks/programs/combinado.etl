@@ -1,0 +1,19 @@
+PIPELINE p {
+  INPUT ventas: TABLE[id: INT, cliente: INT?, monto: DECIMAL?, etiqueta: STRING?];
+  INPUT clientes: TABLE[clave: INT?, nombre: STRING, peso: INT?];
+  STEP limite = FILTER { WHERE monto >= 100 AND monto < 900; }
+  STEP redundante = FILTER { WHERE monto >= 0; }
+  STEP union = JOIN { TYPE INNER; ON left.cliente == right.clave; VERIFY MANY_TO_ONE; }
+  STEP vista = SELECT { COLUMNS id, cliente, monto, etiqueta; }
+  STEP constante = FILTER { WHERE 1 < 2; }
+  STEP texto = FILTER { WHERE etiqueta IS NOT NULL; }
+  STEP positivo = FILTER { WHERE id >= 0; }
+  STEP calculo = DERIVE { ajustado = monto * (2 + 3); }
+  STEP sin_uso = SELECT { COLUMNS id; }
+  STEP resumen = AGGREGATE { GROUP_BY cliente; SUM(ajustado) AS total; COUNT() AS n; }
+  STEP orden = SORT { BY cliente; }
+  OUTPUT resultado: TABLE;
+  FLOW { ventas -> limite -> redundante -> union.left; clientes -> union.right;
+         union -> vista -> constante -> texto -> positivo -> calculo -> resumen -> orden -> resultado;
+         calculo -> sin_uso; }
+}

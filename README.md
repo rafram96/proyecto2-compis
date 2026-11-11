@@ -214,3 +214,19 @@ izquierdo. Las validaciones y ambas lecturas permanecen, incluso con -O0.
 
 Demo reproducible: `.venv/bin/python main.py demo/joins.etl --run --output /tmp/cauce-c4`.
 Contrato de análisis actual: versión 4. Reglas y límites: [C4](docs/optimizacion_joins.md).
+
+### Evaluación reproducible (C5)
+
+```sh
+# Desde la raíz, con requirements.txt instalado; elegir un destino nuevo.
+.venv/bin/python -m benchmarks --mode small --output benchmarks/results/small
+.venv/bin/python -m benchmarks --mode measure --output benchmarks/results/medicion
+```
+
+El arnés genera datos con semilla fija, exige equivalencia antes de medir y
+compara O0, cada pase, la combinación predeterminada y Polars manual con los
+mismos contratos. Separa compilación de ejecución completa, incluidas las
+validaciones de C4; exporta muestras, medianas/IQR, evidencia IR, entorno y un
+reporte Markdown. Los artefactos generados quedan fuera de Git.
+El segundo escenario controla solo los collect finales de Polars.
+Comandos, workloads, resultados y límites: [evaluación C5](docs/evaluacion.md).
