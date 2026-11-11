@@ -25,6 +25,7 @@ pipeline optimizaciones (raíz) {
 | Pase | Qué hace |
 | --- | --- |
 | `constantes` | Pliega `+ - *` y comparaciones entre literales; simplifica `AND`, `OR` y `NOT` con `TRUE`/`FALSE` respetando la lógica de tres valores. Un `FILTER` que queda en `TRUE` se elimina. La división no se pliega. |
+| `rangos` | Elimina filtros o términos AND implicados por intervalos y ausencia de NULL; registra hechos y pruebas en la IR. |
 | `filtros` | Fusiona un `FILTER` con el `FILTER` anterior cuando este no tiene otros consumidores. |
 | `muertos` | Elimina pasos cuyo resultado no llega a ningún `SINK`, `OUTPUT` ni `USE`. Los `INPUT` se conservan porque son la interfaz del pipeline. |
 
@@ -171,8 +172,9 @@ print(outputs["cleaned"].collect())
 ## Límites actuales
 
 La verificación estática C2 está implementada; sus reglas y límites se describen
-en [semantica_estatica.md](semantica_estatica.md). Los pases O1 (rangos) y O3 (joins)
-siguen pendientes. Polars también optimiza el plan al ejecutarlo, por lo que el efecto
+en [semantica_estatica.md](semantica_estatica.md). O1 (`rangos`) está implementado
+con las restricciones de [optimizacion_rangos.md](optimizacion_rangos.md);
+O3 (joins) sigue pendiente. Polars también optimiza el plan al ejecutarlo, por lo que el efecto
 de los pases propios se mide comparando `-O0` con la versión optimizada.
 La ejecución no es una transacción global entre todos los SINK: una salida ya
 escrita puede persistir si otro bloque falla después. Los artefactos de

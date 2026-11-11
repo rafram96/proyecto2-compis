@@ -2,7 +2,7 @@
 
 Fecha de revisión: **11 de noviembre de 2026**.
 
-Este plan parte del código actual de `etl_dsl/`, `tests/` y `web/`, y lo contrasta con [el enunciado](Enunciado_DSL.md). Cubre el compilador y la continuación de la web. C1 y C2 están implementados; las siguientes entregas continúan pendientes.
+Este plan parte del código actual de `etl_dsl/`, `tests/` y `web/`, y lo contrasta con [el enunciado](Enunciado_DSL.md). Cubre el compilador y la continuación de la web. C1, C2 y C3 están implementados; las siguientes entregas continúan pendientes.
 
 Ampliación del plan: arquitectura de conexión, páginas adicionales y evaluación de edición visual, tomando como referencia el proyecto local `csharp-x86-compi/`. Se mantiene la libertad de adaptar sus ideas al dominio ETL. Esta ampliación documenta decisiones; no implementa todavía las páginas ni el editor por bloques.
 
@@ -21,15 +21,15 @@ La [definición de arquitectura de la aplicación](arquitectura_aplicacion.md) c
 | API de análisis compartida (C1) | ✅ | `etl_dsl.analyze` recibe texto sin archivos temporales y entrega artefactos seleccionables, errores parciales y contrato JSON versionado; CLI, puente web y demos la consumen. |
 | Tipos (C2) | ✅ | Inferencia conservadora de esquemas, tipos y nulabilidad en las diez operaciones; contratos OUTPUT/USE. Se mantienen chequeos de datos en ejecución. |
 | IR | ✅ | DAG por pipeline, orden topológico, puertos resueltos, origen de los nodos y formato textual: `ir.py`. Las expresiones reutilizan el AST. |
-| Anotaciones semánticas de la IR | 🟡 | Artefacto `schemas` por nodo/puerto de la IR original. Rangos, unicidad y referencias siguen pendientes. |
-| Optimizaciones actuales | ✅ | `constantes`, `filtros` y `muertos`; selección por `--pases` y desactivación con `-O0`: `passes.py`. |
-| Optimizaciones basadas en hechos del dominio | ⬜ | O1 de rangos y O3 de eliminación de joins siguen pendientes. Los tres pases actuales se agrupan como O4 en la documentación. |
+| Anotaciones semánticas de la IR | 🟡 | Artefacto `schemas` de la IR original; hechos y pruebas O1 en `ir_after.module`. Unicidad y referencias siguen pendientes. |
+| Optimizaciones actuales | ✅ | `constantes`, `rangos`, `filtros` y `muertos`; selección por `--pases` y desactivación con `-O0`: `passes.py`. |
+| Optimizaciones basadas en hechos del dominio | 🟡 | O1 `rangos` implementado con pruebas y procedencia. O3 de eliminación de joins sigue pendiente. Los tres pases clásicos se agrupan como O4. |
 | Generación de código | ✅ | Python legible con Polars desde la IR, expresiones y composición mediante `USE`: `backend.py`. |
 | Operaciones | ✅ | `FILTER`, `SELECT`, `DERIVE`, `AGGREGATE`, `JOIN`, `SORT`, `DISTINCT`, `RENAME`, `FILL_NULL`, `DROP_NULLS`. |
 | Conectores | ✅ | Lectura CSV, Parquet, SQLite y DuckDB; escritura CSV, Parquet y DuckDB: `runtime.py`. DuckDB es un conector; las transformaciones usan Polars. |
 | Ejecución | ✅ | `LazyFrame`, selección de pipelines, entradas externas mediante API Python y comprobaciones en ejecución. |
 | CLI | ✅ | Compilación individual y por carpetas, seis formatos, ejecución, selección de pases, rutas base y continuación del lote tras errores: `main.py`. |
-| Pruebas y entorno | ✅ | Suite `unittest`, dependencias, Docker y datos de demostración. Tras C2 pasan **88 pruebas Python**, más 4 del adaptador web. |
+| Pruebas y entorno | ✅ | Suite `unittest`, dependencias, Docker y datos de demostración. Tras C3 pasan **105 pruebas Python**, más 4 del adaptador web. |
 | Evaluación experimental | ⬜ | No se identificó un arnés de benchmarks, baselines manuales y resultados estadísticos reproducibles entre los archivos revisados. |
 
 **Distinción importante:** el compilador ya funciona de punta a punta por terminal. La brecha principal está en verificar propiedades de los datos antes de ejecutarlos y usarlas para optimizar.
@@ -109,15 +109,17 @@ El [plan inicial](planificacion.md) contiene decisiones anteriores: sintaxis en 
 
 ### C3. Hechos del dominio y optimización O1 de rangos — P0
 
-- [ ] Definir hechos conservadores por columna: intervalo, nulabilidad y procedencia de la garantía. Comenzar por hechos deducidos de filtros y literales existentes.
-- [ ] Propagarlos por filtros, selección y renombrado; invalidarlos cuando `DERIVE` sustituya una columna y ensancharlos conservadoramente en uniones y agregaciones.
-- [ ] Crear un pase `rangos`: si un filtro previo garantiza `monto >= 100`, eliminar un filtro posterior `monto >= 0` cuando esa implicación sea demostrable.
-- [ ] Manejar límites abiertos/cerrados y `NULL`; ante una contradicción, conservar inicialmente el filtro que produce vacío hasta tener una representación de relación vacía con esquema correcto.
-- [ ] Registrar qué hecho permitió la reescritura y qué nodos cambiaron.
+- [x] Definir hechos conservadores por columna: intervalo, nulabilidad y procedencia de la garantía. Comenzar por hechos deducidos de filtros y literales existentes.
+- [x] Propagarlos por filtros, selección y renombrado; invalidarlos cuando `DERIVE` sustituya una columna y ensancharlos conservadoramente en uniones y agregaciones.
+- [x] Crear un pase `rangos`: si un filtro previo garantiza `monto >= 100`, eliminar un filtro posterior `monto >= 0` cuando esa implicación sea demostrable.
+- [x] Manejar límites abiertos/cerrados y `NULL`; ante una contradicción, conservar inicialmente el filtro que produce vacío hasta tener una representación de relación vacía con esquema correcto.
+- [x] Registrar qué hecho permitió la reescritura y qué nodos cambiaron.
 
 **Dependencia:** C2. **Archivos:** módulo de hechos, `passes.py`, anotaciones de IR y pruebas.
 
 **Criterio de cierre:** equivalencia con `-O0` en límites, nulos, ramas compartidas y columnas redefinidas; el pase solo elimina condiciones demostradas.
+
+**Cerrado:** `facts.py` implementa hechos inmutables y el pase `rangos`, predeterminado entre `constantes` y `filtros`. Incluye procedencia, pruebas estructuradas y comentarios en IR (contrato JSON 3). Las diez operaciones y USE tienen transferencia conservadora; los límites y abstenciones están en [optimizacion_rangos.md](optimizacion_rangos.md). Verificación: 105 pruebas Python, 4 web, build, demos y Pyodide con `playwright-cli`. No incluye C4, W2 gráfico ni mediciones C5.
 
 ### C4. Optimización O3 de joins con garantías verificables — P0
 
@@ -204,9 +206,9 @@ El contrato del servicio y un primer recorrido con un dataset incluido pueden de
 
 ## 7. Pruebas y documentación para cerrar el proyecto
 
-- [x] Suite actual: `.venv/bin/python -m unittest discover` — **88 pruebas, OK**.
+- [x] Suite actual: `.venv/bin/python -m unittest discover` — **105 pruebas, OK**.
 - [x] Adaptador de diagnósticos: `cd web && npm test` — **4 pruebas, OK**.
-- [x] C1/C2 en navegador: `.venv/bin/python web/scripts/verify_browser.py` — **32 comparaciones CPython/Pyodide, dos casos C2 y recorrido de corrección, OK**.
+- [x] C1/C2/C3 en navegador: `.venv/bin/python web/scripts/verify_browser.py` — **32 comparaciones CPython/Pyodide, dos casos C2, prueba O1 y recorrido de corrección, OK**.
 - [x] Build actual: `cd web && npm run build` — **OK**.
 - [x] Agregar pruebas de tipos/esquemas y de propagación de nulabilidad, especialmente en JOIN y `USE`.
 - [ ] Probar equivalencia por cada pase nuevo y casos donde debe abstenerse de optimizar.

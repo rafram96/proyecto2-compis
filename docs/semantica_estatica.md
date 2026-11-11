@@ -104,7 +104,8 @@ la estructura `pipeline -> nodo -> puerto -> esquema`; `""` es el puerto ordinar
 Los nodos USE exponen puertos nombrados. OUTPUT y SINK muestran el esquema recibido
 (después de comprobar el contrato si corresponde). Si hay errores semánticos,
 `schemas`, la IR optimizada y Python quedan bloqueados; se conservan tokens, árbol,
-AST e IR original solicitados. El contrato JSON es versión 2; véase
+AST e IR original solicitados. C2 introdujo `schemas` en la versión 2; C3
+actualiza el contrato a versión 3 con hechos y pruebas O1. Véase
 [api_analisis.md](api_analisis.md).
 
 El análisis es conservador: no comprueba valores, overflow, precisión decimal,
@@ -112,5 +113,5 @@ anchos/unidades del motor, existencia de archivos ni inferencia de tipos de CSV.
 Las operaciones posteriores sobre DURATION que no estén modeladas pierden el tipo
 preciso; permanecen sujetas al runtime. No demuestra satisfacibilidad, filas no
 vacías, unicidad ni rangos. La refinación de filtros cubre las formas descritas,
-sin resolver implicaciones arbitrarias. No hay optimizaciones C3/C4 ni lectura de
-datasets. Las diez operaciones actuales tienen reglas y pruebas de comportamiento.
+sin resolver implicaciones arbitrarias. C3 consume estas garantías para el pase [rangos](optimizacion_rangos.md).
+C4 sigue pendiente y la compilación no lee datasets. Las diez operaciones actuales tienen reglas y pruebas de comportamiento.

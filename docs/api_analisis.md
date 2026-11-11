@@ -1,4 +1,4 @@
-# API de análisis compartida (C1/C2)
+# API de análisis compartida (C1/C2/C3)
 
 La CLI, el puente web y el generador de demostraciones usan la API pública `etl_dsl.analyze`. Recibe texto en memoria, sin crear un `.etl` temporal, leer conectores, ejecutar Python generado ni importar Polars/DuckDB.
 
@@ -21,11 +21,11 @@ print(json.dumps(payload, ensure_ascii=False))
 
 Los nombres válidos son `tokens`, `tree`, `ast`, `ir_before`, `ir_after`, `python` y `schemas`. Los errores de opciones del llamador lanzan `ValueError`. Los errores del programa se devuelven en `diagnostics`; las excepciones inesperadas de implementación no se ocultan como errores del usuario.
 
-## Contrato JSON versión 2
+## Contrato JSON versión 3
 
 | Campo | Significado |
 |---|---|
-| `contract_version` | Versión del contrato de análisis (`"2"`). No es una versión HTTP. |
+| `contract_version` | Versión del contrato de análisis (`"3"`). No es una versión HTTP. |
 | `compiler_version` | Versión del paquete compilador. |
 | `offset_encoding` | `unicode-codepoints`: offsets y columnas medidos en caracteres Unicode de Python. |
 | `filename` | Nombre lógico recibido; puede contener rutas o `:` y no se interpreta para abrir un archivo. |
@@ -81,3 +81,22 @@ pueden aparecer ahora en `semantic`, con IR original disponible.
 Verificación C2: 88 pruebas Python, 4 pruebas web, build de producción y prueba
 Pyodide con `playwright-cli`: 32 comparaciones CPython/WASM, dos casos C2 con
 intervalos y artefactos parciales, corrección en CodeMirror y rangos Unicode.
+
+## Extensión aditiva C3: hechos de rangos
+
+La versión 3 incorpora los hechos y pruebas O1. Los consumidores deben aceptar
+`contract_version="3"`; se actualizan el discriminante TypeScript y los snapshots.
+`ir_before.module` e `ir_after.module` agregan
+`range_facts` y `range_rewrites` (listas inicialmente vacías). Al ejecutar
+`rangos`, la IR posterior contiene hechos por nodo y pruebas de eliminación o
+simplificación: predicado antes/después, nodo/origin, consumidores reconectados,
+intervalos, nulabilidad, procedencia y spans. Los pases posteriores conservan el
+historial; los hechos son instantáneas de la etapa de rangos. El artefacto
+`schemas` conserva su forma y su referencia a la IR original. Los consumidores
+actualizados aceptan los nuevos campos del módulo; el transporte del worker conserva su forma.
+
+El orden predeterminado pasa a `constantes,rangos,filtros,muertos`; `passes=()`
+continúa desactivando todos los pases. Ejemplos, reglas y límites de precisión:
+[optimizacion_rangos.md](optimizacion_rangos.md). Verificación de C3: 105 pruebas
+Python, 4 web, build y Pyodide mediante `playwright-cli`, con el caso de eliminación
+de un filtro, su evidencia estructurada y el control sin optimización.

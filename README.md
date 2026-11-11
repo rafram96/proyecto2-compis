@@ -170,7 +170,7 @@ módulos estándar de Python llamados `ast` y `token`.
 - [Tipos](etl_dsl/type.py): catálogo `ScalarType` usado por el AST y su constructor.
 - [IR](etl_dsl/ir.py): baja el AST a un DAG de operadores por pipeline, en orden
   topológico según `FLOW`, y lo imprime como texto (`--format ir`).
-- [Pases](etl_dsl/passes.py): plegado de constantes, fusión de filtros y
+- [Pases](etl_dsl/passes.py): rangos con pruebas, plegado de constantes, fusión de filtros y
   eliminación de pasos muertos (O4).
 - [Backend](etl_dsl/backend.py): genera Python desde la IR optimizada, compila
   expresiones a Polars y traduce `USE` a llamadas entre funciones Python.
@@ -190,8 +190,8 @@ todas las transformaciones se ejecutan en Polars.
 
 Los contratos comprueban nombres, orden, familias de tipos y nulabilidad en
 ejecución. Los pasos son `LazyFrame` y solo se calculan en un `SINK` (o en un
-contrato que verifica nulos), así que Polars optimiza el plan completo. Quedan pendientes el
-análisis estático de tipos y los pases O1 (rangos) y O3 (joins). [docs/backend_polars.md](docs/backend_polars.md) describe este backend;
+contrato que verifica nulos), así que Polars optimiza el plan completo. Queda pendiente
+el pase O3 (joins). C2 y O1 (rangos) ya están implementados. [docs/backend_polars.md](docs/backend_polars.md) describe este backend;
 [docs/backend_duckdb.md](docs/backend_duckdb.md), el backend DuckDB anterior (commit 4109895).
 
 La referencia de sintaxis y las decisiones para el backend están en
@@ -200,3 +200,6 @@ La referencia de sintaxis y las decisiones para el backend están en
 
 El análisis estático C2 no lee datasets y conserva las comprobaciones de datos
 en ejecución. Reglas, conocimiento parcial y límites: [semántica estática](docs/semantica_estatica.md).
+
+El pase O1 `rangos` elimina predicados implicados por filtros previos y registra
+sus pruebas en la IR. [Reglas y demo](docs/optimizacion_rangos.md).
