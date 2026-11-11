@@ -2,7 +2,7 @@
 
 Fecha de revisión: **11 de noviembre de 2026**.
 
-Este plan parte del código actual de `etl_dsl/`, `tests/` y `web/`, y lo contrasta con [el enunciado](Enunciado_DSL.md). Cubre el compilador y la continuación de la web. Las tareas propuestas todavía no están implementadas.
+Este plan parte del código actual de `etl_dsl/`, `tests/` y `web/`, y lo contrasta con [el enunciado](Enunciado_DSL.md). Cubre el compilador y la continuación de la web. C1 y C2 están implementados; las siguientes entregas continúan pendientes.
 
 Ampliación del plan: arquitectura de conexión, páginas adicionales y evaluación de edición visual, tomando como referencia el proyecto local `csharp-x86-compi/`. Se mantiene la libertad de adaptar sus ideas al dominio ETL. Esta ampliación documenta decisiones; no implementa todavía las páginas ni el editor por bloques.
 
@@ -19,9 +19,9 @@ La [definición de arquitectura de la aplicación](arquitectura_aplicacion.md) c
 | Validación estructural | ✅ | Duplicados, enlaces y puertos, entradas requeridas, ciclos de `FLOW` y `USE`, aridad, uso de `NULL` y condiciones de JOIN: `validation.py`. |
 | Diagnósticos | 🟡 | Código, mensaje, fase, severidad, archivo e intervalo completo; se transportan como objetos hasta CodeMirror. Queda mejorar sugerencias. |
 | API de análisis compartida (C1) | ✅ | `etl_dsl.analyze` recibe texto sin archivos temporales y entrega artefactos seleccionables, errores parciales y contrato JSON versionado; CLI, puente web y demos la consumen. |
-| Tipos | 🟡 | Tipos escalares y nulabilidad declarados; contratos de nombres, orden, familias de tipos y nulos en ejecución. Falta inferencia y comprobación estática por operación. |
+| Tipos (C2) | ✅ | Inferencia conservadora de esquemas, tipos y nulabilidad en las diez operaciones; contratos OUTPUT/USE. Se mantienen chequeos de datos en ejecución. |
 | IR | ✅ | DAG por pipeline, orden topológico, puertos resueltos, origen de los nodos y formato textual: `ir.py`. Las expresiones reutilizan el AST. |
-| Anotaciones semánticas de la IR | ⬜ | No hay esquemas inferidos ni hechos de rango, unicidad o referencias asociados a cada nodo. |
+| Anotaciones semánticas de la IR | 🟡 | Artefacto `schemas` por nodo/puerto de la IR original. Rangos, unicidad y referencias siguen pendientes. |
 | Optimizaciones actuales | ✅ | `constantes`, `filtros` y `muertos`; selección por `--pases` y desactivación con `-O0`: `passes.py`. |
 | Optimizaciones basadas en hechos del dominio | ⬜ | O1 de rangos y O3 de eliminación de joins siguen pendientes. Los tres pases actuales se agrupan como O4 en la documentación. |
 | Generación de código | ✅ | Python legible con Polars desde la IR, expresiones y composición mediante `USE`: `backend.py`. |
@@ -29,7 +29,7 @@ La [definición de arquitectura de la aplicación](arquitectura_aplicacion.md) c
 | Conectores | ✅ | Lectura CSV, Parquet, SQLite y DuckDB; escritura CSV, Parquet y DuckDB: `runtime.py`. DuckDB es un conector; las transformaciones usan Polars. |
 | Ejecución | ✅ | `LazyFrame`, selección de pipelines, entradas externas mediante API Python y comprobaciones en ejecución. |
 | CLI | ✅ | Compilación individual y por carpetas, seis formatos, ejecución, selección de pases, rutas base y continuación del lote tras errores: `main.py`. |
-| Pruebas y entorno | ✅ | Suite `unittest`, dependencias, Docker y datos de demostración. Tras C1 pasan **70 pruebas Python**, más 4 del adaptador web. |
+| Pruebas y entorno | ✅ | Suite `unittest`, dependencias, Docker y datos de demostración. Tras C2 pasan **88 pruebas Python**, más 4 del adaptador web. |
 | Evaluación experimental | ⬜ | No se identificó un arnés de benchmarks, baselines manuales y resultados estadísticos reproducibles entre los archivos revisados. |
 
 **Distinción importante:** el compilador ya funciona de punta a punta por terminal. La brecha principal está en verificar propiedades de los datos antes de ejecutarlos y usarlas para optimizar.
@@ -89,21 +89,23 @@ El [plan inicial](planificacion.md) contiene decisiones anteriores: sintaxis en 
 
 **Criterio de cierre:** el mismo programa produce diagnósticos y artefactos equivalentes en CLI y puente web; CodeMirror recibe intervalos estructurados sin extraerlos de stderr con una expresión regular.
 
-**Cerrado:** implementación en `etl_dsl/analysis.py`; contrato y comandos de verificación en [api_analisis.md](api_analisis.md). Se verificaron 70 pruebas Python, 4 pruebas del adaptador de rangos, build web y 32 comparaciones CPython/Pyodide mediante `playwright-cli`, además de corregir un diagnóstico real y comprobar rangos Unicode multilínea en CodeMirror. C2 y el servicio de ejecución siguen pendientes.
+**Cerrado:** implementación en `etl_dsl/analysis.py`; contrato y comandos de verificación en [api_analisis.md](api_analisis.md). Se verificaron 70 pruebas Python, 4 pruebas del adaptador de rangos, build web y 32 comparaciones CPython/Pyodide mediante `playwright-cli`, además de corregir un diagnóstico real y comprobar rangos Unicode multilínea en CodeMirror. C2 se completó en la entrega siguiente; el servicio de ejecución sigue pendiente.
 
 ### C2. Análisis estático de esquemas y tipos — P0
 
-- [ ] Agregar un módulo semántico que recorra el DAG en orden topológico y asocie a cada salida un esquema: columnas, tipo y nulabilidad.
-- [ ] Partir de contratos `INPUT` y `SOURCE`; conservar un estado explícito de esquema desconocido cuando no haya contrato. Compilar debe seguir sin leer los archivos de datos.
-- [ ] Comprobar referencias de columnas, operandos numéricos, predicados booleanos, argumentos de funciones y agregaciones.
-- [ ] Propagar esquemas por selección, renombrado y columnas derivadas. Respetar el alcance de asignaciones que ya tiene el backend.
-- [ ] Modelar nulabilidad tras `FILL_NULL`, `DROP_NULLS` y joins externos; comprobar claves de JOIN, columnas ambiguas y contratos de `OUTPUT` y `USE`.
-- [ ] Ejecutar la comprobación antes de eliminar nodos para que un pase no oculte errores del programa original.
-- [ ] Conservar comprobaciones en ejecución para propiedades que no puedan demostrarse estáticamente.
+- [x] Agregar un módulo semántico que recorra el DAG en orden topológico y asocie a cada salida un esquema: columnas, tipo y nulabilidad.
+- [x] Partir de contratos `INPUT` y `SOURCE`; conservar un estado explícito de esquema desconocido cuando no haya contrato. Compilar debe seguir sin leer los archivos de datos.
+- [x] Comprobar referencias de columnas, operandos numéricos, predicados booleanos, argumentos de funciones y agregaciones.
+- [x] Propagar esquemas por selección, renombrado y columnas derivadas. Respetar el alcance de asignaciones que ya tiene el backend.
+- [x] Modelar nulabilidad tras `FILL_NULL`, `DROP_NULLS` y joins externos; comprobar claves de JOIN, columnas ambiguas y contratos de `OUTPUT` y `USE`.
+- [x] Ejecutar la comprobación antes de eliminar nodos para que un pase no oculte errores del programa original.
+- [x] Conservar comprobaciones en ejecución para propiedades que no puedan demostrarse estáticamente.
 
 **Archivos:** nuevo módulo semántico, `type.py`, `ir.py`, `backend.py`, `main.py`; pruebas semánticas nuevas.
 
 **Criterio de cierre:** con un esquema conocido, `WHERE monto + 1` y una referencia a una columna inexistente fallan al compilar, con posición y explicación; un esquema desconocido no se interpreta como prueba de validez.
+
+**Cerrado:** `etl_dsl/semantic.py` comparte reglas entre `analyze`, `build_ir` y `compile_program`; cubre las diez operaciones, esquemas parciales, nulabilidad y composición especializada de USE. El artefacto `schemas` se publica con contrato JSON 2. Ver [reglas y límites](semantica_estatica.md). Verificado con 88 pruebas Python, 4 web, build y Pyodide mediante `playwright-cli` (32 comparaciones y dos casos estáticos adicionales). No incluye C3/C4.
 
 ### C3. Hechos del dominio y optimización O1 de rangos — P0
 
@@ -202,11 +204,11 @@ El contrato del servicio y un primer recorrido con un dataset incluido pueden de
 
 ## 7. Pruebas y documentación para cerrar el proyecto
 
-- [x] Suite actual: `.venv/bin/python -m unittest discover` — **70 pruebas, OK**.
+- [x] Suite actual: `.venv/bin/python -m unittest discover` — **88 pruebas, OK**.
 - [x] Adaptador de diagnósticos: `cd web && npm test` — **4 pruebas, OK**.
-- [x] C1 en navegador: `.venv/bin/python web/scripts/verify_browser.py` — **32 comparaciones CPython/Pyodide y recorrido de corrección, OK**.
+- [x] C1/C2 en navegador: `.venv/bin/python web/scripts/verify_browser.py` — **32 comparaciones CPython/Pyodide, dos casos C2 y recorrido de corrección, OK**.
 - [x] Build actual: `cd web && npm run build` — **OK**.
-- [ ] Agregar pruebas de tipos/esquemas y de propagación de nulabilidad, especialmente en JOIN y `USE`.
+- [x] Agregar pruebas de tipos/esquemas y de propagación de nulabilidad, especialmente en JOIN y `USE`.
 - [ ] Probar equivalencia por cada pase nuevo y casos donde debe abstenerse de optimizar.
 - [ ] Automatizar el recorrido web: cargar Pyodide, editar, diagnosticar, comparar IR y ejecutar un ejemplo.
 - [ ] Verificar el estudio en móvil y escritorio, teclado, foco, temas y movimiento reducido.

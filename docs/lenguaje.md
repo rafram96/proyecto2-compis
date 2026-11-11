@@ -157,3 +157,11 @@ artefactos de ejecuciones anteriores.
 `python main.py otra_entrada --output otra_salida`. `--run` ejecuta los pipelines
 con Polars después de compilar. Los `.py` también pueden ejecutarse directamente,
 con el paquete `etl_dsl` instalado. Más detalles en [backend_polars.md](backend_polars.md).
+
+## Comprobación estática
+
+C2 propaga esquemas, tipos y nulabilidad antes de optimizar, sin consultar datos.
+Detecta columnas inexistentes sobre esquemas completos, predicados no booleanos,
+operandos incompatibles y contratos imposibles. Conserva conocimiento parcial
+cuando SOURCE no tiene contrato. Las [reglas semánticas](semantica_estatica.md)
+describen las diez operaciones y los chequeos que permanecen en ejecución.

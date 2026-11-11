@@ -3,7 +3,7 @@
 ## Compilación y ejecución
 
 ```text
-.etl -> Lark -> AST -> validación -> IR -> pases -> Python con Polars (LazyFrame) -> SINK
+.etl -> Lark -> AST -> validación -> IR -> semántica estática -> pases -> Python con Polars (LazyFrame) -> SINK
 ```
 
 ## IR y optimización
@@ -36,8 +36,9 @@ y sus errores de ejecución citan ambas (`grandes+pagadas`).
 `python main.py` compila los programas de `input/` a `output/*.py`. La generación
 de código valida nombres de conectores y sus opciones, ordena las declaraciones
 topológicamente según `FLOW` y emite una función Python por pipeline. Los datos
-no se consultan durante esta fase; los errores de archivos, columnas, tipos y
-nulos de entrada aparecen al ejecutar.
+no se consultan durante esta fase. C2 detecta incompatibilidades demostrables de
+columnas y tipos antes de optimizar; archivos, nulos reales y conocimiento
+desconocido conservan sus chequeos en ejecución.
 
 Cada paso genera un `LazyFrame` nuevo a partir de su entrada, envuelto en
 `rt.step(plan, etiqueta)`. `rt.step` resuelve el esquema del plan con
@@ -169,8 +170,9 @@ print(outputs["cleaned"].collect())
 
 ## Límites actuales
 
-La verificación estática de tipos y los pases O1 (rangos) y O3 (joins) siguen
-pendientes. Polars también optimiza el plan al ejecutarlo, por lo que el efecto
+La verificación estática C2 está implementada; sus reglas y límites se describen
+en [semantica_estatica.md](semantica_estatica.md). Los pases O1 (rangos) y O3 (joins)
+siguen pendientes. Polars también optimiza el plan al ejecutarlo, por lo que el efecto
 de los pases propios se mide comparando `-O0` con la versión optimizada.
 La ejecución no es una transacción global entre todos los SINK: una salida ya
 escrita puede persistir si otro bloque falla después. Los artefactos de

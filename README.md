@@ -71,7 +71,8 @@ ejecutarlos directamente con datos externos, se dispone de la API Python.
 Tras instalar, también se puede usar `etl-dsl` para procesar `input/`, o
 `etl-dsl archivo.etl` para compilar un archivo. Los formatos de inspección de un
 archivo individual se muestran en consola; `--output output` permite guardarlos.
-La CLI retorna `0` si la sintaxis y estructura son válidas, y `1` si encuentra
+La CLI retorna `0` si las fases solicitadas pasan, incluido el análisis estático
+de esquemas, tipos y nulabilidad, y `1` si encuentra
 errores, falta la entrada o una carpeta no contiene programas. Los diagnósticos se escriben a stderr con
 archivo, línea, columna y un indicador de posición.
 
@@ -196,3 +197,6 @@ análisis estático de tipos y los pases O1 (rangos) y O3 (joins). [docs/backend
 La referencia de sintaxis y las decisiones para el backend están en
 [docs/lenguaje.md](docs/lenguaje.md). Los requisitos académicos están en
 [docs/Enunciado_DSL.md](docs/Enunciado_DSL.md).
+
+El análisis estático C2 no lee datasets y conserva las comprobaciones de datos
+en ejecución. Reglas, conocimiento parcial y límites: [semántica estática](docs/semantica_estatica.md).
