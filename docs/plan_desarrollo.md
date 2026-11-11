@@ -2,7 +2,7 @@
 
 Fecha de revisión: **11 de noviembre de 2026**.
 
-Este plan parte del código actual de `etl_dsl/`, `tests/` y `web/`, y lo contrasta con [el enunciado](Enunciado_DSL.md). Cubre el compilador y la continuación de la web. C1, C2, C3, C4 y C5 están implementados. La continuación web entrega W1 pasos A/B, paso C/W2 y la robustez esencial de W4; W1 global sigue parcial y W3 pendiente.
+Este plan parte del código actual de `etl_dsl/`, `tests/` y `web/`, y lo contrasta con [el enunciado](Enunciado_DSL.md). Cubre el compilador y la continuación de la web. C1, C2, C3, C4 y C5 están implementados. La continuación web entrega W1 pasos A/B, paso C/W2 y la robustez esencial de W4; W1 global sigue parcial; D/W3 incorpora ejecución privada real.
 
 Ampliación del plan: arquitectura de conexión, páginas adicionales y evaluación de edición visual, tomando como referencia el proyecto local `csharp-x86-compi/`. Se mantiene la libertad de adaptar sus ideas al dominio ETL. La ruta `/estudio` ya implementa el paso A. `/ejemplos` y `/docs` ya implementan el paso B; `/evaluacion` y el editor por bloques siguen pendientes.
 
@@ -188,17 +188,17 @@ Persistencia y recuperación detalladas en [web/README.md](../web/README.md).
 
 **Criterio de cierre:** una modificación del programa actualiza ambas IR y su Python; seleccionar un nodo lleva al fragmento que lo originó.
 
-### W3. Ejecución y resultados — P1
+### W3. Ejecución y resultados — P1 — ✅ paso D
 
 **Decisión:** mantener compilación en navegador y agregar un servicio Python para la ejecución real. Así se reutiliza `PolarsRuntime` y sus conectores sin condicionar la entrega a portar Polars/DuckDB al navegador. La ejecución enteramente local con WebAssembly queda como investigación futura.
 
-- [ ] Implementar el servicio descrito en la sección 8, comenzando por datasets de ejemplo y conservando la compilación local independiente del servicio.
-- [ ] Ejecutar cada solicitud en un proceso aislado con directorio temporal y límites de tiempo/memoria. Para exposición pública, usar además aislamiento de sistema de archivos y red mediante un contenedor o mecanismo equivalente; un proceso separado por sí solo no restringe archivos del host.
-- [ ] Aceptar fuente `.etl`, opciones y referencias a datasets autorizados; recompilar en el servidor. No recibir Python arbitrario para ejecutarlo.
-- [ ] Añadir selección de pipeline, botón Ejecutar, estados y errores; reutilizar el código generado y sus contratos.
-- [ ] Devolver vista previa limitada de filas, esquema, nulos, duración y artefactos de `SINK`; permitir descargar resultados completos sin enviar todas las filas a la interfaz.
-- [ ] Mostrar tabla y un gráfico sencillo cuando las columnas seleccionadas lo permitan. Separar claramente datos de ejemplo, salida precalculada y resultado recién ejecutado.
-- [ ] Actualizar el texto actual «tus datos no salen de tu equipo»: compilar ocurre localmente; ejecutar envía el programa y, cuando se habiliten archivos propios, los datos seleccionados al servicio.
+- [x] Implementar el servicio descrito en la sección 8, comenzando por datasets de ejemplo y conservando la compilación local independiente del servicio.
+- [x] Ejecutar cada solicitud en un proceso separado con directorio temporal y límites de tiempo/memoria muestreados. Para exposición pública, usar además aislamiento de sistema de archivos y red mediante un contenedor o mecanismo equivalente; un proceso separado por sí solo no restringe archivos del host.
+- [x] Aceptar fuente `.etl`, opciones y referencias a datasets autorizados; recompilar en el servidor. No recibir Python arbitrario para ejecutarlo.
+- [x] Añadir selección de pipeline, botón Ejecutar, estados y errores; recompilar el fuente en el servidor y conservar los contratos del runtime.
+- [x] Devolver vista previa limitada de filas, esquema, nulos, duración y artefactos de `SINK`; permitir descargar resultados completos sin enviar todas las filas a la interfaz.
+- [x] Mostrar tabla y un gráfico opcional de hasta 20 filas numéricas de la página cuando las columnas seleccionadas lo permitan. Separar claramente datos de ejemplo, salida precalculada y resultado recién ejecutado.
+- [x] Actualizar el texto actual «tus datos no salen de tu equipo»: compilar ocurre localmente; ejecutar envía el programa y, cuando se habiliten archivos propios, los datos seleccionados al servicio.
 
 **Criterio de cierre:** ejecutar un ejemplo genera filas y un archivo real; un archivo ausente o un contrato inválido produce un error comprensible; la interfaz sigue respondiendo durante la ejecución.
 
@@ -231,17 +231,17 @@ El contrato del servicio y un primer recorrido con un dataset incluido pueden de
 
 ## 7. Pruebas y documentación para cerrar el proyecto
 
-- [x] Suite actual: `.venv/bin/python -m unittest discover` — **137 pruebas, OK**.
-- [x] Diagnósticos, revisiones, persistencia y worker: `cd web && npm test` — **31 pruebas, OK**.
+- [x] Suite actual: `.venv/bin/python -m unittest discover` — **157 pruebas, OK**.
+- [x] Diagnósticos, revisiones, persistencia y worker: `cd web && npm test` — **38 pruebas, OK**.
 - [x] C1/C2/C3/C4 en navegador: `.venv/bin/python web/scripts/verify_browser.py` — **32 comparaciones CPython/Pyodide, dos casos C2, prueba O1, eliminación O3 con obligaciones, abstenciones y recorrido de corrección, OK**.
 - [x] Build actual: `cd web && npm run build` — **OK**.
 - [x] Agregar pruebas de tipos/esquemas y de propagación de nulabilidad, especialmente en JOIN y `USE`.
 - [x] Probar equivalencia de los cinco pases actuales y casos donde deben abstenerse de optimizar, también en la evaluación C5.
 - [x] Automatizar el recorrido local: Pyodide, transferencia desde demo, editar, corregir, fases sin recompilar, importación/exportación byte a byte, recarga, rutas y recuperación.
 - [x] Completar comparación avanzada de IR (W2/paso C).
-- [ ] Ejecutar un ejemplo desde la web (W3/paso D).
+- [x] Ejecutar ejemplos desde la web hasta preview y descarga (W3/paso D).
 - [x] Verificar `/estudio` en móvil y escritorio, teclado, foco, ambos temas y movimiento reducido.
-- [x] Paridad CPython/Pyodide (32 presentaciones), diagnósticos y O1/O3 conservados; demos regeneradas con 137 pruebas.
+- [x] Paridad CPython/Pyodide (32 presentaciones), diagnósticos y O1/O3 conservados; demos regeneradas con 157 pruebas.
 - [ ] Actualizar `docs/lenguaje.md` y `docs/backend_polars.md`; escribir un tutorial desde un CSV hasta un resultado.
 - [ ] Preparar reporte LaTeX de 6–10 páginas con evaluación, limitaciones, referencias y declaración de uso de IA.
 - [ ] Preparar demo técnica y ensayo de explicación de todas las fases por el equipo.
@@ -293,7 +293,7 @@ Agregar `service/` como adaptador HTTP Python delgado. Se propone FastAPI para e
 | `GET /api/v1/runs/:id/outputs/:outputId/preview` | Consultar esquema y vista previa acotada de una salida. |
 | `GET /api/v1/runs/:id/artifacts/:artifactId` | Descargar exclusivamente un archivo producido por ese trabajo mediante un identificador opaco. |
 
-Los nombres son parte del diseño propuesto, no endpoints existentes. El cliente HTTP debe quedar detrás de `src/execution/client.ts`, separado del cliente de compilación.
+Los endpoints del diseño están implementados en el paso D; el contrato vigente y sus modelos están en [servicio_ejecucion.md](servicio_ejecucion.md). El cliente HTTP debe quedar detrás de `src/execution/client.ts`, separado del cliente de compilación.
 
 - Primer alcance: datasets incluidos y versionados, sin cuentas ni carga pública de archivos. Los bindings identifican una declaración `SOURCE` por pipeline y nombre; el servicio sustituye su ruta por un archivo permitido y conserva las demás opciones validadas.
 - Validar todas las rutas de `SOURCE`/`SINK`, incluidas las de pipelines invocados mediante `USE`; los destinos siempre quedan dentro del directorio del trabajo. No interpretar una ruta enviada por el cliente como permiso para leer el host.
@@ -327,7 +327,7 @@ El contrato debe distinguir `no solicitado`, `disponible`, `bloqueado por error`
 | Ruta | Estado | Propósito y prioridad |
 |---|---|---|
 | `/` | ✅ Composición y navegación a estudio/ejemplos/docs | Presentación de Cauce y demostración breve. |
-| `/estudio` | 🟡 Paso A implementado | Editar, compilar, inspeccionar fases y descargar/restaurar documentos. Ejecución pendiente W3. |
+| `/estudio` | ✅ Recorrido esencial A/C/D | Editar, compilar, inspeccionar, enlazar datos autorizados, ejecutar, ver filas y descargar/restaurar documentos. Ajuste de tamaño y extensiones pendientes. |
 | `/ejemplos` y `/ejemplos/:slug` | ✅ Paso B implementado | Elegir un problema ETL y abrir una copia editable. |
 | `/docs` y `/docs/:slug` | ✅ Paso B implementado | Aprender a usar el lenguaje y consultar sus reglas. |
 | `/evaluacion` | ⬜ Nueva página, P1 tras C5 | Consultar evidencia de expresividad, errores y rendimiento. |
@@ -557,3 +557,18 @@ Siguiente entrega: D/W3, servicio de ejecución y resultados; `/evaluacion` corr
 
 Los enteros fuera del rango seguro de JavaScript se advierten en los inspectores; se consultan exactos en las
 vistas textuales producidas por Python y no se certifica su igualdad en la comparación estructurada.
+
+
+## Entrega W1 paso D / W3 — ejecución privada y resultados reales
+
+Implementados los siete endpoints HTTP `/api/v1` con contrato 1 independiente del análisis 4, catálogo explícito versionado, runner en subprocess y recompilación autoritativa con etl_dsl. SQLite guarda identidad/estados/manifiestos; archivos grandes y fuente temporal viven fuera de la base. El gestor limita concurrencia/cola, tiempo, RSS y archivos; cancela procesos efectivamente, limpia caducados y detecta interrupciones/huérfanos tras reinicio. No hay reanudación ni sandbox público.
+
+El estudio reutiliza documento/revisión/pases, editor estable y compilación Pyodide. Selecciona pipeline y SOURCE/INPUT mediante datasets autorizados, cubre USE, conserva obligaciones JOIN en O0/O3 y muestra estado, diagnósticos, salidas independientes, tabla paginada, esquema físico/nulabilidad observada, gráfico opcional de la página y descargas. OUTPUT se recoge y materializa como Parquet; SINK conserva el runtime original. Cambiar opciones marca lo anterior; no ejecuta automáticamente. Solo se sondea trabajo activo con estudio/pestaña visibles. Navegar conserva referencia en memoria; recargar conserva v1 pero pierde trabajos/bindings locales. Sin datasets/resultados en localStorage ni migración del documento.
+
+JOIN funciona con CSV incluidos; `service.prepare` prepara ventas/riesgo desde el generador canónico, rangos con su esquema específico y duplicados derechos para fallo intencional. El catálogo informa disponibilidad/hash y rechaza conectores incompatibles. El ejercicio NULL original permanece inválido y su corrección puede ejecutarse. Rutas arbitrarias del navegador y descargas por path no están admitidas.
+
+Vite dev/preview conecta por proxy; la API entrega el build bajo mismo origen con fallback SPA y errores reales de assets/API. Docker tiene targets compiler/service y perfil local web, sin despliegue público. Dependencias de servidor aisladas en `requirements-service.txt`; tipos TS y OpenAPI generados y comprobados. Comandos, contrato, límites detallados, persistencia y semántica de salidas: [servicio_ejecucion.md](servicio_ejecucion.md).
+
+Paso D/W3 cubre los criterios esenciales del recorrido código → ejecución → tabla → archivo. W1 **sigue parcial** por `/evaluacion`, ajuste de tamaño y otros requisitos de alcance global; el constructor por bloques, cuentas, cargas de datasets propios y colaboración no se incorporan. La siguiente entrega es E: publicar evidencia C5 en `/evaluacion`, sin modificar las cifras existentes.
+
+**Verificación D:** 157 pruebas Python (también en Docker), 38 web, contenido/OpenAPI comprobados, demos regeneradas y builds web/Docker. `playwright-cli`: A/B/C completo y las 32 comparaciones en Vite 5177; D completo en Vite, build servido por FastAPI 8017 y build Docker 8019; contenido e inspectores también en Docker, sin imports de `/src/`. Descargas Parquet/CSV comparadas con Python; casos reales de USE, múltiples salidas, JOIN O0/O3 válido/fallido, revisión durante running, cancelación activa, timeout, desconexión con compilación local, vacío válido, navegación/persistencia v1, móvil/temas/foco. La descarga CDN de Pyodide falló en un intento de inspectores y la repetición completa pasó. Evidencia detallada en la guía del servicio; no se declara toda la continuación web completa.

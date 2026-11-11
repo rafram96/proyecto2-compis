@@ -1,6 +1,6 @@
 # Arquitectura propuesta de Cauce
 
-Fecha: 11 de noviembre de 2026. Estado: **arquitectura aceptada para demo privada; implementación incremental**.
+Fecha: 11 de noviembre de 2026. Estado: **arquitectura aceptada para demo privada; paso D implementado**.
 
 Este documento concreta la arquitectura del [plan de desarrollo](plan_desarrollo.md). El equipo ha elegido una **demo privada**, de una sola instancia, con ejemplos incluidos y ejecuciones acotadas, siguiendo las recomendaciones de este documento. Se inicia en entorno local con Docker; cuentas, carga de archivos propios y despliegue público quedan fuera de la primera entrega. Solo se elegirá un proveedor si se necesita alojar la demo privada fuera del equipo local.
 
@@ -165,3 +165,16 @@ invocar el pipeline generado, también sin optimización. El futuro runner deber
 conservarlas y sus dependencias; no debe confiar en una marca de integridad del
 cliente. C4 no introduce servidor ni cambios al ciclo HTTP propuesto.
 Ver [condiciones de corrección](optimizacion_joins.md).
+
+
+## Implementación del paso D (11 de noviembre de 2026)
+
+El contrato HTTP 1 de la sección 3 está implementado en `service/`, con Pydantic estricto, FastAPI/Uvicorn, subprocess por trabajo, SQLite y un directorio propio. `web/src/execution/` integra selección de pipeline/bindings, sondeo visible, estados, preview, esquema y descargas con el documento/revisión/pases existentes. Los modelos TS se generan desde OpenAPI; el contrato de análisis permanece en 4. No se agregó endpoint de compilación ni se modificaron los contratos del núcleo.
+
+Los valores de la sección 6 eran propuestas; los límites aplicados ahora son: 30 s, un activo/cuatro posiciones adicionales, 512 MiB RSS muestreado cada 50 ms, 16 MiB de entradas, 16 MiB por archivo y 32 MiB por trabajo, reserva de almacenamiento hasta 256 MiB, 128 metadatos, 1 millón de filas/128 columnas por salida, preview de 100 filas y archivos durante una hora más tombstone de otra hora. No son capacidad medida. En Docker, 1 GiB y dos CPU para el contenedor completo. RSS y directorio pueden sobrepasar el límite entre muestras: el hijo no equivale a un sandbox de red/host.
+
+Los bindings incluyen SOURCE alcanzados por USE y los INPUT del pipeline elegido; el adaptador modifica solo rutas de conectores sobre la IR original/optimizada existente. Se conserva el driver/opciones y se valida compatibilidad. JOIN conserva todas sus obligaciones dinámicas en O0 y con optimización. SINK usa el runtime original; OUTPUT del pipeline elegido se recoge explícitamente y exporta Parquet. No hay transacción global. La cancelación mata/recolecta el hijo; el reinicio marca interrumpidos, limpia huérfanos y no reanuda automáticamente.
+
+Datasets incluidos: JOIN. Preparados reproduciblemente: pedidos y SQLite del generador existente, rangos con su propio esquema y un caso JOIN derecho duplicado. La disponibilidad real procede de capacidades, con versiones y hashes. El servicio sirve el build y fallback SPA con errores reales de assets/API; Vite tiene proxy de desarrollo/preview. No se realizó despliegue público.
+
+Detalles vigentes, comandos y evidencia: [servicio_ejecucion.md](servicio_ejecucion.md). Las secciones de propuesta anteriores conservan las razones de diseño; esa guía documenta el comportamiento implementado y sus límites. W1 global sigue parcial; D/W3 no completa toda la continuación web.

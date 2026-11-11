@@ -29,7 +29,8 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m etl_dsl input\duckdb.etl --format ast
 # IR antes y después de los pases de optimización
 .\.venv\Scripts\python.exe -m etl_dsl demo\optimizaciones.etl --format ir
-.\.venv\Scripts\python.exe -m unittest discover -v
+# La suite completa incluye el servicio POSIX; en Windows, usar Docker:
+docker compose --profile tests run --build --rm tests
 ```
 
 `main.py` procesa recursivamente los archivos `.etl` de `input/` y guarda el
@@ -231,13 +232,13 @@ reporte Markdown. Los artefactos generados quedan fuera de Git.
 El segundo escenario controla solo los collect finales de Polars.
 Comandos, workloads, resultados y límites: [evaluación C5](docs/evaluacion.md).
 
-### Web Cauce (W1 pasos A/B, paso C/W2 y W4 esencial)
+### Web Cauce (W1 pasos A/B, C/W2, D/W3 y W4 esencial)
 
 La web Vite/React conserva el landing en `/`, ofrece `/ejemplos`, `/ejemplos/:slug`, `/docs`, `/docs/:slug`
 y el espacio de trabajo en `/estudio`:
 editor CodeMirror, compilación local real con Pyodide, inspectores estructurados y diagnósticos seleccionables.
 Permite importar/exportar `.etl`, descargar Python vigente y recuperar borradores versionados
-tras recargar. No ejecuta Polars ni lee datasets en el navegador.
+tras recargar. La ejecución real se realiza en el servicio Python privado descrito más abajo; el navegador no ejecuta Polars.
 
 ```sh
 cd web
@@ -268,7 +269,28 @@ Los esquemas corresponden a la IR original y los hechos de rangos a una etapa in
 separa declaración, prueba estática y obligaciones dinámicas pendientes; compilar no valida datos. No se
 inventan trazas para constantes, filtros o muertos ni correspondencia entre Python generado y líneas DSL.
 
-Verificación de esta entrega: **137 pruebas Python**, **31 web**, demos regeneradas, build y recorridos
+Verificación de esta entrega: **157 pruebas Python**, **38 web**, demos regeneradas, build y recorridos
 reales con `playwright-cli` en Vite y preview. Se conservan las 32 comparaciones CPython/Pyodide,
 O1/O3 y recuperación del worker. W1 sigue parcial por `/evaluacion` y los requisitos pendientes;
-Paso C/W2 queda implementado; W3 de ejecución corresponde a la siguiente entrega D. Las cifras experimentales de C5 no cambian.
+Paso C/W2 queda implementado; el servicio del paso D/W3 se describe en la sección siguiente. Las cifras experimentales de C5 no cambian.
+
+### Ejecución web privada (paso D / W3)
+
+El estudio ahora ejecuta mediante una API Python local/privada y conserva la compilación local Pyodide independiente. No se ha realizado un despliegue público.
+
+```sh
+# Desde la raíz; en un entorno creado con uv puede usarse uv pip install --python .venv/bin/python -r requirements-service.txt
+.venv/bin/python -m pip install -r requirements-service.txt
+.venv/bin/python -m service.prepare
+.venv/bin/python -m uvicorn service.app:app --host 127.0.0.1 --port 8000 --workers 1 --no-access-log
+# Otra terminal: cd web && npm ci && npm run dev -- --host 127.0.0.1 --port 5174 --strictPort
+# O después del build: abrir http://127.0.0.1:8000/estudio
+```
+
+En Resultados, elegir pipeline, enlazar datasets del catálogo y pulsar Ejecutar. Ventas: `ventas.pedidos → orders@1`. JOIN utiliza los dos CSV incluidos sin preparación; ventas/riesgo/rangos necesitan `service.prepare`, que reutiliza el generador canónico y prepara rangos por separado. La API informa disponibilidad y versiones; el ejercicio NULL se ejecuta después de corregirlo. También funcionan INPUT directo y composición USE.
+
+La API `/api/v1` acepta fuente ETL, recompila en un proceso hijo y mantiene queued/running/estados terminales en SQLite. Previews paginados, esquema observado y descargas por manifiesto; OUTPUT se materializa como Parquet. Revisión, pases (null, O0 y orden explícito), pipeline y bindings identifican cada resultado. Un cambio marca resultados anteriores; no ejecuta automáticamente ni afecta a CodeMirror. Borradores v1 sin cambios; referencias de trabajos solo en memoria de la pestaña.
+
+Límites privados: un activo/cuatro posiciones adicionales, 30 s, RSS muestreado de 512 MiB, archivos acotados y caducidad de una hora. Cancelar termina el hijo; reiniciar limpia huérfanos sin reanudación. Los contratos dinámicos y las obligaciones JOIN permanecen con O0 y optimización. No hay transacción global ni sandbox público. Docker: `docker compose --profile web up --build cauce`, accesible solo en loopback.
+
+Contrato HTTP 1 (distinto del análisis JSON 4), comandos, límites completos, persistencia, serialización y verificación: [guía del servicio](docs/servicio_ejecucion.md). W1 global sigue parcial; `/evaluacion`, constructor visual y otras extensiones siguen pendientes. No se modificaron las cifras C5.

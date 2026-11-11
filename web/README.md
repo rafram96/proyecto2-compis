@@ -56,7 +56,7 @@ Los snapshots del landing guardan texto y resumen de análisis con diagnósticos
 del paquete inicial. El resultado en vivo sí conserva los artefactos solicitados, incluso cuando una fase posterior falla.
 La vista AST compacta oculta posiciones solo en el texto; el contrato en vivo las mantiene. Véase [la API de análisis](../docs/api_analisis.md).
 
-Polars y DuckDB no hacen falta para compilar: el estudio no ejecuta pipelines ni lee datos.
+Polars y DuckDB no hacen falta para compilar: el análisis local no ejecuta pipelines ni lee datos. La ejecución del paso D utiliza el servicio Python privado.
 
 ## Contenido y recursos
 
@@ -113,8 +113,7 @@ Si hay ocho anteriores, se muestra un error y enlace para gestionar borradores, 
 Si el almacenamiento falla, la copia abre en memoria y el estudio muestra **Sin guardar**, con indicación de descargar antes de salir.
 No se garantiza recuperación tras cerrar/recargar en ese caso. El límite total de 512 KiB se mantiene.
 
-Los requisitos distinguen datasets incluidos (`demo/joins_*.csv`), generables localmente (`scripts/create_demo_data.py`)
-y ausentes (`ventas.csv` de rangos). Compilar no los consulta, no certifica sus valores y no ejecuta pipelines.
+Los requisitos distinguen datasets incluidos (`demo/joins_*.csv`) y preparados por `python -m service.prepare`: ventas/riesgo reutilizan `scripts/create_demo_data.py`; rangos se prepara por separado con su propio esquema. Compilar no los consulta, no certifica sus valores y no ejecuta pipelines.
 La ejecución y el Python descargado requieren el entorno Python del proyecto, sus dependencias y los archivos declarados.
 
 ## Documento, archivos y persistencia
@@ -151,8 +150,8 @@ el documento y requiere pulsar Compilar para descargar/cargar Python otra vez. N
 
 ## Verificación reproducible
 
-Desde la raíz: `.venv/bin/python -m unittest discover` (**137 pruebas**) y `.venv/bin/python web/scripts/gen_compiled.py`.
-Desde `web`: `npm test` (**31 pruebas**) y `npm run build`. El worker se prueba con canales/temporizadores simulados para fallos y plazos.
+Desde la raíz: `.venv/bin/python -m unittest discover` (**157 pruebas**) y `.venv/bin/python web/scripts/gen_compiled.py`.
+Desde `web`: `npm test` (**38 pruebas**) y `npm run build`. El worker se prueba con canales/temporizadores simulados para fallos y plazos.
 
 Con Vite iniciado en un puerto libre (no detener procesos ajenos):
 
@@ -187,7 +186,7 @@ Esta opción no sustituye la suite completa de desarrollo; añade verificación 
 ## Pendiente
 
 W1 queda **parcial**: pasos A y B implementados; `/evaluacion` y otros requisitos de su definición siguen pendientes. W4 esencial implementado; las sugerencias semánticas siguen pendientes.
-Paso C/W2 implementa AST/FLOW y comparación de IR. W3 (servicio HTTP, bindings y ejecución Polars con datos) sigue pendiente.
+Paso C/W2 implementa AST/FLOW y comparación de IR. W3 (servicio HTTP, bindings y ejecución Polars con datos) se implementa en el paso D descrito al final.
 No hay cuentas, colaboración, persistencia remota ni editor por bloques.
 
 
@@ -256,3 +255,23 @@ resultados y constructor visual siguen fuera de esta entrega. La siguiente entre
 Para enteros fuera del rango seguro de JavaScript, el inspector advierte el posible redondeo del JSON y
 remite a AST/IR textuales producidos en Python; no certifica igualdad estructurada para esos nodos ni
 imprime un límite de rangos redondeado como exacto. Los decimales del AST ya llegan como texto.
+
+## Paso D: servicio privado y resultados reales
+
+La entrega D añade ejecución explícita al estudio mediante `service/` (FastAPI/Pydantic/Uvicorn), runner subprocess, SQLite y archivos temporales. **Compilar sigue siendo local** e independiente de la API. Ejecutar envía el programa y opciones al servicio, vuelve a compilar allí y valida datasets/contratos con PolarsRuntime. No hay uploads ni despliegue público.
+
+Desde la raíz: instalar `requirements-service.txt`, ejecutar `.venv/bin/python -m service.prepare` y arrancar `.venv/bin/python -m uvicorn service.app:app --host 127.0.0.1 --port 8000 --workers 1 --no-access-log`. Vite dev/preview redirige `/api` a ese puerto; `CAUCE_API_TARGET` permite elegir otro. Después de `npm run build`, la misma API sirve `web/dist` y las rutas SPA, con 404 reales de assets/API. `docker compose --profile web up --build cauce` prepara y sirve ambos bajo loopback con volumen local.
+
+Resultados permite elegir pipeline y bindings `pipeline.declaración → dataset@versión`, ejecutar, cancelar, elegir salida, paginar hasta 100 filas, consultar esquema observado, graficar números finitos de la página y descargar archivos. SOURCE/INPUT/OUTPUT/USE y VERIFY conservan los contratos del núcleo. OUTPUT se materializa en Parquet; SINK conserva CSV/Parquet/DuckDB. Decimales y enteros grandes llegan como texto exacto; NULL, fechas y no finitos tienen representación explícita.
+
+JOIN está incluido sin preparar datos. `service.prepare` reutiliza el generador canónico para ventas/riesgo, prepara rangos con sus propias columnas y un dataset de duplicados para fallo intencional. La disponibilidad procede de capacidades: no basta con que un ejemplo compile. Pases null/[]/listas y su orden se conservan. La API HTTP 1 y el análisis JSON 4 son contratos distintos; `scripts/gen_http.py` genera tipos TS/OpenAPI y `--check` detecta deriva.
+
+Cada trabajo pertenece a fuente/revisión/pases/pipeline/bindings/hash de datasets. Editar lo marca anterior; navegar conserva su referencia en memoria, mientras el sondeo solo funciona en el estudio visible y con trabajo activo. Recargar pierde referencia y bindings, conserva el documento v1 y no cancela el proceso. No hay tablas/datasets en localStorage. Archivo y estado caducan por separado; el servicio limpia archivos a la hora y elimina el tombstone una hora después. Reiniciar marca trabajos interrumpidos y limpia huérfanos, sin reanudar.
+
+Límites: 30 s, un activo y cuatro posiciones adicionales, RSS 512 MiB muestreado cada 50 ms, 16 MiB de entradas, 16 MiB por archivo/32 MiB por trabajo, 256 MiB de instancia y 128 registros; 1 millón de filas/128 columnas por salida. Son protecciones de demo, con posibles sobrepasos entre muestras. No hay sandbox de red/host ni transacción global. La instancia está limitada a uso local/privado.
+
+Comandos, contrato, datasets, aislamiento y verificación detallada: [servicio_ejecucion.md](../docs/servicio_ejecucion.md). Para repetir D con `playwright-cli`, arrancar otra API con `CAUCE_STORAGE=data/cauce-timeout CAUCE_TIMEOUT=0.02` en 8018 y ejecutar `verify_browser.py --url URL --execution-only --timeout-api http://127.0.0.1:8018`. Funciona sobre Vite y sobre el build servido, sin `/src/`. Las suites históricas siguen ejecutándose con el comando sin `--execution-only`.
+
+Paso D/W3 incorpora el recorrido esencial real; W1 global sigue parcial por `/evaluacion` y otros requisitos pendientes. Los apartados históricos anteriores describen su entrega concreta; este apartado y la guía del servicio describen la ejecución vigente.
+
+Verificación final D: **157 Python** (también en Docker), **38 web**, contenido/OpenAPI vigentes, demos regeneradas y builds web/Docker. `playwright-cli` conservó A/B/C y las 32 comparaciones en Vite 5177. D pasó en Vite, build servido por FastAPI 8017 y contenedor local 8019; contenido e inspectores también pasaron en el contenedor, sin `/src/`. Incluye descarga contra Python, varias salidas, USE, JOIN válido/fallido en O0/O3, edición durante running, cancelación, timeout real, API desconectada con Pyodide operativo, vacío, navegación, recarga v1, foco y ambos temas/móvil. Un intento de inspectores falló por descarga externa de Pyodide; la repetición íntegra pasó. Las capturas se revisaron visualmente. Detalle y comandos en la guía del servicio.
