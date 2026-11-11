@@ -172,7 +172,7 @@ arnés; los metadatos guardan el número efectivo y las variables relevantes.
 - `structure.csv/json`: recuentos y cambios, IR y pruebas de reescritura.
 - `errors.csv`: caso, fase y código exigido/observado; controles Polars.
 - `metadata.json`: opciones, versiones, revisión y estado Git, hashes de fuentes
-  exactos, Python/Polars/Lark, plataforma, CPU, RAM disponible cuando el SO la
+  exactos, Python/Polars/Lark, plataforma, CPU, RAM total cuando el SO la
   expone, hilos, firma/flags, manifiestos IPC de datos y equivalencia.
 - `report.md`: tablas reales de tiempos/estructura, expresividad descriptiva,
   comandos de reproducción y límites. LOC cuenta líneas no vacías/comentadas;
@@ -197,6 +197,105 @@ mejora demostrada; tampoco se infiere rendimiento a partir de nodos eliminados.
 
 ## Resultados y verificaciones
 
-Las campañas y la interpretación medidas se documentan al finalizar la
-verificación de esta entrega. El reporte completo se produce con los comandos
-anteriores; no se usan cifras simuladas.
+Campaña realizada el **11 de noviembre de 2026, 15:38–15:41 (America/Lima)**
+sobre la implementación `efe1399`, con Python **3.13.13**, Polars **2.1.0**,
+Lark **1.3.1**, Apple **M5 Pro**, 15 CPUs lógicas, **24 GiB** de RAM,
+macOS **27.2 arm64**, cuatro hilos Polars. Semilla **20261111**; tamaños
+**10 000, 200 000 y 1 000 000**; dos calentamientos y diez repeticiones por
+celda, ambos escenarios. El estado Git solo contenía los cambios ajenos en
+`.gitignore` y `uv.lock`; los hashes de implementación están en los metadatos.
+
+Se obtuvieron **4 400 muestras**, **440 resúmenes**, **56 registros
+estructurales**, **1 024 comparaciones previas** y **285 errores esperados**.
+Además, cada una de las 3 840 ejecuciones cronometradas y sus calentamientos
+pasó equivalencia. Se recalcularon desde `samples.csv` la mediana, P25/P75,
+IQR, extremos y razón de todas las celdas de `summary.csv`, sin discrepancias.
+El modo pequeño final obtuvo 368 muestras y 768 comparaciones previas.
+
+Estos son resultados reales de esta máquina. **Mediana (IQR), en ms**, a un
+millón de filas, escenario **normal**. La razón compara O0 con default.
+
+| Workload | O0 | Default | Manual contractual | O0/default |
+|---|---:|---:|---:|---:|
+| rangos | 12.4385 (0.4826) | 12.6280 (0.5622) | 12.4837 (0.2974) | 0.985 |
+| clasicas | 15.7956 (1.6553) | 16.3338 (2.1254) | 16.7759 (0.9474) | 0.967 |
+| join | 11.4485 (0.7292) | 2.6018 (0.8249) | 12.2013 (1.6387) | 4.400 |
+| combinado | 13.1244 (1.5899) | 8.7495 (0.9066) | 13.7256 (1.2790) | 1.500 |
+| control_limites | 20.8111 (3.0886) | 21.8753 (0.7691) | 21.2934 (1.1094) | 0.951 |
+| control_join | 16.2328 (1.4793) | 15.7612 (1.0344) | 15.2197 (1.3988) | 1.030 |
+| control_sin_garantia | 3.5081 (0.2426) | 3.4795 (1.1039) | 3.7154 (0.8799) | 1.008 |
+| agregados | 3.9562 (1.4560) | 3.5889 (0.7851) | 3.9865 (0.8309) | 1.102 |
+
+Efectos **individuales** pertinentes, mismas filas y escenario; O0 es el de la
+tabla anterior. Los resultados completos de todos los pases y tamaños están
+en el reporte exportado.
+
+| Workload | Pase aislado | Mediana (IQR) ms | O0/pase |
+|---|---|---:|---:|
+| rangos | rangos | 12.1560 (1.2670) | 1.023 |
+| clasicas | constantes | 16.4054 (1.5394) | 0.963 |
+| clasicas | filtros | 15.6947 (1.0696) | 1.006 |
+| clasicas | muertos | 16.4080 (2.0048) | 0.963 |
+| join | joins | 2.2660 (0.3824) | 5.052 |
+| combinado | rangos | 13.1384 (1.2914) | 0.999 |
+| combinado | joins | 8.7860 (1.1119) | 1.494 |
+| control_limites | rangos (abstención) | 21.0660 (1.1974) | 0.988 |
+| control_join | joins (abstención) | 15.1985 (2.0569) | 1.068 |
+
+La ganancia observada de JOIN incluye **toda** la validación C4. En join,
+CHECK_JOIN mantiene los mismos cinco nodos y evita construir las columnas
+combinadas; en combinado se pasa de 14 a 10 nodos. No hay evidencia aquí de una
+mejora clara de O1 con el motor habitual: en rangos, default elimina un nodo y
+registra dos pruebas, pero la mediana es ligeramente peor. En clasicas se pasa
+de ocho a cinco nodos y aun así default tarda aproximadamente un 3.4% más. Las
+diferencias son pequeñas respecto a la dispersión y no se presentan como
+regresiones estadísticamente demostradas.
+
+Los controles aportan una advertencia concreta: control_join, control_sin_garantia
+y agregados **no transforman operadores** con default, pero sus medianas también
+varían. Por ejemplo, el 1.102 de agregados no puede atribuirse a una reescritura
+que no ocurrió. Tampoco se explica una reducción de tiempo usando solamente
+el número de nodos. El baseline manual contractual conserva el JOIN y su coste;
+no supone una cota inferior de una implementación experta que eliminase ese
+JOIN manualmente tras verificar las mismas garantías.
+
+En **final_flags_none**, a un millón de filas, las razones O0/default fueron
+**1.047** (rangos), **1.057** (clasicas), **6.788** (join) y **2.231**
+(combinado). Para join/default se midieron **2.4185 ms (IQR 0.4374)**; para
+combinado/default, **8.4773 ms (1.6127)**. Estas razones tienen **su propio O0
+del mismo escenario**. Cambiar flags solo en salidas afecta de forma distinta
+a JOIN y CHECK_JOIN porque sus planes finales difieren; los snapshots y el anti
+join anteriores conservan las opciones habituales. No se atribuyen estas
+razones a desactivar globalmente Polars.
+
+**Compilación completa de la API**, mediana (IQR) en ms, independiente de tamaños:
+
+| Workload | O0 | Default |
+|---|---:|---:|
+| rangos | 2.1709 (0.8596) | 1.9305 (0.3274) |
+| clasicas | 2.1498 (1.6172) | 2.1957 (0.8924) |
+| join | 1.2116 (0.3656) | 1.4818 (0.2164) |
+| combinado | 2.7173 (0.3278) | 3.6514 (1.3854) |
+| control_limites | 1.0429 (0.3138) | 1.2326 (0.3462) |
+| control_join | 1.2233 (0.4685) | 1.3165 (0.1203) |
+| control_sin_garantia | 1.3707 (1.3490) | 2.3864 (1.1648) |
+| agregados | 1.2089 (0.1289) | 1.4427 (0.2217) |
+
+Los pases añaden análisis —rangos y joins vuelven a inferir esquemas— y en
+general aumentan el coste de compilación. La dispersión en varias celdas es
+alta; el caso rangos no permite afirmar que activar más fases acelere el
+compilador. No se amortiza este coste dentro del tiempo de ejecución.
+
+Artefactos locales de esta campaña:
+`benchmarks/results/representativa/{samples.csv,summary.csv,structure.csv,structure.json,errors.csv,metadata.json,report.md}`.
+Permanecen ignorados por Git y se regeneran con el comando exacto al principio
+de este documento. No se promete reproducir los mismos nanosegundos; sí datos,
+programas, garantías, opciones y protocolo. Para llevar las tablas al artículo
+final todavía corresponde discutir otras máquinas, IO y memoria si el equipo
+amplía el estudio; eso no está medido en C5.
+
+Verificación de la entrega: **131 pruebas Python** (11 del arnés), modo pequeño,
+campaña representativa, demos regeneradas con 131 pruebas, **4 pruebas web**,
+build de producción y comprobación Pyodide con Vite mediante `playwright-cli`.
+No se modificó el núcleo ni el contrato JSON 4; la comprobación de navegador
+cubre los snapshots regenerados. C5 no implementa el servicio ni páginas web.

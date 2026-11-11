@@ -140,7 +140,8 @@ No hay propagación interprocedural de integridad ni prueba estática de datos.
 
 La validación materializa ambas entradas y usa memoria; aún realiza un anti join
 para comprobar pertenencia. La optimización elimina el JOIN que construía las
-columnas combinadas, no el trabajo necesario para justificarlo. No se afirma una
-mejora de tiempo o memoria sin las mediciones de C5, que siguen pendientes.
+columnas combinadas, no el trabajo necesario para justificarlo. Las
+[mediciones C5](evaluacion.md) incluyen todo ese coste y documentan mejoras
+observadas y controles; no prueban una mejora universal ni miden memoria pico.
 No hay transacción global ni bloqueo de archivos: la instantánea vincula esta
 obligación y su resultado, no todos los consumidores independientes del pipeline.

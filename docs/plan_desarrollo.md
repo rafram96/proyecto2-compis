@@ -2,7 +2,7 @@
 
 Fecha de revisión: **11 de noviembre de 2026**.
 
-Este plan parte del código actual de `etl_dsl/`, `tests/` y `web/`, y lo contrasta con [el enunciado](Enunciado_DSL.md). Cubre el compilador y la continuación de la web. C1, C2, C3 y C4 están implementados; las siguientes entregas continúan pendientes.
+Este plan parte del código actual de `etl_dsl/`, `tests/` y `web/`, y lo contrasta con [el enunciado](Enunciado_DSL.md). Cubre el compilador y la continuación de la web. C1, C2, C3, C4 y C5 están implementados; las siguientes entregas continúan pendientes.
 
 Ampliación del plan: arquitectura de conexión, páginas adicionales y evaluación de edición visual, tomando como referencia el proyecto local `csharp-x86-compi/`. Se mantiene la libertad de adaptar sus ideas al dominio ETL. Esta ampliación documenta decisiones; no implementa todavía las páginas ni el editor por bloques.
 
@@ -29,8 +29,8 @@ La [definición de arquitectura de la aplicación](arquitectura_aplicacion.md) c
 | Conectores | ✅ | Lectura CSV, Parquet, SQLite y DuckDB; escritura CSV, Parquet y DuckDB: `runtime.py`. DuckDB es un conector; las transformaciones usan Polars. |
 | Ejecución | ✅ | `LazyFrame`, selección de pipelines, entradas externas mediante API Python y comprobaciones en ejecución. |
 | CLI | ✅ | Compilación individual y por carpetas, seis formatos, ejecución, selección de pases, rutas base y continuación del lote tras errores: `main.py`. |
-| Pruebas y entorno | ✅ | Suite `unittest`, dependencias, Docker y datos de demostración. Tras C4 pasan **120 pruebas Python**, más 4 del adaptador web. |
-| Evaluación experimental | ⬜ | No se identificó un arnés de benchmarks, baselines manuales y resultados estadísticos reproducibles entre los archivos revisados. |
+| Pruebas y entorno | ✅ | Suite `unittest`, dependencias, Docker y datos de demostración. Tras C5 pasan **131 pruebas Python**, más 4 del adaptador web. |
+| Evaluación experimental | ✅ | `benchmarks/`: ocho workloads, baselines contractuales, equivalencia obligatoria, compilación/ejecución separadas y CSV/JSON/reporte. Campaña real hasta un millón de filas; [metodología y límites](evaluacion.md). |
 
 **Distinción importante:** el compilador ya funciona de punta a punta por terminal. La brecha principal está en verificar propiedades de los datos antes de ejecutarlos y usarlas para optimizar.
 
@@ -132,17 +132,29 @@ El [plan inicial](planificacion.md) contiene decisiones anteriores: sintaxis en 
 
 **Dependencias:** C2 y modelo de hechos de C3. **Archivos:** gramática/AST si se agregan contratos, análisis semántico, runtime, IR y pases.
 
-**Cerrado:** `VERIFY MANY_TO_ONE` y pase `joins` con obligación ejecutable CHECK_JOIN, fronteras SELECT en todas las ramas, instantáneas materializadas y conservación de dependencias por muertos. Solo INNER con clave simple y lado derecho no observable. Contrato JSON 4. Ver [condiciones y límites](optimizacion_joins.md). Verificación: 120 pruebas Python (15 C4, 120 órdenes de pases), demos, 4 web, build y Pyodide con `playwright-cli`. C5 permanece pendiente; no se afirma mejora de rendimiento.
+**Cerrado:** `VERIFY MANY_TO_ONE` y pase `joins` con obligación ejecutable CHECK_JOIN, fronteras SELECT en todas las ramas, instantáneas materializadas y conservación de dependencias por muertos. Solo INNER con clave simple y lado derecho no observable. Contrato JSON 4. Ver [condiciones y límites](optimizacion_joins.md). Verificación de C4: 120 pruebas Python (15 C4, 120 órdenes de pases), demos, 4 web, build y Pyodide con `playwright-cli`. Las mediciones se incorporan en C5; la corrección por sí sola no implica mejora de rendimiento.
 
 ### C5. Evaluación reproducible — P1
 
-- [ ] Crear `benchmarks/` con datos de semilla fija, programas `.etl` y versiones Polars escritas a mano.
-- [ ] Comparar `-O0`, cada pase por separado, combinación completa y baseline manual; verificar primero igualdad de resultados.
-- [ ] Separar tiempo de compilación y ejecución; documentar calentamiento, número de repeticiones, mediana, dispersión y entorno.
-- [ ] Controlar y documentar las optimizaciones de Polars para distinguir su efecto del de nuestros pases. No prometer mejoras de tiempo por una reducción de nodos.
-- [ ] Exportar resultados a CSV y generar tablas/gráficos para expresividad, rendimiento, impacto por pase y detección de errores.
+- [x] Crear `benchmarks/` con datos de semilla fija, programas `.etl` y versiones Polars escritas a mano.
+- [x] Comparar `-O0`, cada pase por separado, combinación completa y baseline manual contractual; verificar primero igualdad de resultados.
+- [x] Separar tiempo de compilación y ejecución; documentar calentamiento, número de repeticiones, mediana, dispersión y entorno.
+- [x] Controlar y documentar las optimizaciones de Polars para distinguir su efecto del de nuestros pases. Escenario normal y flags desactivados solo en collect finales; validaciones internas habituales.
+- [x] Exportar resultados a CSV/JSON y generar tablas para expresividad descriptiva, rendimiento, impacto por pase y detección de errores.
 
 **Criterio de cierre:** un comando reproduce datos y mediciones; los resultados reportados incluyen variación y limitaciones.
+
+**Cerrado:** ocho workloads, siete configuraciones del compilador y baseline manual,
+dos escenarios Polars; equivalencia exacta con columnas/dtypes/nulos/orden/multiplicidad,
+vacíos y NaN, comprobaciones de abstención por IR y 285 errores de contratos/compilación.
+Campaña real en Apple M5 Pro, cuatro hilos, semilla 20261111, 10 000/200 000/1 000 000 filas,
+dos calentamientos y diez repeticiones: 4 400 muestras, 440 resúmenes y 1 024 comparaciones
+previas. Ejecución incluye toda la validación C4. A un millón de filas, escenario normal,
+O0/default observado: join 4.400, combinado 1.500, rangos 0.985 y clasicas 0.967;
+no se afirma significancia ni mejora universal. Artefactos generados ignorados por Git.
+[Comandos, cifras con IQR, costes y amenazas a la validez](evaluacion.md).
+Verificación: 131 pruebas Python (11 C5), modo pequeño, campaña, demos regeneradas,
+4 pruebas web, build y Pyodide con `playwright-cli`. Núcleo y contrato JSON 4 sin cambios.
 
 ## 5. Plan de continuación de la web
 
@@ -206,12 +218,12 @@ El contrato del servicio y un primer recorrido con un dataset incluido pueden de
 
 ## 7. Pruebas y documentación para cerrar el proyecto
 
-- [x] Suite actual: `.venv/bin/python -m unittest discover` — **120 pruebas, OK**.
+- [x] Suite actual: `.venv/bin/python -m unittest discover` — **131 pruebas, OK**.
 - [x] Adaptador de diagnósticos: `cd web && npm test` — **4 pruebas, OK**.
 - [x] C1/C2/C3/C4 en navegador: `.venv/bin/python web/scripts/verify_browser.py` — **32 comparaciones CPython/Pyodide, dos casos C2, prueba O1, eliminación O3 con obligaciones, abstenciones y recorrido de corrección, OK**.
 - [x] Build actual: `cd web && npm run build` — **OK**.
 - [x] Agregar pruebas de tipos/esquemas y de propagación de nulabilidad, especialmente en JOIN y `USE`.
-- [ ] Probar equivalencia por cada pase nuevo y casos donde debe abstenerse de optimizar.
+- [x] Probar equivalencia de los cinco pases actuales y casos donde deben abstenerse de optimizar, también en la evaluación C5.
 - [ ] Automatizar el recorrido web: cargar Pyodide, editar, diagnosticar, comparar IR y ejecutar un ejemplo.
 - [ ] Verificar el estudio en móvil y escritorio, teclado, foco, temas y movimiento reducido.
 - [ ] Comprobar paridad entre CLI, puente y navegador después de cambiar el compilador; regenerar `compiled.json`.
