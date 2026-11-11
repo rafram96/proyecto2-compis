@@ -7,7 +7,7 @@ Cumbemayo y Nazca.
 ```bash
 cd web && npm install && npm run dev            # http://localhost:5173
 npm run build                                    # tsc + vite build
-npm test                                         # 24 pruebas de contenido, rangos, documentos y worker; Node >= 22.18
+npm test                                         # 31 pruebas de contenido, inspectores, rangos, documentos y worker; Node >= 22.18
 .venv/bin/python web/scripts/gen_content.py      # (raíz del repo) genera src/content/generated.json
 .venv/bin/python web/scripts/gen_content.py --check # detecta contenido desactualizado
 .venv/bin/python web/scripts/gen_compiled.py     # (raíz del repo) regenera src/data/compiled.json
@@ -70,7 +70,7 @@ Polars y DuckDB no hacen falta para compilar: el estudio no ejecuta pipelines ni
 ## Rutas y navegación
 
 - `/`: landing y demo breve. **Continuar en el estudio** copia el texto editado y los pases al documento activo, conservando el anterior.
-- `/estudio`: editor estable, inspectores Resultado/Tokens/Árbol/AST/IR/Python y diagnósticos accesibles desde cualquier fase.
+- `/estudio`: editor estable, inspectores Resultado/Tokens/Árbol/AST/FLOW/IR/Esquemas/Python y diagnósticos accesibles desde cualquier fase.
 - `/ejemplos`: catálogo de cinco intenciones. `/ejemplos/:slug`: explicación, programa completo, expectativas y requisitos.
 - `/docs`: índice de seis guías. `/docs/:slug`: lectura con navegación entre artículos, anclas, tablas y resaltado existente.
 - Slugs inexistentes muestran recuperación al catálogo correspondiente y al estudio. Las demás rutas recuperan hacia Inicio/Estudio.
@@ -152,7 +152,7 @@ el documento y requiere pulsar Compilar para descargar/cargar Python otra vez. N
 ## Verificación reproducible
 
 Desde la raíz: `.venv/bin/python -m unittest discover` (**137 pruebas**) y `.venv/bin/python web/scripts/gen_compiled.py`.
-Desde `web`: `npm test` (**24 pruebas**) y `npm run build`. El worker se prueba con canales/temporizadores simulados para fallos y plazos.
+Desde `web`: `npm test` (**31 pruebas**) y `npm run build`. El worker se prueba con canales/temporizadores simulados para fallos y plazos.
 
 Con Vite iniciado en un puerto libre (no detener procesos ajenos):
 
@@ -187,5 +187,72 @@ Esta opción no sustituye la suite completa de desarrollo; añade verificación 
 ## Pendiente
 
 W1 queda **parcial**: pasos A y B implementados; `/evaluacion` y otros requisitos de su definición siguen pendientes. W4 esencial implementado; las sugerencias semánticas siguen pendientes.
-W2 conserva pendientes AST/FLOW gráficos y comparación avanzada de IR. W3 (servicio HTTP, bindings y ejecución Polars con datos) no se implementó.
+Paso C/W2 implementa AST/FLOW y comparación de IR. W3 (servicio HTTP, bindings y ejecución Polars con datos) sigue pendiente.
 No hay cuentas, colaboración, persistencia remota ni editor por bloques.
+
+
+## Paso C: estructura, FLOW y comparación de IR
+
+`src/components/inspectors/` adapta los artefactos reales del contrato 4. `Inspector` es una selección de UI,
+independiente de los seis `Format` del compilador; FLOW consume `ast` y Esquemas consume `schemas`.
+No cambia el núcleo, la semántica, el puente ni el protocolo. No añade dependencias al proyecto.
+Los componentes de inspección y CodeMirror se cargan en diferido; leer docs/ejemplos no carga sus módulos ni Pyodide.
+
+- **AST:** jerarquía expandible con propiedades, selección de nodos con span, texto compacto y JSON completo con posiciones.
+  No reconstruye declaraciones a partir del fuente. Los artefactos bloqueados/no solicitados explican su estado.
+- **FLOW:** declaraciones y cadenas originales del AST, separadas por pipeline. Distingue SOURCE/INPUT/STEP/USE/OUTPUT/SINK,
+  operaciones y puertos de JOIN y de los INPUT/OUTPUT del pipeline usado. Disposición determinista por capas,
+  tamaño según el contenido, desplazamiento interno y alternativa de lista accesible. No edita conexiones.
+  Una estructura inválida sigue mostrando su AST y enlaces; una disposición no resuelta se identifica sin corregir el programa.
+- **IR:** compara original/optimizada de la misma respuesta. `origin` permite conservar la procedencia de fusiones;
+  no se relacionan revisiones por nombre. Conservado/cambiado/eliminado describe diferencias de estructura y presencia
+  en la IR final, sin atribuirlas a un pase que no emite traza. Sin procedencia suficiente se indica falta de correspondencia.
+  En móvil se apilan original y optimizada por nodo; permanecen las representaciones textuales completas.
+  La pestaña interna **Evidencia O1/O3** evita recorrer todos los nodos para encontrar las pruebas emitidas.
+- **Esquemas:** `schemas` de la IR original, por pipeline/nodo/puerto, con conocimiento completo/parcial, tipos desconocidos,
+  dtype Null (`types=[]`), nulabilidad y ausencias conocidas. No es un esquema observado ni inferencia sobre archivos reales.
+- **Rangos:** hechos, límites, procedencia y reescrituras originales de `range_facts`/`range_rewrites`.
+  Los hechos se identifican como instantáneas intermedias del pase de rangos; no se presentan como estado final.
+- **JOIN:** declaración VERIFY, prueba estática emitida, consumidores SELECT, dependencias retenidas y obligaciones
+  dinámicas de `join_rewrites`. CHECK_JOIN conserva ambas entradas. VERIFY MANY_TO_ONE también exige validación en O0;
+  el navegador no ejecuta esa validación. No hay trazas de constantes/filtros/muertos ni métricas de velocidad nuevas.
+
+Un botón de fuente convierte el span del compilador con el mismo adaptador Unicode → UTF-16 de los diagnósticos;
+selecciona rangos multilínea y EOF en el CodeMirror existente. Conexiones FLOW seleccionan su sentencia original completa.
+Los nodos fusionados ofrecen cada origen original. No existe mapa Python generado → DSL. Cambiar inspector, pipeline,
+subvista o nodo no recompila. Una compilación por revisión/pases solicita todos los artefactos. Solo texto/nombre/pases
+crean revisión; los resultados antiguos conservan su rótulo y bloquean selección y descarga Python. Al hacer clic se
+vuelve a comprobar el documento/revisión actuales, además de deshabilitar el botón.
+
+**Pases:** Predeterminados envía `null`; O0 envía `[]`; Personalizados envía una lista explícita, incluso si coincide
+con los cinco predeterminados. Las casillas añaden al final y Subir/Bajar modifica el orden enviado, que se muestra junto
+al selector y en IR con los pases aplicados que devolvió el núcleo. No se ordena silenciosamente al restaurar.
+Se mantiene `cauce-workspace-v1`: sus campos ya admitían listas y orden, sin cambios de esquema ni migración necesaria.
+Los borradores previos con cualquiera de los seis inspectores históricos siguen restaurándose; se admiten además FLOW/Esquemas.
+Se conservan límites, borradores anteriores, avisos de cuota, revisión y descarga exclusiva de Python vigente.
+
+`npm test` incluye adaptadores contra artefactos generados en el momento por `.venv/bin/python` desde la raíz del proyecto;
+requiere ese entorno además de Node. Comprueba ramas, múltiples pipelines y puertos USE, JOIN, ciclos parciales,
+O0/procedencia/fusiones, evidencia real, restauración v1 y selección Unicode/revisiones.
+`verify_browser.py` conserva analysis/workspace/content y añade `inspectors.js`: ventas AST→fuente, riesgo/USE,
+JOIN left/right/SELECT/obligaciones, rangos antes/después/pruebas, null→personalizados→O0→recarga, documentación sin pérdida,
+Unicode multilínea, revisión antigua bloqueada, errores sintácticos/estructurales/semánticos y corrección,
+exploración sin mensajes al worker ni recrear CodeMirror, teclado, ambos temas y móvil.
+La descarga de Python con `rangos,constantes` se compara byte a byte con CPython, además de las descargas históricas.
+
+El recorrido nuevo también funciona sobre **vite preview**, sin importar módulos de `/src/`:
+
+```sh
+# web/, después del build; elegir puertos libres
+npm run preview -- --host 127.0.0.1 --port 5194 --strictPort
+# raíz
+.venv/bin/python web/scripts/verify_browser.py --url http://127.0.0.1:5194/ --inspectors-only
+.venv/bin/python web/scripts/verify_browser.py --url http://127.0.0.1:5194/ --content-only
+```
+
+Paso C/W2 entregado. W1 sigue parcial por `/evaluacion` y otros requisitos; W3/servicio, datasets, ejecución,
+resultados y constructor visual siguen fuera de esta entrega. La siguiente entrega es D, integración de ejecución.
+
+Para enteros fuera del rango seguro de JavaScript, el inspector advierte el posible redondeo del JSON y
+remite a AST/IR textuales producidos en Python; no certifica igualdad estructurada para esos nodos ni
+imprime un límite de rangos redondeado como exacto. Los decimales del AST ya llegan como texto.

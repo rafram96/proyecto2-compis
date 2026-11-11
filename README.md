@@ -231,11 +231,11 @@ reporte Markdown. Los artefactos generados quedan fuera de Git.
 El segundo escenario controla solo los collect finales de Polars.
 Comandos, workloads, resultados y límites: [evaluación C5](docs/evaluacion.md).
 
-### Web Cauce (W1, pasos A y B + W4 esencial)
+### Web Cauce (W1 pasos A/B, paso C/W2 y W4 esencial)
 
 La web Vite/React conserva el landing en `/`, ofrece `/ejemplos`, `/ejemplos/:slug`, `/docs`, `/docs/:slug`
 y el espacio de trabajo en `/estudio`:
-editor CodeMirror, compilación local real con Pyodide, fases textuales y diagnósticos seleccionables.
+editor CodeMirror, compilación local real con Pyodide, inspectores estructurados y diagnósticos seleccionables.
 Permite importar/exportar `.etl`, descargar Python vigente y recuperar borradores versionados
 tras recargar. No ejecuta Polars ni lee datasets en el navegador.
 
@@ -261,7 +261,14 @@ conectores y composición. `web/content/examples.json` y `articles.json` selecci
 `.venv/bin/python web/scripts/gen_content.py` genera el contenido web sin copiar programas a mano.
 Los artículos reutilizan secciones de documentación vigente; no publican propuestas ni planificación.
 
-Verificación de esta entrega: **137 pruebas Python**, **24 web**, demos regeneradas, build y recorridos
+El paso C añade AST expandible, FLOW de lectura por pipeline y comparación de IR por procedencia,
+con texto/JSON alternativos y selección del fuente Unicode. Los cinco pases se pueden seleccionar y ordenar;
+`null` (predeterminados), `[]` (O0) y listas explícitas conservan su identidad y revisión en los borradores v1.
+Los esquemas corresponden a la IR original y los hechos de rangos a una etapa intermedia. La evidencia JOIN
+separa declaración, prueba estática y obligaciones dinámicas pendientes; compilar no valida datos. No se
+inventan trazas para constantes, filtros o muertos ni correspondencia entre Python generado y líneas DSL.
+
+Verificación de esta entrega: **137 pruebas Python**, **31 web**, demos regeneradas, build y recorridos
 reales con `playwright-cli` en Vite y preview. Se conservan las 32 comparaciones CPython/Pyodide,
 O1/O3 y recuperación del worker. W1 sigue parcial por `/evaluacion` y los requisitos pendientes;
-W2 gráfico y W3 de ejecución no se completan. Las cifras experimentales de C5 no cambian.
+Paso C/W2 queda implementado; W3 de ejecución corresponde a la siguiente entrega D. Las cifras experimentales de C5 no cambian.

@@ -2,7 +2,7 @@
 
 Fecha de revisión: **11 de noviembre de 2026**.
 
-Este plan parte del código actual de `etl_dsl/`, `tests/` y `web/`, y lo contrasta con [el enunciado](Enunciado_DSL.md). Cubre el compilador y la continuación de la web. C1, C2, C3, C4 y C5 están implementados. La continuación web entrega W1 pasos A y B y la robustez esencial de W4; W1 global, W2 y W3 siguen parciales o pendientes.
+Este plan parte del código actual de `etl_dsl/`, `tests/` y `web/`, y lo contrasta con [el enunciado](Enunciado_DSL.md). Cubre el compilador y la continuación de la web. C1, C2, C3, C4 y C5 están implementados. La continuación web entrega W1 pasos A/B, paso C/W2 y la robustez esencial de W4; W1 global sigue parcial y W3 pendiente.
 
 Ampliación del plan: arquitectura de conexión, páginas adicionales y evaluación de edición visual, tomando como referencia el proyecto local `csharp-x86-compi/`. Se mantiene la libertad de adaptar sus ideas al dominio ETL. La ruta `/estudio` ya implementa el paso A. `/ejemplos` y `/docs` ya implementan el paso B; `/evaluacion` y el editor por bloques siguen pendientes.
 
@@ -29,7 +29,7 @@ La [definición de arquitectura de la aplicación](arquitectura_aplicacion.md) c
 | Conectores | ✅ | Lectura CSV, Parquet, SQLite y DuckDB; escritura CSV, Parquet y DuckDB: `runtime.py`. DuckDB es un conector; las transformaciones usan Polars. |
 | Ejecución | ✅ | `LazyFrame`, selección de pipelines, entradas externas mediante API Python y comprobaciones en ejecución. |
 | CLI | ✅ | Compilación individual y por carpetas, seis formatos, ejecución, selección de pases, rutas base y continuación del lote tras errores: `main.py`. |
-| Pruebas y entorno | ✅ | Suite `unittest`, dependencias, Docker y datos de demostración. Tras W1-B pasan **137 pruebas Python** y **24 pruebas web**; la evidencia histórica C5 conserva sus 131 pruebas. |
+| Pruebas y entorno | ✅ | Suite `unittest`, dependencias, Docker y datos de demostración. Tras el paso C pasan **137 pruebas Python** y **31 pruebas web**; la evidencia histórica C5 conserva sus 131 pruebas. |
 | Evaluación experimental | ✅ | `benchmarks/`: ocho workloads, baselines contractuales, equivalencia obligatoria, compilación/ejecución separadas y CSV/JSON/reporte. Campaña real hasta un millón de filas; [metodología y límites](evaluacion.md). |
 
 **Distinción importante:** el compilador ya funciona de punta a punta por terminal. La brecha principal está en verificar propiedades de los datos antes de ejecutarlos y usarlas para optimizar.
@@ -48,7 +48,7 @@ La web conserva la demo breve del landing y amplía el estudio en `/estudio`. Se
 | Inspección de fases | ✅ | Resultado de validación, tokens, árbol concreto, AST, IR y Python como texto. La IR incluye antes/después cuando hay pases activos. |
 | Compilación al editar | ✅ | Tras cargar Python, espera de 320 ms; ejemplos editables, restauración y switch de optimización: `Studio.tsx`. |
 | Demostración de pases | ✅ | Comparación progresiva de constantes, filtros y pasos muertos: `Optimizer.tsx`. |
-| AST y FLOW como gráficos | ⬜ | Se muestran representaciones textuales; falta navegación visual entre nodos y código. |
+| AST y FLOW explorables | ✅ | Paso C: árbol expandible, grafo de lectura desde AST/FLOW original, pipelines, puertos, lista accesible y selección del fuente. |
 | Catálogo y documentación | ✅ | Paso B: cinco ejemplos, seis artículos, slugs explícitos, código de fuente canónica, anclas y copias independientes mediante el workspace. |
 | Estudio ampliado | ✅ | `/estudio` con editor/inspector paralelos en escritorio y alternancia móvil; el landing conserva su demo. |
 | Ejecución y resultados | ⬜ | La web compila, pero no ejecuta Polars ni lee datasets; no hay tabla de resultados de ejecución. |
@@ -178,13 +178,13 @@ anteriores y no ofrece Python de otra revisión. No hay ejecución Polars en la 
 `web/public/_redirects` y ejemplo `web/nginx.conf`; el alojamiento final debe aplicar el fallback de `/estudio`.
 Persistencia y recuperación detalladas en [web/README.md](../web/README.md).
 
-### W2. Fases y optimizaciones explorables — P1/P2
+### W2. Fases y optimizaciones explorables — P1/P2 — ✅ paso C
 
-- [ ] Consumir los artefactos estructurados de C1; mantener texto/JSON como vista alternativa.
-- [ ] Presentar IR original y optimizada lado a lado, con selector de pases individuales y explicación de cada transformación.
-- [ ] Agregar AST expandible y DAG de FLOW, diferenciando pipelines, puertos, entradas y salidas. El grafo dibujado es mejora posterior; las vistas textuales ya existen.
-- [ ] Enlazar nodos con posiciones del editor mediante `span` y `origin`, incluyendo los nodos fusionados.
-- [ ] Añadir esquemas y hechos inferidos cuando C2/C3 estén disponibles.
+- [x] Consumir los artefactos estructurados de C1; mantener texto/JSON como vista alternativa.
+- [x] Presentar IR original y optimizada lado a lado, con selector ordenable de pases y diferencias observadas; explicación estructurada de las transformaciones para las que el núcleo emite evidencia.
+- [x] Agregar AST expandible y DAG de FLOW, diferenciando pipelines, puertos, entradas y salidas. Grafo de lectura determinista y lista accesible; se conservan las vistas textuales.
+- [x] Enlazar nodos con posiciones del editor mediante `span` y `origin`, incluyendo los nodos fusionados.
+- [x] Añadir esquemas y hechos inferidos cuando C2/C3 estén disponibles.
 
 **Criterio de cierre:** una modificación del programa actualiza ambas IR y su Python; seleccionar un nodo lleva al fragmento que lo originó.
 
@@ -232,13 +232,14 @@ El contrato del servicio y un primer recorrido con un dataset incluido pueden de
 ## 7. Pruebas y documentación para cerrar el proyecto
 
 - [x] Suite actual: `.venv/bin/python -m unittest discover` — **137 pruebas, OK**.
-- [x] Diagnósticos, revisiones, persistencia y worker: `cd web && npm test` — **24 pruebas, OK**.
+- [x] Diagnósticos, revisiones, persistencia y worker: `cd web && npm test` — **31 pruebas, OK**.
 - [x] C1/C2/C3/C4 en navegador: `.venv/bin/python web/scripts/verify_browser.py` — **32 comparaciones CPython/Pyodide, dos casos C2, prueba O1, eliminación O3 con obligaciones, abstenciones y recorrido de corrección, OK**.
 - [x] Build actual: `cd web && npm run build` — **OK**.
 - [x] Agregar pruebas de tipos/esquemas y de propagación de nulabilidad, especialmente en JOIN y `USE`.
 - [x] Probar equivalencia de los cinco pases actuales y casos donde deben abstenerse de optimizar, también en la evaluación C5.
 - [x] Automatizar el recorrido local: Pyodide, transferencia desde demo, editar, corregir, fases sin recompilar, importación/exportación byte a byte, recarga, rutas y recuperación.
-- [ ] Completar comparación avanzada de IR y ejecutar un ejemplo (W2/W3).
+- [x] Completar comparación avanzada de IR (W2/paso C).
+- [ ] Ejecutar un ejemplo desde la web (W3/paso D).
 - [x] Verificar `/estudio` en móvil y escritorio, teclado, foco, ambos temas y movimiento reducido.
 - [x] Paridad CPython/Pyodide (32 presentaciones), diagnósticos y O1/O3 conservados; demos regeneradas con 137 pruebas.
 - [ ] Actualizar `docs/lenguaje.md` y `docs/backend_polars.md`; escribir un tutorial desde un CSV hasta un resultado.
@@ -465,7 +466,7 @@ Antes de desarrollarlo completo, probar un prototipo con tareas de filtrar venta
 |---|---|---|---|
 | A ✅ | Enrutamiento, navegación y `/estudio` reutilizando CodeMirror y salidas textuales. | Código actual. | El landing abre un espacio de trabajo completo con borradores. |
 | B ✅ | `/ejemplos` y `/docs`, detalles y acciones hacia el estudio. | Manifiestos y contenido existente. | Recorrido problema → explicación → programa editable. |
-| C | API C1, estados por fase, AST expandible, FLOW de lectura y comparación de IR. | C1; C2–C4 se incorporan progresivamente. | Recorrido código ↔ fases con datos reales y posiciones. |
+| C ✅ | API C1, estados por fase, AST expandible, FLOW de lectura y comparación de IR. | C1; C2–C4 se incorporan progresivamente. | Recorrido código ↔ fases con datos reales y posiciones. |
 | D | Servicio de ejecución, bindings de ejemplos y vista Resultados. | W3 y runtime actual. | Recorrido código → ejecución → tabla → archivo. |
 | E | `/evaluacion`, revisión de documentación y pruebas de navegador. | C5 para publicar métricas. | Evidencia reproducible y recorrido final comprobado. |
 | F | Prototipo de constructor visual, solo si se decide avanzar tras evaluarlo. | Documento compartido, FLOW y pruebas de ida/vuelta. | Experimento separado que no retrasa el entorno funcional. |
@@ -518,3 +519,41 @@ No es una evaluación de usabilidad ni un despliegue realizado.
 Límites: la web no lee datasets ni ejecuta Polars, y compilar no certifica datos. Los CSV de JOIN están incluidos;
 los de riesgo/ventas son generables localmente; `ventas.csv` de rangos debe prepararse. El Python generado exige el
 entorno del proyecto. Próxima entrega: paso C, inspectores avanzados; `/evaluacion` pertenece al paso E.
+
+
+### Evidencia de la entrega paso C / W2 (11 de noviembre de 2026)
+
+Se completa W2 según su criterio de inspección: editar actualiza ambas IR y Python, seleccionar un nodo lleva a su fuente.
+W1 global sigue parcial; el criterio completo del estudio que incluye ejecución depende de W3/paso D.
+No se declara completada toda la continuación web ni se altera C5 o el contrato 4.
+
+Inspectores entregados en `web/src/components/inspectors/`: AST expandible y JSON/texto; FLOW de lectura desde AST original,
+con pipeline, ramas, tipos de declaración, puertos JOIN/USE y lista accesible; comparación de IR por procedencia dentro de
+una misma compilación, vistas textuales y evidencia O1/O3; esquemas originales con límites de conocimiento/tipos/nulos.
+La comparación se apila por nodo en móvil. Los orígenes fusionados conservan sus selecciones individuales del fuente.
+Los hechos de rangos se presentan como instantáneas del pase, separadas de esquemas originales y de la IR final.
+JOIN distingue declaración, prueba estática, SELECT y obligaciones dinámicas conservadas; CHECK_JOIN no elimina la lectura derecha.
+Constantes/filtros/muertos solo tienen diferencias observadas: no se inventa atribución por pase ni aceleración.
+
+Los cinco pases tienen casillas y orden explícito (Subir/Bajar). Predeterminados/null, O0/[] y listas explícitas son estados
+distintos; modificarlos crea revisión, invalida selección antigua y descarga Python. Persistencia v1 sin cambiar campos,
+sin migración: ya admitía listas ordenadas; se amplía el conjunto de inspectores UI, sin confundirlo con formatos del contrato.
+Una compilación solicita todos los artefactos; explorar no recompila ni desmonta CodeMirror. Los spans Unicode/multilínea/EOF
+usan el adaptador existente; al seleccionar se comprueba otra vez la revisión activa. No se crea mapa Python→DSL.
+
+Verificación: 137 pruebas Python y 31 web; contenido `--check`, demos regeneradas y build de producción.
+El verificador conserva las 32 comparaciones CPython/Pyodide, diagnósticos C2, O1/O0, O3, abstenciones y recuperación del worker;
+conserva los recorridos de estudio y contenido del paso B. `inspectors.js` añade ventas AST→fuente, riesgo con varios pipelines/USE,
+JOIN con puertos y obligación pendiente, rangos con comparación y pruebas, pases personalizados ordenados/O0/restauración,
+consulta docs/ejemplos sin pérdida, edición con resultado antiguo bloqueado, tres clases de error y recuperación,
+Unicode multilínea, ausencia de recompilación al explorar, teclado/foco, móvil y ambos temas. Descargas Python O0 y personalizada
+se comparan byte a byte con CPython. Los recorridos nuevos y de contenido se repiten sobre vite preview, sin imports de `/src/`.
+Capturas en `web/.playwright-cli/` revisadas visualmente; no es una evaluación de usabilidad. Puertos de esta entrega: Vite 5193,
+preview 5194, sin detener procesos ajenos. No se añaden dependencias al proyecto.
+
+Límites: grafo sin edición, compilación sin ejecución/datasets, esquemas estáticos, ausencia de mapa Python-fuente,
+sin trazas adicionales de pases clásicos, sin identidad de nodos entre revisiones ni persistencia remota.
+Siguiente entrega: D/W3, servicio de ejecución y resultados; `/evaluacion` corresponde a E.
+
+Los enteros fuera del rango seguro de JavaScript se advierten en los inspectores; se consultan exactos en las
+vistas textuales producidas por Python y no se certifica su igualdad en la comparación estructurada.
