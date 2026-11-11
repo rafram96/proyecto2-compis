@@ -1,31 +1,31 @@
 import { useState } from "react";
-import { parseDiagnostics } from "../compiler/client";
 import { programs } from "../data";
 import { highlight } from "./highlight";
 
 const bad = programs["pendientes.etl"];
 const good = programs["pendientes_ok.etl"];
-const [diag] = parseDiagnostics(bad.default.check.err);
-const badLine = bad.source.split("\n")[diag.line - 1].trimStart();
-const goodLine = good.source.split("\n")[diag.line - 1].trimStart();
+const [diag] = bad.default.check.analysis!.diagnostics;
+const { line, column } = diag.span;
+const badLine = bad.source.split("\n")[line - 1].trimStart();
+const goodLine = good.source.split("\n")[line - 1].trimStart();
 const okText = good.default.check.out.trim().replace(/^OK: [^:]+: /, "");
 // Lo subrayado: desde la columna del diagnóstico hasta el fin de la comparación.
-const lead = bad.source.split("\n")[diag.line - 1].length - badLine.length;
-const start = diag.column - 1 - lead;
+const lead = bad.source.split("\n")[line - 1].length - badLine.length;
+const start = column - 1 - lead;
 const end = badLine.indexOf(";", start);
 
 function Line({ fixed }: { fixed: boolean }) {
   if (fixed) {
     return (
       <pre className="diag-src">
-        <span className="gutter">{diag.line}</span>
+        <span className="gutter">{line}</span>
         {highlight(goodLine)}
       </pre>
     );
   }
   return (
     <pre className="diag-src">
-      <span className="gutter">{diag.line}</span>
+      <span className="gutter">{line}</span>
       {highlight(badLine.slice(0, start))}
       <span className="squiggle">{highlight(badLine.slice(start, end))}</span>
       {highlight(badLine.slice(end))}
@@ -40,7 +40,7 @@ function Row({ state, onFix, onUndo }: { state: "error" | "hover" | "ok"; onFix?
       <div className="diag-head">
         <span className={`sev ${ok ? "good" : ""}`} aria-hidden="true" />
         <code>{ok ? "OK" : diag.code}</code>
-        <span className="loc">{ok ? "pendientes.etl" : `pendientes.etl:${diag.line}:${diag.column}`}</span>
+        <span className="loc">{ok ? "pendientes.etl" : `pendientes.etl:${line}:${column}`}</span>
       </div>
       <p className="msg">{ok ? okText : diag.message}</p>
       <Line fixed={ok} />

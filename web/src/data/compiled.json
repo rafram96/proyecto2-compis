@@ -41,44 +41,172 @@
     "check": {
      "ok": true,
      "out": "OK: ventas.etl: 1 pipeline(s); sintaxis y estructura válidas.\n",
-     "err": ""
+     "err": "",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": true,
+      "filename": "ventas.etl",
+      "source_hash": "8a2692c4e9f94676266b745d62400a149e366677948c9e77fcd01bc8b764926f",
+      "diagnostics": [],
+      "passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "applied_passes": [],
+      "pipeline_count": 1
+     }
     },
     "tokens": {
      "ok": true,
      "out": "2:1    PIPELINE        PIPELINE\n2:10   NAME            ventas\n2:17   LBRACE          {\n3:5    SOURCE          SOURCE\n3:12   NAME            pedidos\n3:20   EQUAL           =\n3:22   NAME            CSV\n3:25   LPAR            (\n3:26   NAME            file\n3:30   COLON           :\n3:32   STRING          \"orders.csv\"\n3:44   RPAR            )\n3:45   SEMICOLON       ;\n5:5    STEP            STEP\n5:10   NAME            pagados\n5:18   EQUAL           =\n5:20   FILTER          FILTER\n5:27   LBRACE          {\n6:9    WHERE           WHERE\n6:15   NAME            status\n6:22   IS              IS\n6:25   NOT             NOT\n6:29   NULL            NULL\n6:34   AND             AND\n6:38   NAME            amount\n6:45   COMP_OP         >\n6:47   NUMBER          2\n6:49   MUL_OP          *\n6:51   NUMBER          5\n6:52   SEMICOLON       ;\n7:5    RBRACE          }\n9:5    STEP            STEP\n9:10   NAME            por_cliente\n9:22   EQUAL           =\n9:24   AGGREGATE       AGGREGATE\n9:34   LBRACE          {\n10:9   GROUP_BY        GROUP_BY\n10:18  NAME            customer_id\n10:29  SEMICOLON       ;\n11:9   AGG_FUNC        SUM\n11:12  LPAR            (\n11:13  NAME            amount\n11:19  RPAR            )\n11:21  AS              AS\n11:24  NAME            gastado\n11:31  SEMICOLON       ;\n12:9   AGG_FUNC        COUNT\n12:14  LPAR            (\n12:15  RPAR            )\n12:17  AS              AS\n12:20  NAME            compras\n12:27  SEMICOLON       ;\n13:5   RBRACE          }\n15:5   STEP            STEP\n15:10  NAME            ranking\n15:18  EQUAL           =\n15:20  SORT            SORT\n15:25  LBRACE          {\n16:9   BY              BY\n16:12  NAME            gastado\n16:20  SORT_DIRECTION  DESC\n16:24  SEMICOLON       ;\n17:5   RBRACE          }\n19:5   SINK            SINK\n19:10  NAME            reporte\n19:18  EQUAL           =\n19:20  NAME            PARQUET\n19:27  LPAR            (\n19:28  NAME            file\n19:32  COLON           :\n19:34  STRING          \"gasto_por_cliente.parquet\"\n19:61  RPAR            )\n19:62  SEMICOLON       ;\n21:5   FLOW            FLOW\n21:10  LBRACE          {\n22:9   NAME            pedidos\n22:17  __ANON_0        ->\n22:20  NAME            pagados\n22:28  __ANON_0        ->\n22:31  NAME            por_cliente\n22:43  __ANON_0        ->\n22:46  NAME            ranking\n22:54  __ANON_0        ->\n22:57  NAME            reporte\n22:64  SEMICOLON       ;\n23:5   RBRACE          }\n24:1   RBRACE          }\n",
-     "err": ""
+     "err": "",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": true,
+      "filename": "ventas.etl",
+      "source_hash": "8a2692c4e9f94676266b745d62400a149e366677948c9e77fcd01bc8b764926f",
+      "diagnostics": [],
+      "passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "applied_passes": [],
+      "pipeline_count": 1
+     }
     },
     "tree": {
      "ok": true,
      "out": "start\n  pipeline\n    ventas\n    source_decl\n      pedidos\n      connector\n        CSV\n        arguments\n          argument\n            file\n            string\t\"orders.csv\"\n    step_decl\n      pagados\n      filter_op\n        and_expr\n          is_not_null\n            qualified_column\tstatus\n          compare\n            qualified_column\tamount\n            >\n            product\n              number\t2\n              *\n              number\t5\n    step_decl\n      por_cliente\n      aggregate_op\n        group_by\n          names\tcustomer_id\n        aggregation\n          SUM\n          qualified_column\tamount\n          gastado\n        aggregation\n          COUNT\n          compras\n    step_decl\n      ranking\n      sort_op\n        sort_key\n          gastado\n          sort_dir\tDESC\n    sink_decl\n      reporte\n      connector\n        PARQUET\n        arguments\n          argument\n            file\n            string\t\"gasto_por_cliente.parquet\"\n    flow\n      connection\n        endpoint\tpedidos\n        endpoint\tpagados\n        endpoint\tpor_cliente\n        endpoint\tranking\n        endpoint\treporte\n",
-     "err": ""
+     "err": "",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": true,
+      "filename": "ventas.etl",
+      "source_hash": "8a2692c4e9f94676266b745d62400a149e366677948c9e77fcd01bc8b764926f",
+      "diagnostics": [],
+      "passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "applied_passes": [],
+      "pipeline_count": 1
+     }
     },
     "ast": {
      "ok": true,
      "out": "{\n  \"node\": \"Program\",\n  \"pipelines\": [\n    {\n      \"node\": \"Pipeline\",\n      \"name\": \"ventas\",\n      \"declarations\": [\n        {\n          \"node\": \"Source\",\n          \"name\": \"pedidos\",\n          \"schema\": null,\n          \"connector\": {\n            \"node\": \"Connector\",\n            \"name\": \"CSV\",\n            \"arguments\": [\n              {\n                \"node\": \"Argument\",\n                \"name\": \"file\",\n                \"value\": {\n                  \"node\": \"Literal\",\n                  \"value\": \"orders.csv\"\n                }\n              }\n            ]\n          }\n        },\n        {\n          \"node\": \"Step\",\n          \"name\": \"pagados\",\n          \"operation\": {\n            \"node\": \"Filter\",\n            \"predicate\": {\n              \"node\": \"BinaryExpr\",\n              \"operator\": \"AND\",\n              \"left\": {\n                \"node\": \"UnaryExpr\",\n                \"operator\": \"IS NOT NULL\",\n                \"operand\": {\n                  \"node\": \"Column\",\n                  \"name\": \"status\",\n                  \"qualifier\": null\n                }\n              },\n              \"right\": {\n                \"node\": \"BinaryExpr\",\n                \"operator\": \">\",\n                \"left\": {\n                  \"node\": \"Column\",\n                  \"name\": \"amount\",\n                  \"qualifier\": null\n                },\n                \"right\": {\n                  \"node\": \"BinaryExpr\",\n                  \"operator\": \"*\",\n                  \"left\": {\n                    \"node\": \"Literal\",\n                    \"value\": 2\n                  },\n                  \"right\": {\n                    \"node\": \"Literal\",\n                    \"value\": 5\n                  }\n                }\n              }\n            }\n          }\n        },\n        {\n          \"node\": \"Step\",\n          \"name\": \"por_cliente\",\n          \"operation\": {\n            \"node\": \"Aggregate\",\n            \"group_by\": [\n              \"customer_id\"\n            ],\n            \"aggregations\": [\n              {\n                \"node\": \"Aggregation\",\n                \"function\": \"SUM\",\n                \"expression\": {\n                  \"node\": \"Column\",\n                  \"name\": \"amount\",\n                  \"qualifier\": null\n                },\n                \"alias\": \"gastado\"\n              },\n              {\n                \"node\": \"Aggregation\",\n                \"function\": \"COUNT\",\n                \"expression\": null,\n                \"alias\": \"compras\"\n              }\n            ]\n          }\n        },\n        {\n          \"node\": \"Step\",\n          \"name\": \"ranking\",\n          \"operation\": {\n            \"node\": \"Sort\",\n            \"keys\": [\n              {\n                \"node\": \"SortKey\",\n                \"name\": \"gastado\",\n                \"direction\": \"DESC\"\n              }\n            ]\n          }\n        },\n        {\n          \"node\": \"Sink\",\n          \"name\": \"reporte\",\n          \"connector\": {\n            \"node\": \"Connector\",\n            \"name\": \"PARQUET\",\n            \"arguments\": [\n              {\n                \"node\": \"Argument\",\n                \"name\": \"file\",\n                \"value\": {\n                  \"node\": \"Literal\",\n                  \"value\": \"gasto_por_cliente.parquet\"\n                }\n              }\n            ]\n          }\n        }\n      ],\n      \"flow\": {\n        \"node\": \"Flow\",\n        \"connections\": [\n          {\n            \"node\": \"Connection\",\n            \"endpoints\": [\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"pedidos\",\n                \"port\": null\n              },\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"pagados\",\n                \"port\": null\n              },\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"por_cliente\",\n                \"port\": null\n              },\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"ranking\",\n                \"port\": null\n              },\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"reporte\",\n                \"port\": null\n              }\n            ]\n          }\n        ]\n      }\n    }\n  ]\n}\n",
-     "err": ""
+     "err": "",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": true,
+      "filename": "ventas.etl",
+      "source_hash": "8a2692c4e9f94676266b745d62400a149e366677948c9e77fcd01bc8b764926f",
+      "diagnostics": [],
+      "passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "applied_passes": [],
+      "pipeline_count": 1
+     }
     },
     "ir": {
      "ok": true,
      "out": "// IR antes de optimizar\npipeline ventas (raíz) {\n  %pedidos     = SOURCE { CSV(file: \"orders.csv\") : TABLE }\n  %pagados     = FILTER(%pedidos) { (status IS NOT NULL) AND (amount > (2 * 5)) }\n  %por_cliente = AGGREGATE(%pagados) { GROUP_BY customer_id; SUM(amount) AS gastado; COUNT() AS compras }\n  %ranking     = SORT(%por_cliente) { gastado DESC }\n  %reporte     = SINK(%ranking) { PARQUET(file: \"gasto_por_cliente.parquet\") }\n}\n\n// IR después de: constantes, filtros, muertos\npipeline ventas (raíz) {\n  %pedidos     = SOURCE { CSV(file: \"orders.csv\") : TABLE }\n  %pagados     = FILTER(%pedidos) { (status IS NOT NULL) AND (amount > 10) }\n  %por_cliente = AGGREGATE(%pagados) { GROUP_BY customer_id; SUM(amount) AS gastado; COUNT() AS compras }\n  %ranking     = SORT(%por_cliente) { gastado DESC }\n  %reporte     = SINK(%ranking) { PARQUET(file: \"gasto_por_cliente.parquet\") }\n}\n",
-     "err": ""
+     "err": "",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": true,
+      "filename": "ventas.etl",
+      "source_hash": "8a2692c4e9f94676266b745d62400a149e366677948c9e77fcd01bc8b764926f",
+      "diagnostics": [],
+      "passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "applied_passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "pipeline_count": 1
+     }
     },
     "python": {
      "ok": true,
      "out": "# Código generado por etl-dsl: Python + Polars (LazyFrame).\nimport sys\n# Evitar que archivos generados como polars.py oculten las dependencias.\nif __name__ == \"__main__\" and not sys.flags.safe_path:\n    del sys.path[0]\nfrom decimal import Decimal\n\nimport polars as pl\n\nfrom etl_dsl.runtime import generated_main\n\n\ndef pipeline_0(rt, inputs=None):\n    # PIPELINE ventas\n    inputs = inputs or {}\n    # pedidos (línea 3)\n    t_0 = rt.source('CSV', {'file': 'orders.csv'}, None, 'ventas.etl:3:5 ventas.pedidos')\n    # pagados (línea 5)\n    rt.require_columns(t_0, ['status', 'amount'], 'ventas.etl:5:5 ventas.pagados')\n    t_1 = rt.step(t_0.filter((pl.col('status').is_not_null() & (pl.col('amount') > pl.lit(10)))), 'ventas.etl:5:5 ventas.pagados')\n    # por_cliente (línea 9)\n    rt.require_columns(t_1, ['amount', 'customer_id'], 'ventas.etl:9:5 ventas.por_cliente')\n    t_2 = rt.step(t_1.group_by(['customer_id'], maintain_order=True).agg(pl.when(pl.col('amount').count() > 0).then(pl.col('amount').sum()).alias('gastado'), pl.len().cast(pl.Int64).alias('compras')), 'ventas.etl:9:5 ventas.por_cliente')\n    # ranking (línea 15)\n    rt.require_columns(t_2, ['gastado'], 'ventas.etl:15:5 ventas.ranking')\n    t_3 = rt.step(t_2.sort(['gastado'], descending=[True], nulls_last=True, maintain_order=True), 'ventas.etl:15:5 ventas.ranking')\n    # reporte (línea 19)\n    t_4 = rt.sink(t_3, 'PARQUET', {'file': 'gasto_por_cliente.parquet'}, 'ventas.etl:19:5 ventas.reporte')\n    return {'reporte': t_4}\n\nPIPELINES = {'ventas': pipeline_0}\nDEFAULT_PIPELINES = ['ventas']\n\nif __name__ == \"__main__\":\n    raise SystemExit(generated_main(PIPELINES, DEFAULT_PIPELINES, '.'))\n",
-     "err": ""
+     "err": "",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": true,
+      "filename": "ventas.etl",
+      "source_hash": "8a2692c4e9f94676266b745d62400a149e366677948c9e77fcd01bc8b764926f",
+      "diagnostics": [],
+      "passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "applied_passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "pipeline_count": 1
+     }
     }
    },
    "O0": {
     "ir": {
      "ok": true,
      "out": "pipeline ventas (raíz) {\n  %pedidos     = SOURCE { CSV(file: \"orders.csv\") : TABLE }\n  %pagados     = FILTER(%pedidos) { (status IS NOT NULL) AND (amount > (2 * 5)) }\n  %por_cliente = AGGREGATE(%pagados) { GROUP_BY customer_id; SUM(amount) AS gastado; COUNT() AS compras }\n  %ranking     = SORT(%por_cliente) { gastado DESC }\n  %reporte     = SINK(%ranking) { PARQUET(file: \"gasto_por_cliente.parquet\") }\n}\n",
-     "err": ""
+     "err": "",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": true,
+      "filename": "ventas.etl",
+      "source_hash": "8a2692c4e9f94676266b745d62400a149e366677948c9e77fcd01bc8b764926f",
+      "diagnostics": [],
+      "passes": [],
+      "applied_passes": [],
+      "pipeline_count": 1
+     }
     },
     "python": {
      "ok": true,
      "out": "# Código generado por etl-dsl: Python + Polars (LazyFrame).\nimport sys\n# Evitar que archivos generados como polars.py oculten las dependencias.\nif __name__ == \"__main__\" and not sys.flags.safe_path:\n    del sys.path[0]\nfrom decimal import Decimal\n\nimport polars as pl\n\nfrom etl_dsl.runtime import generated_main\n\n\ndef pipeline_0(rt, inputs=None):\n    # PIPELINE ventas\n    inputs = inputs or {}\n    # pedidos (línea 3)\n    t_0 = rt.source('CSV', {'file': 'orders.csv'}, None, 'ventas.etl:3:5 ventas.pedidos')\n    # pagados (línea 5)\n    rt.require_columns(t_0, ['status', 'amount'], 'ventas.etl:5:5 ventas.pagados')\n    t_1 = rt.step(t_0.filter((pl.col('status').is_not_null() & (pl.col('amount') > (pl.lit(2) * pl.lit(5))))), 'ventas.etl:5:5 ventas.pagados')\n    # por_cliente (línea 9)\n    rt.require_columns(t_1, ['amount', 'customer_id'], 'ventas.etl:9:5 ventas.por_cliente')\n    t_2 = rt.step(t_1.group_by(['customer_id'], maintain_order=True).agg(pl.when(pl.col('amount').count() > 0).then(pl.col('amount').sum()).alias('gastado'), pl.len().cast(pl.Int64).alias('compras')), 'ventas.etl:9:5 ventas.por_cliente')\n    # ranking (línea 15)\n    rt.require_columns(t_2, ['gastado'], 'ventas.etl:15:5 ventas.ranking')\n    t_3 = rt.step(t_2.sort(['gastado'], descending=[True], nulls_last=True, maintain_order=True), 'ventas.etl:15:5 ventas.ranking')\n    # reporte (línea 19)\n    t_4 = rt.sink(t_3, 'PARQUET', {'file': 'gasto_por_cliente.parquet'}, 'ventas.etl:19:5 ventas.reporte')\n    return {'reporte': t_4}\n\nPIPELINES = {'ventas': pipeline_0}\nDEFAULT_PIPELINES = ['ventas']\n\nif __name__ == \"__main__\":\n    raise SystemExit(generated_main(PIPELINES, DEFAULT_PIPELINES, '.'))\n",
-     "err": ""
+     "err": "",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": true,
+      "filename": "ventas.etl",
+      "source_hash": "8a2692c4e9f94676266b745d62400a149e366677948c9e77fcd01bc8b764926f",
+      "diagnostics": [],
+      "passes": [],
+      "applied_passes": [],
+      "pipeline_count": 1
+     }
     }
    }
   },
@@ -88,44 +216,172 @@
     "check": {
      "ok": true,
      "out": "OK: credit_risk.etl: 3 pipeline(s); sintaxis y estructura válidas.\n",
-     "err": ""
+     "err": "",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": true,
+      "filename": "credit_risk.etl",
+      "source_hash": "11fb4bb3c5d18359f0e6d99bc4f14b8320027552310cdd9aea38ac880f3dbaf7",
+      "diagnostics": [],
+      "passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "applied_passes": [],
+      "pipeline_count": 3
+     }
     },
     "tokens": {
      "ok": true,
      "out": "2:1    PIPELINE     PIPELINE\n2:10   NAME         credit_risk\n2:22   LBRACE       {\n3:5    SOURCE       SOURCE\n3:12   NAME         clients\n3:20   EQUAL        =\n3:22   NAME         SQLITE\n3:28   LPAR         (\n3:29   NAME         file\n3:33   COLON        :\n3:35   STRING       \"bank.db\"\n3:44   COMMA        ,\n3:46   NAME         table\n3:51   COLON        :\n3:53   STRING       \"clients\"\n3:62   RPAR         )\n3:63   SEMICOLON    ;\n5:5    STEP         STEP\n5:10   NAME         cleaned\n5:18   EQUAL        =\n5:20   FILL_NULL    FILL_NULL\n5:30   LBRACE       {\n6:9    NAME         debt\n6:14   EQUAL        =\n6:16   NUMBER       0\n6:17   SEMICOLON    ;\n7:5    RBRACE       }\n9:5    STEP         STEP\n9:10   NAME         valid\n9:16   EQUAL        =\n9:18   FILTER       FILTER\n9:25   LBRACE       {\n10:9   WHERE        WHERE\n10:15  NAME         income\n10:22  IS           IS\n10:25  NOT          NOT\n10:29  NULL         NULL\n10:34  AND          AND\n10:38  NAME         income\n10:45  COMP_OP      >\n10:47  NUMBER       0\n10:49  AND          AND\n10:53  NAME         debt\n10:58  COMP_OP      >=\n10:61  NUMBER       0\n10:62  SEMICOLON    ;\n11:5   RBRACE       }\n13:5   STEP         STEP\n13:10  NAME         enriched\n13:19  EQUAL        =\n13:21  DERIVE       DERIVE\n13:28  LBRACE       {\n14:9   NAME         debt_ratio\n14:20  EQUAL        =\n14:22  SCALAR_FUNC  SAFE_DIVIDE\n14:33  LPAR         (\n14:34  NAME         debt\n14:38  COMMA        ,\n14:40  NAME         income\n14:46  RPAR         )\n14:47  SEMICOLON    ;\n15:9   NAME         segment_label\n15:23  EQUAL        =\n15:25  SCALAR_FUNC  COALESCE\n15:33  LPAR         (\n15:34  NAME         segment\n15:41  COMMA        ,\n15:43  STRING       \"UNKNOWN\"\n15:52  RPAR         )\n15:53  SEMICOLON    ;\n16:5   RBRACE       }\n18:5   STEP         STEP\n18:10  NAME         flagged\n18:18  EQUAL        =\n18:20  DERIVE       DERIVE\n18:27  LBRACE       {\n19:9   NAME         risk_flag\n19:19  EQUAL        =\n19:21  NAME         debt_ratio\n19:32  IS           IS\n19:35  NULL         NULL\n19:39  SEMICOLON    ;\n20:5   RBRACE       }\n22:5   STEP         STEP\n22:10  NAME         summary\n22:18  EQUAL        =\n22:20  AGGREGATE    AGGREGATE\n22:30  LBRACE       {\n23:9   GROUP_BY     GROUP_BY\n23:18  NAME         segment_label\n23:31  SEMICOLON    ;\n24:9   AGG_FUNC     COUNT\n24:14  LPAR         (\n24:15  RPAR         )\n24:17  AS           AS\n24:20  NAME         total_clients\n24:33  SEMICOLON    ;\n25:9   AGG_FUNC     COUNT\n25:14  LPAR         (\n25:15  NAME         debt_ratio\n25:25  RPAR         )\n25:27  AS           AS\n25:30  NAME         ratios_available\n25:46  SEMICOLON    ;\n26:9   AGG_FUNC     AVG\n26:12  LPAR         (\n26:13  NAME         debt_ratio\n26:23  RPAR         )\n26:25  AS           AS\n26:28  NAME         avg_debt_ratio\n26:42  SEMICOLON    ;\n27:5   RBRACE       }\n29:5   SINK         SINK\n29:10  NAME         output\n29:17  EQUAL        =\n29:19  NAME         PARQUET\n29:26  LPAR         (\n29:27  NAME         file\n29:31  COLON        :\n29:33  STRING       \"summary.parquet\"\n29:50  RPAR         )\n29:51  SEMICOLON    ;\n31:5   FLOW         FLOW\n31:10  LBRACE       {\n32:9   NAME         clients\n32:17  __ANON_0     ->\n32:20  NAME         cleaned\n32:28  __ANON_0     ->\n32:31  NAME         valid\n32:37  __ANON_0     ->\n32:40  NAME         enriched\n32:49  __ANON_0     ->\n32:52  NAME         flagged\n32:60  __ANON_0     ->\n32:63  NAME         summary\n32:71  __ANON_0     ->\n32:74  NAME         output\n32:80  SEMICOLON    ;\n33:5   RBRACE       }\n34:1   RBRACE       }\n37:1   PIPELINE     PIPELINE\n37:10  NAME         clean_orders\n37:23  LBRACE       {\n38:5   INPUT        INPUT\n38:11  NAME         orders\n38:17  COLON        :\n38:19  TABLE        TABLE\n38:24  LSQB         [\n38:25  NAME         id\n38:27  COLON        :\n38:29  BASE_TYPE    INT\n38:32  COMMA        ,\n38:34  NAME         customer_id\n38:45  COLON        :\n38:47  BASE_TYPE    INT\n38:50  COMMA        ,\n38:52  NAME         amount\n38:58  COLON        :\n38:60  BASE_TYPE    DECIMAL\n38:67  QMARK        ?\n38:68  COMMA        ,\n38:70  NAME         status\n38:76  COLON        :\n38:78  BASE_TYPE    STRING\n38:84  QMARK        ?\n38:85  RSQB         ]\n38:86  SEMICOLON    ;\n40:5   STEP         STEP\n40:10  NAME         non_null\n40:19  EQUAL        =\n40:21  DROP_NULLS   DROP_NULLS\n40:32  LBRACE       {\n41:9   COLUMNS      COLUMNS\n41:17  NAME         id\n41:19  COMMA        ,\n41:21  NAME         customer_id\n41:32  SEMICOLON    ;\n42:5   RBRACE       }\n44:5   STEP         STEP\n44:10  NAME         normalized\n44:21  EQUAL        =\n44:23  FILL_NULL    FILL_NULL\n44:33  LBRACE       {\n45:9   NAME         status\n45:16  EQUAL        =\n45:18  STRING       \"UNKNOWN\"\n45:27  SEMICOLON    ;\n46:9   NAME         amount\n46:16  EQUAL        =\n46:18  NUMBER       0\n46:19  SEMICOLON    ;\n47:5   RBRACE       }\n49:5   OUTPUT       OUTPUT\n49:12  NAME         cleaned\n49:19  COLON        :\n49:21  TABLE        TABLE\n49:26  LSQB         [\n49:27  NAME         id\n49:29  COLON        :\n49:31  BASE_TYPE    INT\n49:34  COMMA        ,\n49:36  NAME         customer_id\n49:47  COLON        :\n49:49  BASE_TYPE    INT\n49:52  COMMA        ,\n49:54  NAME         amount\n49:60  COLON        :\n49:62  BASE_TYPE    DECIMAL\n49:69  COMMA        ,\n49:71  NAME         status\n49:77  COLON        :\n49:79  BASE_TYPE    STRING\n49:85  RSQB         ]\n49:86  SEMICOLON    ;\n51:5   FLOW         FLOW\n51:10  LBRACE       {\n52:9   NAME         orders\n52:16  __ANON_0     ->\n52:19  NAME         non_null\n52:28  __ANON_0     ->\n52:31  NAME         normalized\n52:42  __ANON_0     ->\n52:45  NAME         cleaned\n52:52  SEMICOLON    ;\n53:5   RBRACE       }\n54:1   RBRACE       }\n57:1   PIPELINE     PIPELINE\n57:10  NAME         order_report\n57:23  LBRACE       {\n58:5   SOURCE       SOURCE\n58:12  NAME         raw_orders\n58:23  EQUAL        =\n58:25  NAME         CSV\n58:28  LPAR         (\n58:29  NAME         file\n58:33  COLON        :\n58:35  STRING       \"orders.csv\"\n58:47  RPAR         )\n58:48  SEMICOLON    ;\n59:5   SOURCE       SOURCE\n59:12  NAME         customers\n59:22  EQUAL        =\n59:24  NAME         SQLITE\n59:30  LPAR         (\n59:31  NAME         file\n59:35  COLON        :\n59:37  STRING       \"bank.db\"\n59:46  COMMA        ,\n59:48  NAME         table\n59:53  COLON        :\n59:55  STRING       \"customers\"\n59:66  RPAR         )\n59:67  SEMICOLON    ;\n60:5   USE          USE\n60:9   NAME         clean_orders\n60:22  AS           AS\n60:25  NAME         clean\n60:30  SEMICOLON    ;\n62:5   STEP         STEP\n62:10  NAME         customer_keys\n62:24  EQUAL        =\n62:26  RENAME       RENAME\n62:33  LBRACE       {\n63:9   NAME         id\n63:12  AS           AS\n63:15  NAME         customer_key\n63:27  SEMICOLON    ;\n64:5   RBRACE       }\n66:5   STEP         STEP\n66:10  NAME         joined\n66:17  EQUAL        =\n66:19  JOIN         JOIN\n66:24  LBRACE       {\n67:9   TYPE         TYPE\n67:14  JOIN_KIND    LEFT\n67:18  SEMICOLON    ;\n68:9   ON           ON\n68:12  NAME         left\n68:16  DOT          .\n68:17  NAME         customer_id\n68:29  EQ           ==\n68:32  NAME         right\n68:37  DOT          .\n68:38  NAME         customer_key\n68:50  SEMICOLON    ;\n69:5   RBRACE       }\n70:5   STEP         STEP\n70:10  NAME         selected\n70:19  EQUAL        =\n70:21  SELECT       SELECT\n70:28  LBRACE       {\n71:9   COLUMNS      COLUMNS\n71:17  NAME         customer_id\n71:28  COMMA        ,\n71:30  NAME         amount\n71:36  COMMA        ,\n71:38  NAME         status\n71:44  SEMICOLON    ;\n72:5   RBRACE       }\n73:5   SINK         SINK\n73:10  NAME         output\n73:17  EQUAL        =\n73:19  NAME         CSV\n73:22  LPAR         (\n73:23  NAME         file\n73:27  COLON        :\n73:29  STRING       \"orders_clean.csv\"\n73:47  RPAR         )\n73:48  SEMICOLON    ;\n75:5   FLOW         FLOW\n75:10  LBRACE       {\n76:9   NAME         raw_orders\n76:20  __ANON_0     ->\n76:23  NAME         clean\n76:28  DOT          .\n76:29  NAME         orders\n76:35  SEMICOLON    ;\n77:9   NAME         clean\n77:14  DOT          .\n77:15  NAME         cleaned\n77:23  __ANON_0     ->\n77:26  NAME         joined\n77:32  DOT          .\n77:33  NAME         left\n77:37  SEMICOLON    ;\n78:9   NAME         customers\n78:19  __ANON_0     ->\n78:22  NAME         customer_keys\n78:36  __ANON_0     ->\n78:39  NAME         joined\n78:45  DOT          .\n78:46  NAME         right\n78:51  SEMICOLON    ;\n79:9   NAME         joined\n79:16  __ANON_0     ->\n79:19  NAME         selected\n79:28  __ANON_0     ->\n79:31  NAME         output\n79:37  SEMICOLON    ;\n80:5   RBRACE       }\n81:1   RBRACE       }\n",
-     "err": ""
+     "err": "",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": true,
+      "filename": "credit_risk.etl",
+      "source_hash": "11fb4bb3c5d18359f0e6d99bc4f14b8320027552310cdd9aea38ac880f3dbaf7",
+      "diagnostics": [],
+      "passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "applied_passes": [],
+      "pipeline_count": 3
+     }
     },
     "tree": {
      "ok": true,
      "out": "start\n  pipeline\n    credit_risk\n    source_decl\n      clients\n      connector\n        SQLITE\n        arguments\n          argument\n            file\n            string\t\"bank.db\"\n          argument\n            table\n            string\t\"clients\"\n    step_decl\n      cleaned\n      fill_null_op\n        assignment\n          debt\n          number\t0\n    step_decl\n      valid\n      filter_op\n        and_expr\n          is_not_null\n            qualified_column\tincome\n          compare\n            qualified_column\tincome\n            >\n            number\t0\n          compare\n            qualified_column\tdebt\n            >=\n            number\t0\n    step_decl\n      enriched\n      derive_op\n        assignment\n          debt_ratio\n          scalar_function\n            SAFE_DIVIDE\n            qualified_column\tdebt\n            qualified_column\tincome\n        assignment\n          segment_label\n          scalar_function\n            COALESCE\n            qualified_column\tsegment\n            string\t\"UNKNOWN\"\n    step_decl\n      flagged\n      derive_op\n        assignment\n          risk_flag\n          is_null\n            qualified_column\tdebt_ratio\n    step_decl\n      summary\n      aggregate_op\n        group_by\n          names\tsegment_label\n        aggregation\n          COUNT\n          total_clients\n        aggregation\n          COUNT\n          qualified_column\tdebt_ratio\n          ratios_available\n        aggregation\n          AVG\n          qualified_column\tdebt_ratio\n          avg_debt_ratio\n    sink_decl\n      output\n      connector\n        PARQUET\n        arguments\n          argument\n            file\n            string\t\"summary.parquet\"\n    flow\n      connection\n        endpoint\tclients\n        endpoint\tcleaned\n        endpoint\tvalid\n        endpoint\tenriched\n        endpoint\tflagged\n        endpoint\tsummary\n        endpoint\toutput\n  pipeline\n    clean_orders\n    input_decl\n      orders\n      table_schema\n        field\n          id\n          scalar_type\tINT\n        field\n          customer_id\n          scalar_type\tINT\n        field\n          amount\n          scalar_type\tDECIMAL\n          nullable\n        field\n          status\n          scalar_type\tSTRING\n          nullable\n    step_decl\n      non_null\n      drop_nulls_op\n        names\n          id\n          customer_id\n    step_decl\n      normalized\n      fill_null_op\n        assignment\n          status\n          string\t\"UNKNOWN\"\n        assignment\n          amount\n          number\t0\n    output_decl\n      cleaned\n      table_type\n        table_schema\n          field\n            id\n            scalar_type\tINT\n          field\n            customer_id\n            scalar_type\tINT\n          field\n            amount\n            scalar_type\tDECIMAL\n          field\n            status\n            scalar_type\tSTRING\n    flow\n      connection\n        endpoint\torders\n        endpoint\tnon_null\n        endpoint\tnormalized\n        endpoint\tcleaned\n  pipeline\n    order_report\n    source_decl\n      raw_orders\n      connector\n        CSV\n        arguments\n          argument\n            file\n            string\t\"orders.csv\"\n    source_decl\n      customers\n      connector\n        SQLITE\n        arguments\n          argument\n            file\n            string\t\"bank.db\"\n          argument\n            table\n            string\t\"customers\"\n    use_decl\n      clean_orders\n      clean\n    step_decl\n      customer_keys\n      rename_op\n        rename_item\n          id\n          customer_key\n    step_decl\n      joined\n      join_op\n        join_type\tLEFT\n        join_condition\n          qualified_column\n            left\n            customer_id\n          ==\n          qualified_column\n            right\n            customer_key\n    step_decl\n      selected\n      select_op\n        names\n          customer_id\n          amount\n          status\n    sink_decl\n      output\n      connector\n        CSV\n        arguments\n          argument\n            file\n            string\t\"orders_clean.csv\"\n    flow\n      connection\n        endpoint\traw_orders\n        endpoint\n          clean\n          orders\n      connection\n        endpoint\n          clean\n          cleaned\n        endpoint\n          joined\n          left\n      connection\n        endpoint\tcustomers\n        endpoint\tcustomer_keys\n        endpoint\n          joined\n          right\n      connection\n        endpoint\tjoined\n        endpoint\tselected\n        endpoint\toutput\n",
-     "err": ""
+     "err": "",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": true,
+      "filename": "credit_risk.etl",
+      "source_hash": "11fb4bb3c5d18359f0e6d99bc4f14b8320027552310cdd9aea38ac880f3dbaf7",
+      "diagnostics": [],
+      "passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "applied_passes": [],
+      "pipeline_count": 3
+     }
     },
     "ast": {
      "ok": true,
      "out": "{\n  \"node\": \"Program\",\n  \"pipelines\": [\n    {\n      \"node\": \"Pipeline\",\n      \"name\": \"credit_risk\",\n      \"declarations\": [\n        {\n          \"node\": \"Source\",\n          \"name\": \"clients\",\n          \"schema\": null,\n          \"connector\": {\n            \"node\": \"Connector\",\n            \"name\": \"SQLITE\",\n            \"arguments\": [\n              {\n                \"node\": \"Argument\",\n                \"name\": \"file\",\n                \"value\": {\n                  \"node\": \"Literal\",\n                  \"value\": \"bank.db\"\n                }\n              },\n              {\n                \"node\": \"Argument\",\n                \"name\": \"table\",\n                \"value\": {\n                  \"node\": \"Literal\",\n                  \"value\": \"clients\"\n                }\n              }\n            ]\n          }\n        },\n        {\n          \"node\": \"Step\",\n          \"name\": \"cleaned\",\n          \"operation\": {\n            \"node\": \"FillNull\",\n            \"assignments\": [\n              {\n                \"node\": \"Assignment\",\n                \"name\": \"debt\",\n                \"expression\": {\n                  \"node\": \"Literal\",\n                  \"value\": 0\n                }\n              }\n            ]\n          }\n        },\n        {\n          \"node\": \"Step\",\n          \"name\": \"valid\",\n          \"operation\": {\n            \"node\": \"Filter\",\n            \"predicate\": {\n              \"node\": \"BinaryExpr\",\n              \"operator\": \"AND\",\n              \"left\": {\n                \"node\": \"BinaryExpr\",\n                \"operator\": \"AND\",\n                \"left\": {\n                  \"node\": \"UnaryExpr\",\n                  \"operator\": \"IS NOT NULL\",\n                  \"operand\": {\n                    \"node\": \"Column\",\n                    \"name\": \"income\",\n                    \"qualifier\": null\n                  }\n                },\n                \"right\": {\n                  \"node\": \"BinaryExpr\",\n                  \"operator\": \">\",\n                  \"left\": {\n                    \"node\": \"Column\",\n                    \"name\": \"income\",\n                    \"qualifier\": null\n                  },\n                  \"right\": {\n                    \"node\": \"Literal\",\n                    \"value\": 0\n                  }\n                }\n              },\n              \"right\": {\n                \"node\": \"BinaryExpr\",\n                \"operator\": \">=\",\n                \"left\": {\n                  \"node\": \"Column\",\n                  \"name\": \"debt\",\n                  \"qualifier\": null\n                },\n                \"right\": {\n                  \"node\": \"Literal\",\n                  \"value\": 0\n                }\n              }\n            }\n          }\n        },\n        {\n          \"node\": \"Step\",\n          \"name\": \"enriched\",\n          \"operation\": {\n            \"node\": \"Derive\",\n            \"assignments\": [\n              {\n                \"node\": \"Assignment\",\n                \"name\": \"debt_ratio\",\n                \"expression\": {\n                  \"node\": \"Call\",\n                  \"name\": \"SAFE_DIVIDE\",\n                  \"arguments\": [\n                    {\n                      \"node\": \"Column\",\n                      \"name\": \"debt\",\n                      \"qualifier\": null\n                    },\n                    {\n                      \"node\": \"Column\",\n                      \"name\": \"income\",\n                      \"qualifier\": null\n                    }\n                  ]\n                }\n              },\n              {\n                \"node\": \"Assignment\",\n                \"name\": \"segment_label\",\n                \"expression\": {\n                  \"node\": \"Call\",\n                  \"name\": \"COALESCE\",\n                  \"arguments\": [\n                    {\n                      \"node\": \"Column\",\n                      \"name\": \"segment\",\n                      \"qualifier\": null\n                    },\n                    {\n                      \"node\": \"Literal\",\n                      \"value\": \"UNKNOWN\"\n                    }\n                  ]\n                }\n              }\n            ]\n          }\n        },\n        {\n          \"node\": \"Step\",\n          \"name\": \"flagged\",\n          \"operation\": {\n            \"node\": \"Derive\",\n            \"assignments\": [\n              {\n                \"node\": \"Assignment\",\n                \"name\": \"risk_flag\",\n                \"expression\": {\n                  \"node\": \"UnaryExpr\",\n                  \"operator\": \"IS NULL\",\n                  \"operand\": {\n                    \"node\": \"Column\",\n                    \"name\": \"debt_ratio\",\n                    \"qualifier\": null\n                  }\n                }\n              }\n            ]\n          }\n        },\n        {\n          \"node\": \"Step\",\n          \"name\": \"summary\",\n          \"operation\": {\n            \"node\": \"Aggregate\",\n            \"group_by\": [\n              \"segment_label\"\n            ],\n            \"aggregations\": [\n              {\n                \"node\": \"Aggregation\",\n                \"function\": \"COUNT\",\n                \"expression\": null,\n                \"alias\": \"total_clients\"\n              },\n              {\n                \"node\": \"Aggregation\",\n                \"function\": \"COUNT\",\n                \"expression\": {\n                  \"node\": \"Column\",\n                  \"name\": \"debt_ratio\",\n                  \"qualifier\": null\n                },\n                \"alias\": \"ratios_available\"\n              },\n              {\n                \"node\": \"Aggregation\",\n                \"function\": \"AVG\",\n                \"expression\": {\n                  \"node\": \"Column\",\n                  \"name\": \"debt_ratio\",\n                  \"qualifier\": null\n                },\n                \"alias\": \"avg_debt_ratio\"\n              }\n            ]\n          }\n        },\n        {\n          \"node\": \"Sink\",\n          \"name\": \"output\",\n          \"connector\": {\n            \"node\": \"Connector\",\n            \"name\": \"PARQUET\",\n            \"arguments\": [\n              {\n                \"node\": \"Argument\",\n                \"name\": \"file\",\n                \"value\": {\n                  \"node\": \"Literal\",\n                  \"value\": \"summary.parquet\"\n                }\n              }\n            ]\n          }\n        }\n      ],\n      \"flow\": {\n        \"node\": \"Flow\",\n        \"connections\": [\n          {\n            \"node\": \"Connection\",\n            \"endpoints\": [\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"clients\",\n                \"port\": null\n              },\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"cleaned\",\n                \"port\": null\n              },\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"valid\",\n                \"port\": null\n              },\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"enriched\",\n                \"port\": null\n              },\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"flagged\",\n                \"port\": null\n              },\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"summary\",\n                \"port\": null\n              },\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"output\",\n                \"port\": null\n              }\n            ]\n          }\n        ]\n      }\n    },\n    {\n      \"node\": \"Pipeline\",\n      \"name\": \"clean_orders\",\n      \"declarations\": [\n        {\n          \"node\": \"Input\",\n          \"name\": \"orders\",\n          \"schema\": {\n            \"node\": \"TableSchema\",\n            \"fields\": [\n              {\n                \"node\": \"Field\",\n                \"name\": \"id\",\n                \"type\": \"INT\",\n                \"nullable\": false\n              },\n              {\n                \"node\": \"Field\",\n                \"name\": \"customer_id\",\n                \"type\": \"INT\",\n                \"nullable\": false\n              },\n              {\n                \"node\": \"Field\",\n                \"name\": \"amount\",\n                \"type\": \"DECIMAL\",\n                \"nullable\": true\n              },\n              {\n                \"node\": \"Field\",\n                \"name\": \"status\",\n                \"type\": \"STRING\",\n                \"nullable\": true\n              }\n            ]\n          }\n        },\n        {\n          \"node\": \"Step\",\n          \"name\": \"non_null\",\n          \"operation\": {\n            \"node\": \"DropNulls\",\n            \"columns\": [\n              \"id\",\n              \"customer_id\"\n            ]\n          }\n        },\n        {\n          \"node\": \"Step\",\n          \"name\": \"normalized\",\n          \"operation\": {\n            \"node\": \"FillNull\",\n            \"assignments\": [\n              {\n                \"node\": \"Assignment\",\n                \"name\": \"status\",\n                \"expression\": {\n                  \"node\": \"Literal\",\n                  \"value\": \"UNKNOWN\"\n                }\n              },\n              {\n                \"node\": \"Assignment\",\n                \"name\": \"amount\",\n                \"expression\": {\n                  \"node\": \"Literal\",\n                  \"value\": 0\n                }\n              }\n            ]\n          }\n        },\n        {\n          \"node\": \"Output\",\n          \"name\": \"cleaned\",\n          \"schema\": {\n            \"node\": \"TableSchema\",\n            \"fields\": [\n              {\n                \"node\": \"Field\",\n                \"name\": \"id\",\n                \"type\": \"INT\",\n                \"nullable\": false\n              },\n              {\n                \"node\": \"Field\",\n                \"name\": \"customer_id\",\n                \"type\": \"INT\",\n                \"nullable\": false\n              },\n              {\n                \"node\": \"Field\",\n                \"name\": \"amount\",\n                \"type\": \"DECIMAL\",\n                \"nullable\": false\n              },\n              {\n                \"node\": \"Field\",\n                \"name\": \"status\",\n                \"type\": \"STRING\",\n                \"nullable\": false\n              }\n            ]\n          }\n        }\n      ],\n      \"flow\": {\n        \"node\": \"Flow\",\n        \"connections\": [\n          {\n            \"node\": \"Connection\",\n            \"endpoints\": [\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"orders\",\n                \"port\": null\n              },\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"non_null\",\n                \"port\": null\n              },\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"normalized\",\n                \"port\": null\n              },\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"cleaned\",\n                \"port\": null\n              }\n            ]\n          }\n        ]\n      }\n    },\n    {\n      \"node\": \"Pipeline\",\n      \"name\": \"order_report\",\n      \"declarations\": [\n        {\n          \"node\": \"Source\",\n          \"name\": \"raw_orders\",\n          \"schema\": null,\n          \"connector\": {\n            \"node\": \"Connector\",\n            \"name\": \"CSV\",\n            \"arguments\": [\n              {\n                \"node\": \"Argument\",\n                \"name\": \"file\",\n                \"value\": {\n                  \"node\": \"Literal\",\n                  \"value\": \"orders.csv\"\n                }\n              }\n            ]\n          }\n        },\n        {\n          \"node\": \"Source\",\n          \"name\": \"customers\",\n          \"schema\": null,\n          \"connector\": {\n            \"node\": \"Connector\",\n            \"name\": \"SQLITE\",\n            \"arguments\": [\n              {\n                \"node\": \"Argument\",\n                \"name\": \"file\",\n                \"value\": {\n                  \"node\": \"Literal\",\n                  \"value\": \"bank.db\"\n                }\n              },\n              {\n                \"node\": \"Argument\",\n                \"name\": \"table\",\n                \"value\": {\n                  \"node\": \"Literal\",\n                  \"value\": \"customers\"\n                }\n              }\n            ]\n          }\n        },\n        {\n          \"node\": \"Use\",\n          \"pipeline\": \"clean_orders\",\n          \"name\": \"clean\"\n        },\n        {\n          \"node\": \"Step\",\n          \"name\": \"customer_keys\",\n          \"operation\": {\n            \"node\": \"Rename\",\n            \"items\": [\n              {\n                \"node\": \"RenameItem\",\n                \"name\": \"id\",\n                \"alias\": \"customer_key\"\n              }\n            ]\n          }\n        },\n        {\n          \"node\": \"Step\",\n          \"name\": \"joined\",\n          \"operation\": {\n            \"node\": \"Join\",\n            \"kind\": \"LEFT\",\n            \"conditions\": [\n              {\n                \"node\": \"JoinCondition\",\n                \"left\": {\n                  \"node\": \"Column\",\n                  \"name\": \"customer_id\",\n                  \"qualifier\": \"left\"\n                },\n                \"right\": {\n                  \"node\": \"Column\",\n                  \"name\": \"customer_key\",\n                  \"qualifier\": \"right\"\n                }\n              }\n            ]\n          }\n        },\n        {\n          \"node\": \"Step\",\n          \"name\": \"selected\",\n          \"operation\": {\n            \"node\": \"Select\",\n            \"columns\": [\n              \"customer_id\",\n              \"amount\",\n              \"status\"\n            ]\n          }\n        },\n        {\n          \"node\": \"Sink\",\n          \"name\": \"output\",\n          \"connector\": {\n            \"node\": \"Connector\",\n            \"name\": \"CSV\",\n            \"arguments\": [\n              {\n                \"node\": \"Argument\",\n                \"name\": \"file\",\n                \"value\": {\n                  \"node\": \"Literal\",\n                  \"value\": \"orders_clean.csv\"\n                }\n              }\n            ]\n          }\n        }\n      ],\n      \"flow\": {\n        \"node\": \"Flow\",\n        \"connections\": [\n          {\n            \"node\": \"Connection\",\n            \"endpoints\": [\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"raw_orders\",\n                \"port\": null\n              },\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"clean\",\n                \"port\": \"orders\"\n              }\n            ]\n          },\n          {\n            \"node\": \"Connection\",\n            \"endpoints\": [\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"clean\",\n                \"port\": \"cleaned\"\n              },\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"joined\",\n                \"port\": \"left\"\n              }\n            ]\n          },\n          {\n            \"node\": \"Connection\",\n            \"endpoints\": [\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"customers\",\n                \"port\": null\n              },\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"customer_keys\",\n                \"port\": null\n              },\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"joined\",\n                \"port\": \"right\"\n              }\n            ]\n          },\n          {\n            \"node\": \"Connection\",\n            \"endpoints\": [\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"joined\",\n                \"port\": null\n              },\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"selected\",\n                \"port\": null\n              },\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"output\",\n                \"port\": null\n              }\n            ]\n          }\n        ]\n      }\n    }\n  ]\n}\n",
-     "err": ""
+     "err": "",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": true,
+      "filename": "credit_risk.etl",
+      "source_hash": "11fb4bb3c5d18359f0e6d99bc4f14b8320027552310cdd9aea38ac880f3dbaf7",
+      "diagnostics": [],
+      "passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "applied_passes": [],
+      "pipeline_count": 3
+     }
     },
     "ir": {
      "ok": true,
      "out": "// IR antes de optimizar\npipeline credit_risk (raíz) {\n  %clients  = SOURCE { SQLITE(file: \"bank.db\", table: \"clients\") : TABLE }\n  %cleaned  = FILL_NULL(%clients) { debt = 0 }\n  %valid    = FILTER(%cleaned) { ((income IS NOT NULL) AND (income > 0)) AND (debt >= 0) }\n  %enriched = DERIVE(%valid) { debt_ratio = SAFE_DIVIDE(debt, income); segment_label = COALESCE(segment, \"UNKNOWN\") }\n  %flagged  = DERIVE(%enriched) { risk_flag = debt_ratio IS NULL }\n  %summary  = AGGREGATE(%flagged) { GROUP_BY segment_label; COUNT() AS total_clients; COUNT(debt_ratio) AS ratios_available; AVG(debt_ratio) AS avg_debt_ratio }\n  %output   = SINK(%summary) { PARQUET(file: \"summary.parquet\") }\n}\npipeline clean_orders {\n  %orders     = INPUT { TABLE[id: INT, customer_id: INT, amount: DECIMAL?, status: STRING?] }\n  %non_null   = DROP_NULLS(%orders) { id, customer_id }\n  %normalized = FILL_NULL(%non_null) { status = \"UNKNOWN\"; amount = 0 }\n  %cleaned    = OUTPUT(%normalized) { TABLE[id: INT, customer_id: INT, amount: DECIMAL, status: STRING] }\n}\npipeline order_report (raíz) {\n  %raw_orders    = SOURCE { CSV(file: \"orders.csv\") : TABLE }\n  %customers     = SOURCE { SQLITE(file: \"bank.db\", table: \"customers\") : TABLE }\n  %clean         = USE(orders=%raw_orders) { clean_orders }\n  %customer_keys = RENAME(%customers) { id AS customer_key }\n  %joined        = JOIN(left=%clean.cleaned, right=%customer_keys) { LEFT ON left.customer_id == right.customer_key }\n  %selected      = SELECT(%joined) { customer_id, amount, status }\n  %output        = SINK(%selected) { CSV(file: \"orders_clean.csv\") }\n}\n\n// IR después de: constantes, filtros, muertos\npipeline credit_risk (raíz) {\n  %clients  = SOURCE { SQLITE(file: \"bank.db\", table: \"clients\") : TABLE }\n  %cleaned  = FILL_NULL(%clients) { debt = 0 }\n  %valid    = FILTER(%cleaned) { ((income IS NOT NULL) AND (income > 0)) AND (debt >= 0) }\n  %enriched = DERIVE(%valid) { debt_ratio = SAFE_DIVIDE(debt, income); segment_label = COALESCE(segment, \"UNKNOWN\") }\n  %flagged  = DERIVE(%enriched) { risk_flag = debt_ratio IS NULL }\n  %summary  = AGGREGATE(%flagged) { GROUP_BY segment_label; COUNT() AS total_clients; COUNT(debt_ratio) AS ratios_available; AVG(debt_ratio) AS avg_debt_ratio }\n  %output   = SINK(%summary) { PARQUET(file: \"summary.parquet\") }\n}\npipeline clean_orders {\n  %orders     = INPUT { TABLE[id: INT, customer_id: INT, amount: DECIMAL?, status: STRING?] }\n  %non_null   = DROP_NULLS(%orders) { id, customer_id }\n  %normalized = FILL_NULL(%non_null) { status = \"UNKNOWN\"; amount = 0 }\n  %cleaned    = OUTPUT(%normalized) { TABLE[id: INT, customer_id: INT, amount: DECIMAL, status: STRING] }\n}\npipeline order_report (raíz) {\n  %raw_orders    = SOURCE { CSV(file: \"orders.csv\") : TABLE }\n  %customers     = SOURCE { SQLITE(file: \"bank.db\", table: \"customers\") : TABLE }\n  %clean         = USE(orders=%raw_orders) { clean_orders }\n  %customer_keys = RENAME(%customers) { id AS customer_key }\n  %joined        = JOIN(left=%clean.cleaned, right=%customer_keys) { LEFT ON left.customer_id == right.customer_key }\n  %selected      = SELECT(%joined) { customer_id, amount, status }\n  %output        = SINK(%selected) { CSV(file: \"orders_clean.csv\") }\n}\n",
-     "err": ""
+     "err": "",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": true,
+      "filename": "credit_risk.etl",
+      "source_hash": "11fb4bb3c5d18359f0e6d99bc4f14b8320027552310cdd9aea38ac880f3dbaf7",
+      "diagnostics": [],
+      "passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "applied_passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "pipeline_count": 3
+     }
     },
     "python": {
      "ok": true,
      "out": "# Código generado por etl-dsl: Python + Polars (LazyFrame).\nimport sys\n# Evitar que archivos generados como polars.py oculten las dependencias.\nif __name__ == \"__main__\" and not sys.flags.safe_path:\n    del sys.path[0]\nfrom decimal import Decimal\n\nimport polars as pl\n\nfrom etl_dsl.runtime import generated_main\n\n\ndef pipeline_0(rt, inputs=None):\n    # PIPELINE credit_risk\n    inputs = inputs or {}\n    # clients (línea 3)\n    t_0 = rt.source('SQLITE', {'file': 'bank.db', 'table': 'clients'}, None, 'credit_risk.etl:3:5 credit_risk.clients')\n    # cleaned (línea 5)\n    rt.require_columns(t_0, ['debt'], 'credit_risk.etl:5:5 credit_risk.cleaned')\n    t_1 = rt.step(t_0.with_columns(pl.coalesce(pl.col('debt'), pl.lit(0)).alias('debt')), 'credit_risk.etl:5:5 credit_risk.cleaned')\n    # valid (línea 9)\n    rt.require_columns(t_1, ['income', 'income', 'debt'], 'credit_risk.etl:9:5 credit_risk.valid')\n    t_2 = rt.step(t_1.filter(((pl.col('income').is_not_null() & (pl.col('income') > pl.lit(0))) & (pl.col('debt') >= pl.lit(0)))), 'credit_risk.etl:9:5 credit_risk.valid')\n    # enriched (línea 13)\n    rt.require_columns(t_2, ['debt', 'income', 'segment'], 'credit_risk.etl:13:5 credit_risk.enriched')\n    rt.new_columns(t_2, ['debt_ratio', 'segment_label'], 'credit_risk.etl:13:5 credit_risk.enriched')\n    t_3 = rt.step(t_2.with_columns(pl.when(pl.col('income') != 0).then(pl.col('debt') / pl.col('income')).alias('debt_ratio'), pl.coalesce(pl.col('segment'), pl.lit('UNKNOWN')).alias('segment_label')), 'credit_risk.etl:13:5 credit_risk.enriched')\n    # flagged (línea 18)\n    rt.require_columns(t_3, ['debt_ratio'], 'credit_risk.etl:18:5 credit_risk.flagged')\n    rt.new_columns(t_3, ['risk_flag'], 'credit_risk.etl:18:5 credit_risk.flagged')\n    t_4 = rt.step(t_3.with_columns(pl.col('debt_ratio').is_null().alias('risk_flag')), 'credit_risk.etl:18:5 credit_risk.flagged')\n    # summary (línea 22)\n    rt.require_columns(t_4, ['debt_ratio', 'debt_ratio', 'segment_label'], 'credit_risk.etl:22:5 credit_risk.summary')\n    t_5 = rt.step(t_4.group_by(['segment_label'], maintain_order=True).agg(pl.len().cast(pl.Int64).alias('total_clients'), pl.col('debt_ratio').count().cast(pl.Int64).alias('ratios_available'), pl.col('debt_ratio').mean().alias('avg_debt_ratio')), 'credit_risk.etl:22:5 credit_risk.summary')\n    # output (línea 29)\n    t_6 = rt.sink(t_5, 'PARQUET', {'file': 'summary.parquet'}, 'credit_risk.etl:29:5 credit_risk.output')\n    return {'output': t_6}\n\ndef pipeline_1(rt, inputs=None):\n    # PIPELINE clean_orders\n    inputs = inputs or {}\n    # orders (línea 38)\n    t_0 = rt.input(inputs, 'orders', [('id', 'INT', False), ('customer_id', 'INT', False), ('amount', 'DECIMAL', True), ('status', 'STRING', True)], 'credit_risk.etl:38:5 clean_orders.orders')\n    # non_null (línea 40)\n    rt.require_columns(t_0, ['id', 'customer_id'], 'credit_risk.etl:40:5 clean_orders.non_null')\n    t_1 = rt.step(t_0.drop_nulls(subset=['id', 'customer_id']), 'credit_risk.etl:40:5 clean_orders.non_null')\n    # normalized (línea 44)\n    rt.require_columns(t_1, ['status', 'amount'], 'credit_risk.etl:44:5 clean_orders.normalized')\n    t_2 = rt.step(t_1.with_columns(pl.coalesce(pl.col('status'), pl.lit('UNKNOWN')).alias('status'), pl.coalesce(pl.col('amount'), pl.lit(0)).alias('amount')), 'credit_risk.etl:44:5 clean_orders.normalized')\n    # cleaned (línea 49)\n    t_3 = rt.contract(t_2, [('id', 'INT', False), ('customer_id', 'INT', False), ('amount', 'DECIMAL', False), ('status', 'STRING', False)], 'credit_risk.etl:49:5 clean_orders.cleaned')\n    return {'cleaned': t_3}\n\ndef pipeline_2(rt, inputs=None):\n    # PIPELINE order_report\n    inputs = inputs or {}\n    # raw_orders (línea 58)\n    t_0 = rt.source('CSV', {'file': 'orders.csv'}, None, 'credit_risk.etl:58:5 order_report.raw_orders')\n    # customers (línea 59)\n    t_1 = rt.source('SQLITE', {'file': 'bank.db', 'table': 'customers'}, None, 'credit_risk.etl:59:5 order_report.customers')\n    # clean (línea 60)\n    t_2 = pipeline_1(rt, {'orders': t_0})\n    # customer_keys (línea 62)\n    rt.require_columns(t_1, [], 'credit_risk.etl:62:5 order_report.customer_keys')\n    rt.check_rename(t_1, {'id': 'customer_key'}, 'credit_risk.etl:62:5 order_report.customer_keys')\n    t_3 = rt.step(t_1.rename({'id': 'customer_key'}), 'credit_risk.etl:62:5 order_report.customer_keys')\n    # joined (línea 66)\n    rt.require_columns(t_2['cleaned'], ['customer_id'], 'credit_risk.etl:66:5 order_report.joined')\n    rt.require_columns(t_3, ['customer_key'], 'credit_risk.etl:66:5 order_report.joined')\n    rt.disjoint(t_2['cleaned'], t_3, 'credit_risk.etl:66:5 order_report.joined')\n    t_4 = rt.step(t_2['cleaned'].join(t_3, left_on=['customer_id'], right_on=['customer_key'], how='left', coalesce=False), 'credit_risk.etl:66:5 order_report.joined')\n    # selected (línea 70)\n    rt.require_columns(t_4, ['customer_id', 'amount', 'status'], 'credit_risk.etl:70:5 order_report.selected')\n    t_5 = rt.step(t_4.select(['customer_id', 'amount', 'status']), 'credit_risk.etl:70:5 order_report.selected')\n    # output (línea 73)\n    t_6 = rt.sink(t_5, 'CSV', {'file': 'orders_clean.csv'}, 'credit_risk.etl:73:5 order_report.output')\n    return {'output': t_6}\n\nPIPELINES = {'credit_risk': pipeline_0, 'clean_orders': pipeline_1, 'order_report': pipeline_2}\nDEFAULT_PIPELINES = ['credit_risk', 'order_report']\n\nif __name__ == \"__main__\":\n    raise SystemExit(generated_main(PIPELINES, DEFAULT_PIPELINES, '.'))\n",
-     "err": ""
+     "err": "",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": true,
+      "filename": "credit_risk.etl",
+      "source_hash": "11fb4bb3c5d18359f0e6d99bc4f14b8320027552310cdd9aea38ac880f3dbaf7",
+      "diagnostics": [],
+      "passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "applied_passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "pipeline_count": 3
+     }
     }
    },
    "O0": {
     "ir": {
      "ok": true,
      "out": "pipeline credit_risk (raíz) {\n  %clients  = SOURCE { SQLITE(file: \"bank.db\", table: \"clients\") : TABLE }\n  %cleaned  = FILL_NULL(%clients) { debt = 0 }\n  %valid    = FILTER(%cleaned) { ((income IS NOT NULL) AND (income > 0)) AND (debt >= 0) }\n  %enriched = DERIVE(%valid) { debt_ratio = SAFE_DIVIDE(debt, income); segment_label = COALESCE(segment, \"UNKNOWN\") }\n  %flagged  = DERIVE(%enriched) { risk_flag = debt_ratio IS NULL }\n  %summary  = AGGREGATE(%flagged) { GROUP_BY segment_label; COUNT() AS total_clients; COUNT(debt_ratio) AS ratios_available; AVG(debt_ratio) AS avg_debt_ratio }\n  %output   = SINK(%summary) { PARQUET(file: \"summary.parquet\") }\n}\npipeline clean_orders {\n  %orders     = INPUT { TABLE[id: INT, customer_id: INT, amount: DECIMAL?, status: STRING?] }\n  %non_null   = DROP_NULLS(%orders) { id, customer_id }\n  %normalized = FILL_NULL(%non_null) { status = \"UNKNOWN\"; amount = 0 }\n  %cleaned    = OUTPUT(%normalized) { TABLE[id: INT, customer_id: INT, amount: DECIMAL, status: STRING] }\n}\npipeline order_report (raíz) {\n  %raw_orders    = SOURCE { CSV(file: \"orders.csv\") : TABLE }\n  %customers     = SOURCE { SQLITE(file: \"bank.db\", table: \"customers\") : TABLE }\n  %clean         = USE(orders=%raw_orders) { clean_orders }\n  %customer_keys = RENAME(%customers) { id AS customer_key }\n  %joined        = JOIN(left=%clean.cleaned, right=%customer_keys) { LEFT ON left.customer_id == right.customer_key }\n  %selected      = SELECT(%joined) { customer_id, amount, status }\n  %output        = SINK(%selected) { CSV(file: \"orders_clean.csv\") }\n}\n",
-     "err": ""
+     "err": "",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": true,
+      "filename": "credit_risk.etl",
+      "source_hash": "11fb4bb3c5d18359f0e6d99bc4f14b8320027552310cdd9aea38ac880f3dbaf7",
+      "diagnostics": [],
+      "passes": [],
+      "applied_passes": [],
+      "pipeline_count": 3
+     }
     },
     "python": {
      "ok": true,
      "out": "# Código generado por etl-dsl: Python + Polars (LazyFrame).\nimport sys\n# Evitar que archivos generados como polars.py oculten las dependencias.\nif __name__ == \"__main__\" and not sys.flags.safe_path:\n    del sys.path[0]\nfrom decimal import Decimal\n\nimport polars as pl\n\nfrom etl_dsl.runtime import generated_main\n\n\ndef pipeline_0(rt, inputs=None):\n    # PIPELINE credit_risk\n    inputs = inputs or {}\n    # clients (línea 3)\n    t_0 = rt.source('SQLITE', {'file': 'bank.db', 'table': 'clients'}, None, 'credit_risk.etl:3:5 credit_risk.clients')\n    # cleaned (línea 5)\n    rt.require_columns(t_0, ['debt'], 'credit_risk.etl:5:5 credit_risk.cleaned')\n    t_1 = rt.step(t_0.with_columns(pl.coalesce(pl.col('debt'), pl.lit(0)).alias('debt')), 'credit_risk.etl:5:5 credit_risk.cleaned')\n    # valid (línea 9)\n    rt.require_columns(t_1, ['income', 'income', 'debt'], 'credit_risk.etl:9:5 credit_risk.valid')\n    t_2 = rt.step(t_1.filter(((pl.col('income').is_not_null() & (pl.col('income') > pl.lit(0))) & (pl.col('debt') >= pl.lit(0)))), 'credit_risk.etl:9:5 credit_risk.valid')\n    # enriched (línea 13)\n    rt.require_columns(t_2, ['debt', 'income', 'segment'], 'credit_risk.etl:13:5 credit_risk.enriched')\n    rt.new_columns(t_2, ['debt_ratio', 'segment_label'], 'credit_risk.etl:13:5 credit_risk.enriched')\n    t_3 = rt.step(t_2.with_columns(pl.when(pl.col('income') != 0).then(pl.col('debt') / pl.col('income')).alias('debt_ratio'), pl.coalesce(pl.col('segment'), pl.lit('UNKNOWN')).alias('segment_label')), 'credit_risk.etl:13:5 credit_risk.enriched')\n    # flagged (línea 18)\n    rt.require_columns(t_3, ['debt_ratio'], 'credit_risk.etl:18:5 credit_risk.flagged')\n    rt.new_columns(t_3, ['risk_flag'], 'credit_risk.etl:18:5 credit_risk.flagged')\n    t_4 = rt.step(t_3.with_columns(pl.col('debt_ratio').is_null().alias('risk_flag')), 'credit_risk.etl:18:5 credit_risk.flagged')\n    # summary (línea 22)\n    rt.require_columns(t_4, ['debt_ratio', 'debt_ratio', 'segment_label'], 'credit_risk.etl:22:5 credit_risk.summary')\n    t_5 = rt.step(t_4.group_by(['segment_label'], maintain_order=True).agg(pl.len().cast(pl.Int64).alias('total_clients'), pl.col('debt_ratio').count().cast(pl.Int64).alias('ratios_available'), pl.col('debt_ratio').mean().alias('avg_debt_ratio')), 'credit_risk.etl:22:5 credit_risk.summary')\n    # output (línea 29)\n    t_6 = rt.sink(t_5, 'PARQUET', {'file': 'summary.parquet'}, 'credit_risk.etl:29:5 credit_risk.output')\n    return {'output': t_6}\n\ndef pipeline_1(rt, inputs=None):\n    # PIPELINE clean_orders\n    inputs = inputs or {}\n    # orders (línea 38)\n    t_0 = rt.input(inputs, 'orders', [('id', 'INT', False), ('customer_id', 'INT', False), ('amount', 'DECIMAL', True), ('status', 'STRING', True)], 'credit_risk.etl:38:5 clean_orders.orders')\n    # non_null (línea 40)\n    rt.require_columns(t_0, ['id', 'customer_id'], 'credit_risk.etl:40:5 clean_orders.non_null')\n    t_1 = rt.step(t_0.drop_nulls(subset=['id', 'customer_id']), 'credit_risk.etl:40:5 clean_orders.non_null')\n    # normalized (línea 44)\n    rt.require_columns(t_1, ['status', 'amount'], 'credit_risk.etl:44:5 clean_orders.normalized')\n    t_2 = rt.step(t_1.with_columns(pl.coalesce(pl.col('status'), pl.lit('UNKNOWN')).alias('status'), pl.coalesce(pl.col('amount'), pl.lit(0)).alias('amount')), 'credit_risk.etl:44:5 clean_orders.normalized')\n    # cleaned (línea 49)\n    t_3 = rt.contract(t_2, [('id', 'INT', False), ('customer_id', 'INT', False), ('amount', 'DECIMAL', False), ('status', 'STRING', False)], 'credit_risk.etl:49:5 clean_orders.cleaned')\n    return {'cleaned': t_3}\n\ndef pipeline_2(rt, inputs=None):\n    # PIPELINE order_report\n    inputs = inputs or {}\n    # raw_orders (línea 58)\n    t_0 = rt.source('CSV', {'file': 'orders.csv'}, None, 'credit_risk.etl:58:5 order_report.raw_orders')\n    # customers (línea 59)\n    t_1 = rt.source('SQLITE', {'file': 'bank.db', 'table': 'customers'}, None, 'credit_risk.etl:59:5 order_report.customers')\n    # clean (línea 60)\n    t_2 = pipeline_1(rt, {'orders': t_0})\n    # customer_keys (línea 62)\n    rt.require_columns(t_1, [], 'credit_risk.etl:62:5 order_report.customer_keys')\n    rt.check_rename(t_1, {'id': 'customer_key'}, 'credit_risk.etl:62:5 order_report.customer_keys')\n    t_3 = rt.step(t_1.rename({'id': 'customer_key'}), 'credit_risk.etl:62:5 order_report.customer_keys')\n    # joined (línea 66)\n    rt.require_columns(t_2['cleaned'], ['customer_id'], 'credit_risk.etl:66:5 order_report.joined')\n    rt.require_columns(t_3, ['customer_key'], 'credit_risk.etl:66:5 order_report.joined')\n    rt.disjoint(t_2['cleaned'], t_3, 'credit_risk.etl:66:5 order_report.joined')\n    t_4 = rt.step(t_2['cleaned'].join(t_3, left_on=['customer_id'], right_on=['customer_key'], how='left', coalesce=False), 'credit_risk.etl:66:5 order_report.joined')\n    # selected (línea 70)\n    rt.require_columns(t_4, ['customer_id', 'amount', 'status'], 'credit_risk.etl:70:5 order_report.selected')\n    t_5 = rt.step(t_4.select(['customer_id', 'amount', 'status']), 'credit_risk.etl:70:5 order_report.selected')\n    # output (línea 73)\n    t_6 = rt.sink(t_5, 'CSV', {'file': 'orders_clean.csv'}, 'credit_risk.etl:73:5 order_report.output')\n    return {'output': t_6}\n\nPIPELINES = {'credit_risk': pipeline_0, 'clean_orders': pipeline_1, 'order_report': pipeline_2}\nDEFAULT_PIPELINES = ['credit_risk', 'order_report']\n\nif __name__ == \"__main__\":\n    raise SystemExit(generated_main(PIPELINES, DEFAULT_PIPELINES, '.'))\n",
-     "err": ""
+     "err": "",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": true,
+      "filename": "credit_risk.etl",
+      "source_hash": "11fb4bb3c5d18359f0e6d99bc4f14b8320027552310cdd9aea38ac880f3dbaf7",
+      "diagnostics": [],
+      "passes": [],
+      "applied_passes": [],
+      "pipeline_count": 3
+     }
     }
    }
   },
@@ -135,44 +391,292 @@
     "check": {
      "ok": false,
      "out": "",
-     "err": "pendientes.etl:3:38: E_NULL_COMPARISON: Use IS NULL / IS NOT NULL para comparar con NULL.\n    STEP sin_estado = FILTER { WHERE status == NULL; }\n                                     ^\npendientes.etl: 1 error(es) de validación.\n"
+     "err": "pendientes.etl:3:38: E_NULL_COMPARISON: Use IS NULL / IS NOT NULL para comparar con NULL.\n    STEP sin_estado = FILTER { WHERE status == NULL; }\n                                     ^\npendientes.etl: 1 error(es) de validación.\n",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": false,
+      "filename": "pendientes.etl",
+      "source_hash": "eec06a9d2b983700efab89267520230caf65edc426f97aa030ae5cbb0a35a842",
+      "diagnostics": [
+       {
+        "code": "E_NULL_COMPARISON",
+        "message": "Use IS NULL / IS NOT NULL para comparar con NULL.",
+        "phase": "semantic",
+        "severity": "error",
+        "filename": "pendientes.etl",
+        "span": {
+         "line": 3,
+         "column": 38,
+         "end_line": 3,
+         "end_column": 52,
+         "start": 105,
+         "end": 119
+        }
+       }
+      ],
+      "passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "applied_passes": [],
+      "pipeline_count": 1
+     }
     },
     "tokens": {
      "ok": false,
      "out": "",
-     "err": "pendientes.etl:3:38: E_NULL_COMPARISON: Use IS NULL / IS NOT NULL para comparar con NULL.\n    STEP sin_estado = FILTER { WHERE status == NULL; }\n                                     ^\npendientes.etl: 1 error(es) de validación.\n"
+     "err": "pendientes.etl:3:38: E_NULL_COMPARISON: Use IS NULL / IS NOT NULL para comparar con NULL.\n    STEP sin_estado = FILTER { WHERE status == NULL; }\n                                     ^\npendientes.etl: 1 error(es) de validación.\n",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": false,
+      "filename": "pendientes.etl",
+      "source_hash": "eec06a9d2b983700efab89267520230caf65edc426f97aa030ae5cbb0a35a842",
+      "diagnostics": [
+       {
+        "code": "E_NULL_COMPARISON",
+        "message": "Use IS NULL / IS NOT NULL para comparar con NULL.",
+        "phase": "semantic",
+        "severity": "error",
+        "filename": "pendientes.etl",
+        "span": {
+         "line": 3,
+         "column": 38,
+         "end_line": 3,
+         "end_column": 52,
+         "start": 105,
+         "end": 119
+        }
+       }
+      ],
+      "passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "applied_passes": [],
+      "pipeline_count": 1
+     }
     },
     "tree": {
      "ok": false,
      "out": "",
-     "err": "pendientes.etl:3:38: E_NULL_COMPARISON: Use IS NULL / IS NOT NULL para comparar con NULL.\n    STEP sin_estado = FILTER { WHERE status == NULL; }\n                                     ^\npendientes.etl: 1 error(es) de validación.\n"
+     "err": "pendientes.etl:3:38: E_NULL_COMPARISON: Use IS NULL / IS NOT NULL para comparar con NULL.\n    STEP sin_estado = FILTER { WHERE status == NULL; }\n                                     ^\npendientes.etl: 1 error(es) de validación.\n",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": false,
+      "filename": "pendientes.etl",
+      "source_hash": "eec06a9d2b983700efab89267520230caf65edc426f97aa030ae5cbb0a35a842",
+      "diagnostics": [
+       {
+        "code": "E_NULL_COMPARISON",
+        "message": "Use IS NULL / IS NOT NULL para comparar con NULL.",
+        "phase": "semantic",
+        "severity": "error",
+        "filename": "pendientes.etl",
+        "span": {
+         "line": 3,
+         "column": 38,
+         "end_line": 3,
+         "end_column": 52,
+         "start": 105,
+         "end": 119
+        }
+       }
+      ],
+      "passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "applied_passes": [],
+      "pipeline_count": 1
+     }
     },
     "ast": {
      "ok": false,
      "out": "",
-     "err": "pendientes.etl:3:38: E_NULL_COMPARISON: Use IS NULL / IS NOT NULL para comparar con NULL.\n    STEP sin_estado = FILTER { WHERE status == NULL; }\n                                     ^\npendientes.etl: 1 error(es) de validación.\n"
+     "err": "pendientes.etl:3:38: E_NULL_COMPARISON: Use IS NULL / IS NOT NULL para comparar con NULL.\n    STEP sin_estado = FILTER { WHERE status == NULL; }\n                                     ^\npendientes.etl: 1 error(es) de validación.\n",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": false,
+      "filename": "pendientes.etl",
+      "source_hash": "eec06a9d2b983700efab89267520230caf65edc426f97aa030ae5cbb0a35a842",
+      "diagnostics": [
+       {
+        "code": "E_NULL_COMPARISON",
+        "message": "Use IS NULL / IS NOT NULL para comparar con NULL.",
+        "phase": "semantic",
+        "severity": "error",
+        "filename": "pendientes.etl",
+        "span": {
+         "line": 3,
+         "column": 38,
+         "end_line": 3,
+         "end_column": 52,
+         "start": 105,
+         "end": 119
+        }
+       }
+      ],
+      "passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "applied_passes": [],
+      "pipeline_count": 1
+     }
     },
     "ir": {
      "ok": false,
      "out": "",
-     "err": "pendientes.etl:3:38: E_NULL_COMPARISON: Use IS NULL / IS NOT NULL para comparar con NULL.\n    STEP sin_estado = FILTER { WHERE status == NULL; }\n                                     ^\npendientes.etl: 1 error(es) de validación.\n"
+     "err": "pendientes.etl:3:38: E_NULL_COMPARISON: Use IS NULL / IS NOT NULL para comparar con NULL.\n    STEP sin_estado = FILTER { WHERE status == NULL; }\n                                     ^\npendientes.etl: 1 error(es) de validación.\n",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": false,
+      "filename": "pendientes.etl",
+      "source_hash": "eec06a9d2b983700efab89267520230caf65edc426f97aa030ae5cbb0a35a842",
+      "diagnostics": [
+       {
+        "code": "E_NULL_COMPARISON",
+        "message": "Use IS NULL / IS NOT NULL para comparar con NULL.",
+        "phase": "semantic",
+        "severity": "error",
+        "filename": "pendientes.etl",
+        "span": {
+         "line": 3,
+         "column": 38,
+         "end_line": 3,
+         "end_column": 52,
+         "start": 105,
+         "end": 119
+        }
+       }
+      ],
+      "passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "applied_passes": [],
+      "pipeline_count": 1
+     }
     },
     "python": {
      "ok": false,
      "out": "",
-     "err": "pendientes.etl:3:38: E_NULL_COMPARISON: Use IS NULL / IS NOT NULL para comparar con NULL.\n    STEP sin_estado = FILTER { WHERE status == NULL; }\n                                     ^\npendientes.etl: 1 error(es) de validación.\n"
+     "err": "pendientes.etl:3:38: E_NULL_COMPARISON: Use IS NULL / IS NOT NULL para comparar con NULL.\n    STEP sin_estado = FILTER { WHERE status == NULL; }\n                                     ^\npendientes.etl: 1 error(es) de validación.\n",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": false,
+      "filename": "pendientes.etl",
+      "source_hash": "eec06a9d2b983700efab89267520230caf65edc426f97aa030ae5cbb0a35a842",
+      "diagnostics": [
+       {
+        "code": "E_NULL_COMPARISON",
+        "message": "Use IS NULL / IS NOT NULL para comparar con NULL.",
+        "phase": "semantic",
+        "severity": "error",
+        "filename": "pendientes.etl",
+        "span": {
+         "line": 3,
+         "column": 38,
+         "end_line": 3,
+         "end_column": 52,
+         "start": 105,
+         "end": 119
+        }
+       }
+      ],
+      "passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "applied_passes": [],
+      "pipeline_count": 1
+     }
     }
    },
    "O0": {
     "ir": {
      "ok": false,
      "out": "",
-     "err": "pendientes.etl:3:38: E_NULL_COMPARISON: Use IS NULL / IS NOT NULL para comparar con NULL.\n    STEP sin_estado = FILTER { WHERE status == NULL; }\n                                     ^\npendientes.etl: 1 error(es) de validación.\n"
+     "err": "pendientes.etl:3:38: E_NULL_COMPARISON: Use IS NULL / IS NOT NULL para comparar con NULL.\n    STEP sin_estado = FILTER { WHERE status == NULL; }\n                                     ^\npendientes.etl: 1 error(es) de validación.\n",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": false,
+      "filename": "pendientes.etl",
+      "source_hash": "eec06a9d2b983700efab89267520230caf65edc426f97aa030ae5cbb0a35a842",
+      "diagnostics": [
+       {
+        "code": "E_NULL_COMPARISON",
+        "message": "Use IS NULL / IS NOT NULL para comparar con NULL.",
+        "phase": "semantic",
+        "severity": "error",
+        "filename": "pendientes.etl",
+        "span": {
+         "line": 3,
+         "column": 38,
+         "end_line": 3,
+         "end_column": 52,
+         "start": 105,
+         "end": 119
+        }
+       }
+      ],
+      "passes": [],
+      "applied_passes": [],
+      "pipeline_count": 1
+     }
     },
     "python": {
      "ok": false,
      "out": "",
-     "err": "pendientes.etl:3:38: E_NULL_COMPARISON: Use IS NULL / IS NOT NULL para comparar con NULL.\n    STEP sin_estado = FILTER { WHERE status == NULL; }\n                                     ^\npendientes.etl: 1 error(es) de validación.\n"
+     "err": "pendientes.etl:3:38: E_NULL_COMPARISON: Use IS NULL / IS NOT NULL para comparar con NULL.\n    STEP sin_estado = FILTER { WHERE status == NULL; }\n                                     ^\npendientes.etl: 1 error(es) de validación.\n",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": false,
+      "filename": "pendientes.etl",
+      "source_hash": "eec06a9d2b983700efab89267520230caf65edc426f97aa030ae5cbb0a35a842",
+      "diagnostics": [
+       {
+        "code": "E_NULL_COMPARISON",
+        "message": "Use IS NULL / IS NOT NULL para comparar con NULL.",
+        "phase": "semantic",
+        "severity": "error",
+        "filename": "pendientes.etl",
+        "span": {
+         "line": 3,
+         "column": 38,
+         "end_line": 3,
+         "end_column": 52,
+         "start": 105,
+         "end": 119
+        }
+       }
+      ],
+      "passes": [],
+      "applied_passes": [],
+      "pipeline_count": 1
+     }
     }
    }
   },
@@ -182,51 +686,179 @@
     "check": {
      "ok": true,
      "out": "OK: pendientes.etl: 1 pipeline(s); sintaxis y estructura válidas.\n",
-     "err": ""
+     "err": "",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": true,
+      "filename": "pendientes.etl",
+      "source_hash": "8be145c9ef0740c47715b759b9d95746c4e665704a3c3ff395d8dbf2c795f32d",
+      "diagnostics": [],
+      "passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "applied_passes": [],
+      "pipeline_count": 1
+     }
     },
     "tokens": {
      "ok": true,
      "out": "1:1   PIPELINE   PIPELINE\n1:10  NAME       pendientes\n1:21  LBRACE     {\n2:5   SOURCE     SOURCE\n2:12  NAME       pedidos\n2:20  EQUAL      =\n2:22  NAME       CSV\n2:25  LPAR       (\n2:26  NAME       file\n2:30  COLON      :\n2:32  STRING     \"orders.csv\"\n2:44  RPAR       )\n2:45  SEMICOLON  ;\n3:5   STEP       STEP\n3:10  NAME       sin_estado\n3:21  EQUAL      =\n3:23  FILTER     FILTER\n3:30  LBRACE     {\n3:32  WHERE      WHERE\n3:38  NAME       status\n3:45  IS         IS\n3:48  NULL       NULL\n3:52  SEMICOLON  ;\n3:54  RBRACE     }\n4:5   SINK       SINK\n4:10  NAME       salida\n4:17  EQUAL      =\n4:19  NAME       CSV\n4:22  LPAR       (\n4:23  NAME       file\n4:27  COLON      :\n4:29  STRING     \"pendientes.csv\"\n4:45  RPAR       )\n4:46  SEMICOLON  ;\n5:5   FLOW       FLOW\n5:10  LBRACE     {\n5:12  NAME       pedidos\n5:20  __ANON_0   ->\n5:23  NAME       sin_estado\n5:34  __ANON_0   ->\n5:37  NAME       salida\n5:43  SEMICOLON  ;\n5:45  RBRACE     }\n6:1   RBRACE     }\n",
-     "err": ""
+     "err": "",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": true,
+      "filename": "pendientes.etl",
+      "source_hash": "8be145c9ef0740c47715b759b9d95746c4e665704a3c3ff395d8dbf2c795f32d",
+      "diagnostics": [],
+      "passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "applied_passes": [],
+      "pipeline_count": 1
+     }
     },
     "tree": {
      "ok": true,
      "out": "start\n  pipeline\n    pendientes\n    source_decl\n      pedidos\n      connector\n        CSV\n        arguments\n          argument\n            file\n            string\t\"orders.csv\"\n    step_decl\n      sin_estado\n      filter_op\n        is_null\n          qualified_column\tstatus\n    sink_decl\n      salida\n      connector\n        CSV\n        arguments\n          argument\n            file\n            string\t\"pendientes.csv\"\n    flow\n      connection\n        endpoint\tpedidos\n        endpoint\tsin_estado\n        endpoint\tsalida\n",
-     "err": ""
+     "err": "",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": true,
+      "filename": "pendientes.etl",
+      "source_hash": "8be145c9ef0740c47715b759b9d95746c4e665704a3c3ff395d8dbf2c795f32d",
+      "diagnostics": [],
+      "passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "applied_passes": [],
+      "pipeline_count": 1
+     }
     },
     "ast": {
      "ok": true,
      "out": "{\n  \"node\": \"Program\",\n  \"pipelines\": [\n    {\n      \"node\": \"Pipeline\",\n      \"name\": \"pendientes\",\n      \"declarations\": [\n        {\n          \"node\": \"Source\",\n          \"name\": \"pedidos\",\n          \"schema\": null,\n          \"connector\": {\n            \"node\": \"Connector\",\n            \"name\": \"CSV\",\n            \"arguments\": [\n              {\n                \"node\": \"Argument\",\n                \"name\": \"file\",\n                \"value\": {\n                  \"node\": \"Literal\",\n                  \"value\": \"orders.csv\"\n                }\n              }\n            ]\n          }\n        },\n        {\n          \"node\": \"Step\",\n          \"name\": \"sin_estado\",\n          \"operation\": {\n            \"node\": \"Filter\",\n            \"predicate\": {\n              \"node\": \"UnaryExpr\",\n              \"operator\": \"IS NULL\",\n              \"operand\": {\n                \"node\": \"Column\",\n                \"name\": \"status\",\n                \"qualifier\": null\n              }\n            }\n          }\n        },\n        {\n          \"node\": \"Sink\",\n          \"name\": \"salida\",\n          \"connector\": {\n            \"node\": \"Connector\",\n            \"name\": \"CSV\",\n            \"arguments\": [\n              {\n                \"node\": \"Argument\",\n                \"name\": \"file\",\n                \"value\": {\n                  \"node\": \"Literal\",\n                  \"value\": \"pendientes.csv\"\n                }\n              }\n            ]\n          }\n        }\n      ],\n      \"flow\": {\n        \"node\": \"Flow\",\n        \"connections\": [\n          {\n            \"node\": \"Connection\",\n            \"endpoints\": [\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"pedidos\",\n                \"port\": null\n              },\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"sin_estado\",\n                \"port\": null\n              },\n              {\n                \"node\": \"Endpoint\",\n                \"name\": \"salida\",\n                \"port\": null\n              }\n            ]\n          }\n        ]\n      }\n    }\n  ]\n}\n",
-     "err": ""
+     "err": "",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": true,
+      "filename": "pendientes.etl",
+      "source_hash": "8be145c9ef0740c47715b759b9d95746c4e665704a3c3ff395d8dbf2c795f32d",
+      "diagnostics": [],
+      "passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "applied_passes": [],
+      "pipeline_count": 1
+     }
     },
     "ir": {
      "ok": true,
      "out": "// IR antes de optimizar\npipeline pendientes (raíz) {\n  %pedidos    = SOURCE { CSV(file: \"orders.csv\") : TABLE }\n  %sin_estado = FILTER(%pedidos) { status IS NULL }\n  %salida     = SINK(%sin_estado) { CSV(file: \"pendientes.csv\") }\n}\n\n// IR después de: constantes, filtros, muertos\npipeline pendientes (raíz) {\n  %pedidos    = SOURCE { CSV(file: \"orders.csv\") : TABLE }\n  %sin_estado = FILTER(%pedidos) { status IS NULL }\n  %salida     = SINK(%sin_estado) { CSV(file: \"pendientes.csv\") }\n}\n",
-     "err": ""
+     "err": "",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": true,
+      "filename": "pendientes.etl",
+      "source_hash": "8be145c9ef0740c47715b759b9d95746c4e665704a3c3ff395d8dbf2c795f32d",
+      "diagnostics": [],
+      "passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "applied_passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "pipeline_count": 1
+     }
     },
     "python": {
      "ok": true,
      "out": "# Código generado por etl-dsl: Python + Polars (LazyFrame).\nimport sys\n# Evitar que archivos generados como polars.py oculten las dependencias.\nif __name__ == \"__main__\" and not sys.flags.safe_path:\n    del sys.path[0]\nfrom decimal import Decimal\n\nimport polars as pl\n\nfrom etl_dsl.runtime import generated_main\n\n\ndef pipeline_0(rt, inputs=None):\n    # PIPELINE pendientes\n    inputs = inputs or {}\n    # pedidos (línea 2)\n    t_0 = rt.source('CSV', {'file': 'orders.csv'}, None, 'pendientes.etl:2:5 pendientes.pedidos')\n    # sin_estado (línea 3)\n    rt.require_columns(t_0, ['status'], 'pendientes.etl:3:5 pendientes.sin_estado')\n    t_1 = rt.step(t_0.filter(pl.col('status').is_null()), 'pendientes.etl:3:5 pendientes.sin_estado')\n    # salida (línea 4)\n    t_2 = rt.sink(t_1, 'CSV', {'file': 'pendientes.csv'}, 'pendientes.etl:4:5 pendientes.salida')\n    return {'salida': t_2}\n\nPIPELINES = {'pendientes': pipeline_0}\nDEFAULT_PIPELINES = ['pendientes']\n\nif __name__ == \"__main__\":\n    raise SystemExit(generated_main(PIPELINES, DEFAULT_PIPELINES, '.'))\n",
-     "err": ""
+     "err": "",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": true,
+      "filename": "pendientes.etl",
+      "source_hash": "8be145c9ef0740c47715b759b9d95746c4e665704a3c3ff395d8dbf2c795f32d",
+      "diagnostics": [],
+      "passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "applied_passes": [
+       "constantes",
+       "filtros",
+       "muertos"
+      ],
+      "pipeline_count": 1
+     }
     }
    },
    "O0": {
     "ir": {
      "ok": true,
      "out": "pipeline pendientes (raíz) {\n  %pedidos    = SOURCE { CSV(file: \"orders.csv\") : TABLE }\n  %sin_estado = FILTER(%pedidos) { status IS NULL }\n  %salida     = SINK(%sin_estado) { CSV(file: \"pendientes.csv\") }\n}\n",
-     "err": ""
+     "err": "",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": true,
+      "filename": "pendientes.etl",
+      "source_hash": "8be145c9ef0740c47715b759b9d95746c4e665704a3c3ff395d8dbf2c795f32d",
+      "diagnostics": [],
+      "passes": [],
+      "applied_passes": [],
+      "pipeline_count": 1
+     }
     },
     "python": {
      "ok": true,
      "out": "# Código generado por etl-dsl: Python + Polars (LazyFrame).\nimport sys\n# Evitar que archivos generados como polars.py oculten las dependencias.\nif __name__ == \"__main__\" and not sys.flags.safe_path:\n    del sys.path[0]\nfrom decimal import Decimal\n\nimport polars as pl\n\nfrom etl_dsl.runtime import generated_main\n\n\ndef pipeline_0(rt, inputs=None):\n    # PIPELINE pendientes\n    inputs = inputs or {}\n    # pedidos (línea 2)\n    t_0 = rt.source('CSV', {'file': 'orders.csv'}, None, 'pendientes.etl:2:5 pendientes.pedidos')\n    # sin_estado (línea 3)\n    rt.require_columns(t_0, ['status'], 'pendientes.etl:3:5 pendientes.sin_estado')\n    t_1 = rt.step(t_0.filter(pl.col('status').is_null()), 'pendientes.etl:3:5 pendientes.sin_estado')\n    # salida (línea 4)\n    t_2 = rt.sink(t_1, 'CSV', {'file': 'pendientes.csv'}, 'pendientes.etl:4:5 pendientes.salida')\n    return {'salida': t_2}\n\nPIPELINES = {'pendientes': pipeline_0}\nDEFAULT_PIPELINES = ['pendientes']\n\nif __name__ == \"__main__\":\n    raise SystemExit(generated_main(PIPELINES, DEFAULT_PIPELINES, '.'))\n",
-     "err": ""
+     "err": "",
+     "analysis": {
+      "contract_version": "1",
+      "compiler_version": "0.1.0",
+      "offset_encoding": "unicode-codepoints",
+      "ok": true,
+      "filename": "pendientes.etl",
+      "source_hash": "8be145c9ef0740c47715b759b9d95746c4e665704a3c3ff395d8dbf2c795f32d",
+      "diagnostics": [],
+      "passes": [],
+      "applied_passes": [],
+      "pipeline_count": 1
+     }
     }
    }
   }
  },
  "stats": {
-  "tests": 51,
-  "errorCodes": 23,
+  "tests": 70,
+  "errorCodes": 25,
   "keywords": 33,
   "passes": [
    "constantes",

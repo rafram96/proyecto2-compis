@@ -17,7 +17,8 @@ La [definición de arquitectura de la aplicación](arquitectura_aplicacion.md) c
 | Análisis léxico y sintáctico | ✅ | Gramática ETL-DSL v0.2, Lark LALR, scanner y posiciones: `etl_dsl/grammar.lark`, `scanner.py`, `parser.py`, `token.py`. |
 | AST | ✅ | Nodos inmutables, intervalos de origen, construcción desde Lark y recorridos: `ast.py`, `visitor.py`. |
 | Validación estructural | ✅ | Duplicados, enlaces y puertos, entradas requeridas, ciclos de `FLOW` y `USE`, aridad, uso de `NULL` y condiciones de JOIN: `validation.py`. |
-| Diagnósticos | 🟡 | Código, mensaje, archivo, línea, columna y marcador en español. Falta transportar los diagnósticos como objetos hasta la web y mejorar sugerencias. |
+| Diagnósticos | 🟡 | Código, mensaje, fase, severidad, archivo e intervalo completo; se transportan como objetos hasta CodeMirror. Queda mejorar sugerencias. |
+| API de análisis compartida (C1) | ✅ | `etl_dsl.analyze` recibe texto sin archivos temporales y entrega artefactos seleccionables, errores parciales y contrato JSON versionado; CLI, puente web y demos la consumen. |
 | Tipos | 🟡 | Tipos escalares y nulabilidad declarados; contratos de nombres, orden, familias de tipos y nulos en ejecución. Falta inferencia y comprobación estática por operación. |
 | IR | ✅ | DAG por pipeline, orden topológico, puertos resueltos, origen de los nodos y formato textual: `ir.py`. Las expresiones reutilizan el AST. |
 | Anotaciones semánticas de la IR | ⬜ | No hay esquemas inferidos ni hechos de rango, unicidad o referencias asociados a cada nodo. |
@@ -28,14 +29,14 @@ La [definición de arquitectura de la aplicación](arquitectura_aplicacion.md) c
 | Conectores | ✅ | Lectura CSV, Parquet, SQLite y DuckDB; escritura CSV, Parquet y DuckDB: `runtime.py`. DuckDB es un conector; las transformaciones usan Polars. |
 | Ejecución | ✅ | `LazyFrame`, selección de pipelines, entradas externas mediante API Python y comprobaciones en ejecución. |
 | CLI | ✅ | Compilación individual y por carpetas, seis formatos, ejecución, selección de pases, rutas base y continuación del lote tras errores: `main.py`. |
-| Pruebas y entorno | ✅ | Suite `unittest`, dependencias, Docker y datos de demostración. En esta revisión pasaron **51 pruebas**. |
+| Pruebas y entorno | ✅ | Suite `unittest`, dependencias, Docker y datos de demostración. Tras C1 pasan **70 pruebas Python**, más 4 del adaptador web. |
 | Evaluación experimental | ⬜ | No se identificó un arnés de benchmarks, baselines manuales y resultados estadísticos reproducibles entre los archivos revisados. |
 
 **Distinción importante:** el compilador ya funciona de punta a punta por terminal. La brecha principal está en verificar propiedades de los datos antes de ejecutarlos y usarlas para optimizar.
 
 ## 2. Estado actual de la web
 
-La web ya contiene un estudio funcional, además del landing. La revisión fue de código y build; no incluye una comprobación visual ni una sesión interactiva en navegador.
+La web ya contiene un estudio funcional, además del landing. Tras C1 se verificó también su recorrido interactivo con `playwright-cli`: Pyodide, paridad de resultados, diagnósticos y corrección en CodeMirror. Esta comprobación funcional no es una auditoría visual del diseño.
 
 | Funcionalidad | Estado | Evidencia y límite actual |
 |---|---|---|
@@ -78,15 +79,17 @@ El [plan inicial](planificacion.md) contiene decisiones anteriores: sintaxis en 
 
 ### C1. API de análisis compartida y resultados estructurados — P1
 
-- [ ] Crear una API pública en `etl_dsl/` que reciba texto, nombre y pases, sin depender de `_analyze` ni de escribir un archivo temporal.
-- [ ] Devolver diagnósticos, AST, IR original, IR optimizada, Python y pases aplicados. Permitir solicitar artefactos para evitar trabajo innecesario.
-- [ ] Serializar diagnósticos con código, mensaje, severidad e intervalo completo; preservar las posiciones del AST aunque la vista decida ocultarlas.
-- [ ] Representar fallos por fase: un error sintáctico deja disponibles los artefactos anteriores que se hayan podido producir, sin simular un AST válido.
-- [ ] Hacer que CLI, `studio.py` y generador de demos consuman la misma API; mantener los formatos de texto existentes.
+- [x] Crear una API pública en `etl_dsl/` que reciba texto, nombre y pases, sin depender de `_analyze` ni de escribir un archivo temporal.
+- [x] Devolver diagnósticos, AST, IR original, IR optimizada, Python y pases aplicados. Permitir solicitar artefactos para evitar trabajo innecesario.
+- [x] Serializar diagnósticos con código, mensaje, severidad e intervalo completo; preservar las posiciones del AST aunque la vista decida ocultarlas.
+- [x] Representar fallos por fase: un error sintáctico deja disponibles los artefactos anteriores que se hayan podido producir, sin simular un AST válido.
+- [x] Hacer que CLI, `studio.py` y generador de demos consuman la misma API; mantener los formatos de texto existentes.
 
 **Archivos:** nuevo módulo de análisis, `diagnostics.py`, `main.py`, `web/src/compiler/{studio.py,types.ts,client.ts,worker.ts}`.
 
 **Criterio de cierre:** el mismo programa produce diagnósticos y artefactos equivalentes en CLI y puente web; CodeMirror recibe intervalos estructurados sin extraerlos de stderr con una expresión regular.
+
+**Cerrado:** implementación en `etl_dsl/analysis.py`; contrato y comandos de verificación en [api_analisis.md](api_analisis.md). Se verificaron 70 pruebas Python, 4 pruebas del adaptador de rangos, build web y 32 comparaciones CPython/Pyodide mediante `playwright-cli`, además de corregir un diagnóstico real y comprobar rangos Unicode multilínea en CodeMirror. C2 y el servicio de ejecución siguen pendientes.
 
 ### C2. Análisis estático de esquemas y tipos — P0
 
@@ -199,7 +202,9 @@ El contrato del servicio y un primer recorrido con un dataset incluido pueden de
 
 ## 7. Pruebas y documentación para cerrar el proyecto
 
-- [x] Suite actual: `.venv/bin/python -m unittest discover` — **51 pruebas, OK**.
+- [x] Suite actual: `.venv/bin/python -m unittest discover` — **70 pruebas, OK**.
+- [x] Adaptador de diagnósticos: `cd web && npm test` — **4 pruebas, OK**.
+- [x] C1 en navegador: `.venv/bin/python web/scripts/verify_browser.py` — **32 comparaciones CPython/Pyodide y recorrido de corrección, OK**.
 - [x] Build actual: `cd web && npm run build` — **OK**.
 - [ ] Agregar pruebas de tipos/esquemas y de propagación de nulabilidad, especialmente en JOIN y `USE`.
 - [ ] Probar equivalencia por cada pase nuevo y casos donde debe abstenerse de optimizar.

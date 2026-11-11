@@ -5,7 +5,7 @@
  * Se carga la primera vez que alguien pulsa «Compilar»; hasta entonces la página muestra la salida precalculada.
  */
 import studioSrc from "./studio.py?raw";
-import type { CompileRequest, WorkerMessage } from "./types";
+import type { CompileRequest, CompileResult, WorkerMessage } from "./types";
 
 const PYODIDE = "https://cdn.jsdelivr.net/pyodide/v314.0.7/full/";
 const LARK_WHEEL = "py/lark-1.3.1-py3-none-any.whl";
@@ -22,7 +22,7 @@ type Pyodide = {
   loadPackage(name: string): Promise<void>;
   pyimport(name: string): { install(url: string): Promise<void> };
   runPython(code: string): unknown;
-  toPy(v: unknown): unknown;
+  toPy(v: unknown): PyProxy;
   FS: { mkdirTree(p: string): void; writeFile(p: string, data: string): void };
 };
 
@@ -71,10 +71,18 @@ self.onmessage = async (e: MessageEvent<CompileRequest>) => {
   try {
     const { py, compile } = runtime;
     // `undefined` llega a Python como None (los pases por defecto); `null` llegaría como JsNull.
-    const res = compile(source, name, fmt, passes === null ? undefined : py.toPy(passes));
-    const out = res.toJs({ dict_converter: Object.fromEntries }) as { ok: boolean; out: string; err: string };
-    res.destroy();
-    post({ type: "result", id, result: out });
+    const pyPasses = passes === null ? undefined : py.toPy(passes);
+    try {
+      const res = compile(source, name, fmt, pyPasses);
+      try {
+        const out = res.toJs({ dict_converter: Object.fromEntries }) as CompileResult;
+        post({ type: "result", id, result: out });
+      } finally {
+        res.destroy();
+      }
+    } finally {
+      pyPasses?.destroy();
+    }
   } catch (err) {
     post({ type: "failure", id, message: String(err) });
   }

@@ -1,8 +1,8 @@
 import raw from "./compiled.json";
-import type { CompileResult, Format } from "../compiler/types";
+import type { CompilePresentation, Format } from "../compiler/types";
 
 /** Salida real de etl_dsl, generada por web/scripts/gen_compiled.py. No se edita a mano. */
-type Program = { source: string; default: Record<Format, CompileResult>; O0: Partial<Record<Format, CompileResult>> };
+type Program = { source: string; default: Record<Format, CompilePresentation>; O0: Partial<Record<Format, CompilePresentation>> };
 type Data = {
   optimizer: Record<string, { ir: string; py: string }> & { source: string };
   programs: Record<string, Program>;

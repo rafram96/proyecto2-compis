@@ -46,15 +46,3 @@ export function useRuntime(): State {
     () => state,
   );
 }
-
-export type Diagnostic = { line: number; column: number; code: string; message: string };
-
-/** `archivo:línea:col: CÓDIGO: mensaje`, el formato de etl_dsl/diagnostics.py. */
-export function parseDiagnostics(err: string): Diagnostic[] {
-  return [...err.matchAll(/^[^\n:]+:(\d+):(\d+): ([A-Z_]+): ([^\n]*)$/gm)].map((m) => ({
-    line: Number(m[1]),
-    column: Number(m[2]),
-    code: m[3],
-    message: m[4],
-  }));
-}

@@ -4,19 +4,14 @@ Lo usan dos lugares, para que ambos produzcan exactamente lo mismo:
 - `web/scripts/gen_compiled.py`, que precalcula la salida que la página muestra al cargar;
 - el worker de Pyodide (`worker.ts`), que corre el compilador real en el navegador.
 
-Reproduce `python -m etl_dsl <archivo> --format <fmt> [--pases ...|-O0] --base-dir .`
-sin escribir en `output/`: devuelve stdout, stderr y si terminó bien.
+Presenta la API pública de análisis sin escribir archivos ni capturar stderr.
+Conserva los formatos de consola y entrega además el contrato estructurado.
 """
-import contextlib
-import io
 import json
 from pathlib import Path
 
-from etl_dsl.diagnostics import ParseError
-from etl_dsl.main import _analyze
-from etl_dsl.passes import DEFAULT, PASSES
-
-FORMATS = ("check", "tokens", "tree", "ast", "ir", "python")
+from etl_dsl import analyze
+from etl_dsl.analysis import FORMATS, artifacts_for_format, format_diagnostics, format_output
 
 
 def _without_spans(node):
@@ -43,24 +38,15 @@ def _compact(fmt: str, out: str) -> str:
 
 
 def compile_etl(source: str, name: str = "programa.etl", fmt: str = "check", passes=None, compact=True) -> dict:
-    """Compila `source` como si fuera el archivo `name` del directorio actual."""
-    if fmt not in FORMATS:
-        raise ValueError(f"formato desconocido: {fmt}")
-    passes = DEFAULT if passes is None else tuple(passes)
-    unknown = [p for p in passes if p not in PASSES]
-    if unknown:
-        raise ValueError(f"pases desconocidos: {', '.join(unknown)}")
-    path = Path(name)
-    path.write_text(source, encoding="utf-8")
-    err = io.StringIO()
-    out = ""
-    ok = True
-    with contextlib.redirect_stderr(err):
-        try:
-            out = _analyze(path, fmt, Path("."), passes)
-        except (OSError, UnicodeError, ParseError, ValueError) as exc:
-            print(exc, file=err)
-            ok = False
-    if ok and compact:
+    """`name` es lógico, no una ruta que se lea o escriba en el navegador/host."""
+    result = analyze(source, filename=name, base_dir=".", passes=passes,
+                     artifacts=artifacts_for_format(fmt))
+    out = format_output(result, fmt) if result.ok else ""
+    payload = result.to_dict()
+    if result.ok and compact:
         out = _compact(fmt, out)
-    return {"ok": ok, "out": out, "err": err.getvalue()}
+    python = payload["artifacts"]["python"]
+    if compact and python["status"] == "available":
+        python["data"] = _compact("python", python["data"])
+    return {"ok": result.ok, "out": out, "err": format_diagnostics(result, source),
+            "analysis": payload}

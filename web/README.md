@@ -7,7 +7,9 @@ Cumbemayo y Nazca.
 ```bash
 cd web && npm install && npm run dev            # http://localhost:5173
 npm run build                                    # tsc + vite build
+npm test                                         # rangos de diagnósticos; Node >= 22.18
 .venv/bin/python web/scripts/gen_compiled.py     # (raíz del repo) regenera src/data/compiled.json
+.venv/bin/python web/scripts/verify_browser.py --url http://127.0.0.1:5173/ # raíz, Vite iniciado y playwright-cli en PATH
 bash web/scripts/gen_icons.sh                    # regenera iconos PNG/ICO y og.png (Chrome + ffmpeg)
 ```
 
@@ -16,7 +18,8 @@ bash web/scripts/gen_icons.sh                    # regenera iconos PNG/ICO y og.
 - **Stack:** Vite + React 19 + TypeScript + Tailwind v4. Tokens en `src/styles/brand.css`, estilos en `src/index.css`.
 - **Editor de código: CodeMirror 6** (`src/editor/`), no Monaco. Lenguaje `etl-dsl` con `StreamLanguage` (vocabulario en
   `src/editor/words.ts`, sacado de `etl_dsl/grammar.lark`), autocompletado, diagnósticos con `@codemirror/lint` alimentados por los
-  errores `archivo:línea:col` del compilador y colores `--syn-*` de `brand.css` (el tema cambia sin recrear el editor).
+  diagnósticos estructurados del compilador y colores `--syn-*` de `brand.css` (el tema cambia sin recrear el editor).
+  Los rangos completos se convierten de caracteres Unicode de Python a UTF-16, conservando emoji y expresiones multilínea.
   Se carga en diferido: la página no lo espera para pintarse. `src/components/highlight.tsx` es solo para fragmentos estáticos.
 - **Marca B «Deep Ocean + ámbar Polars»:** azul = estructura, ámbar `#FFCC00` = acción. Tema **claro por defecto** con toggle
   (`data-theme` en `<html>`, clave `cauce-theme` en `localStorage`). En claro nunca uses `#00B4D8`/`#0096C7` como texto.
@@ -37,10 +40,16 @@ El estudio (sección final) corre **el mismo `etl_dsl`** que la terminal, sin ba
 1. `src/compiler/worker.ts` (Web Worker) descarga Pyodide 314.0.7 (Python 3.14) de jsDelivr la primera vez que alguien pulsa
    «Compilar», instala `public/py/lark-1.3.1-py3-none-any.whl` y copia `../etl_dsl/*.py|lark` (empaquetados por Vite con
    `import.meta.glob`, por eso `vite.config.ts` permite leer fuera de `web/`).
-2. `src/compiler/studio.py` es el puente: reproduce `python -m etl_dsl <archivo> --format <fmt> [--pases|-O0] --base-dir .`
-   y devuelve stdout/stderr. Lo usan **también** `scripts/gen_compiled.py`, así la salida precalculada y la del navegador son
-   idénticas (comprobado en los seis formatos para `ventas.etl` y `credit_risk.etl`).
+2. `src/compiler/studio.py` llama a la API pública `etl_dsl.analyze`, sin crear archivos ni depender de la CLI privada.
+   Devuelve texto de presentación y el contrato estructurado: diagnósticos, versiones, hash del fuente, estado de artefactos,
+   AST con posiciones e IR antes/después. Solicita solo los artefactos del formato elegido.
+   Lo usa **también** `scripts/gen_compiled.py`. La prueba `verify_browser.py` compara 32 presentaciones reales entre CPython
+   y Pyodide: los cuatro ejemplos, los seis formatos y las vistas IR/Python con `-O0`; también verifica corrección y rangos en CodeMirror.
 3. Antes de cargar Python, la página muestra la salida precalculada; ya cargado, compila mientras escribes (pausa de 320 ms).
+
+Los snapshots del landing guardan texto y resumen de análisis con diagnósticos, sin duplicar los AST/IR estructurados dentro
+del paquete inicial. El resultado en vivo sí conserva los artefactos solicitados, incluso cuando una fase posterior falla.
+La vista AST compacta oculta posiciones solo en el texto; el contrato en vivo las mantiene. Véase [la API de análisis](../docs/api_analisis.md).
 
 Polars y DuckDB no hacen falta para compilar: el estudio no ejecuta pipelines ni lee datos.
 

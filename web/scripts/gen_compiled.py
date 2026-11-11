@@ -6,11 +6,9 @@ Todo pasa por web/src/compiler/studio.py, el mismo puente que usa el worker de P
 así que lo que la página muestra al cargar es idéntico a lo que el navegador compila después.
 """
 import json
-import os
 import re
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -31,7 +29,16 @@ PROGRAMS = {
 
 
 def outputs(name: str, source: str, passes=None) -> dict:
-    return {fmt: compile_etl(source, name, fmt, passes) for fmt in FORMATS}
+    return {fmt: presentation(compile_etl(source, name, fmt, passes)) for fmt in FORMATS}
+
+
+def presentation(result: dict) -> dict:
+    """El landing usa texto y diagnósticos, no necesita duplicar AST/IR completos.
+
+    El worker conserva el contrato completo. Estos snapshots son presentaciones
+    precalculadas, no se anuncian como resultados de análisis estructurado.
+    """
+    return {**result, "analysis": {k: v for k, v in result["analysis"].items() if k != "artifacts"}}
 
 
 def count_tests() -> int:
@@ -47,25 +54,19 @@ def main() -> None:
     sources = {name: path.read_text(encoding="utf-8") for name, path in PROGRAMS.items() if path}
     sources["pendientes_ok.etl"] = sources["pendientes.etl"].replace("== NULL", "IS NULL")
 
-    cwd = os.getcwd()
-    with tempfile.TemporaryDirectory() as tmp:
-        os.chdir(tmp)
-        try:
-            opt_src = (ROOT / "demo/optimizaciones.etl").read_text(encoding="utf-8")
-            out["optimizer"]["source"] = opt_src
-            for mask in range(8):
-                activos = [p for i, p in enumerate(PASES) if mask >> i & 1]
-                key = "".join(str(mask >> i & 1) for i in range(3))
-                ir = compile_etl(opt_src, "optimizaciones.etl", "ir", activos)
-                py = compile_etl(opt_src, "optimizaciones.etl", "python", activos)
-                assert ir["ok"] and py["ok"], (key, ir["err"], py["err"])
-                out["optimizer"][key] = {"ir": ir["out"], "py": py["out"]}
-            for key, source in sources.items():
-                name = key.replace("_ok", "")  # la versión corregida se compila con el nombre original
-                out["programs"][key] = {"source": source, "default": outputs(name, source),
-                                        "O0": {fmt: compile_etl(source, name, fmt, []) for fmt in ("ir", "python")}}
-        finally:
-            os.chdir(cwd)
+    opt_src = (ROOT / "demo/optimizaciones.etl").read_text(encoding="utf-8")
+    out["optimizer"]["source"] = opt_src
+    for mask in range(8):
+        activos = [p for i, p in enumerate(PASES) if mask >> i & 1]
+        key = "".join(str(mask >> i & 1) for i in range(3))
+        ir = compile_etl(opt_src, "optimizaciones.etl", "ir", activos)
+        py = compile_etl(opt_src, "optimizaciones.etl", "python", activos)
+        assert ir["ok"] and py["ok"], (key, ir["err"], py["err"])
+        out["optimizer"][key] = {"ir": ir["out"], "py": py["out"]}
+    for key, source in sources.items():
+        name = key.replace("_ok", "")  # la versión corregida se compila con el nombre original
+        out["programs"][key] = {"source": source, "default": outputs(name, source),
+                                "O0": {fmt: presentation(compile_etl(source, name, fmt, [])) for fmt in ("ir", "python")}}
 
     grammar = (ROOT / "etl_dsl/grammar.lark").read_text(encoding="utf-8")
     codes = set(re.findall(r"\bE_[A-Z_]+\b", "".join(p.read_text() for p in (ROOT / "etl_dsl").glob("*.py"))))

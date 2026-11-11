@@ -4,9 +4,10 @@ import { EditorView, drawSelection, highlightActiveLine, highlightActiveLineGutt
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { bracketMatching, indentOnInput } from "@codemirror/language";
 import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap } from "@codemirror/autocomplete";
-import { setDiagnostics, type Diagnostic as CmDiagnostic } from "@codemirror/lint";
+import { setDiagnostics } from "@codemirror/lint";
 import { etlCompletion, etlHighlight, etlLanguage, etlTheme } from "./etl";
-import type { Diagnostic } from "../compiler/client";
+import type { Diagnostic } from "../compiler/types";
+import { editorDiagnostics } from "../compiler/diagnostics";
 
 type Props = {
   value: string;
@@ -15,18 +16,6 @@ type Props = {
   diagnostics?: Diagnostic[];
   label: string;
 };
-
-function toCm(view: EditorView, list: Diagnostic[]): CmDiagnostic[] {
-  const doc = view.state.doc;
-  return list
-    .filter((d) => d.line >= 1 && d.line <= doc.lines)
-    .map((d) => {
-      const line = doc.line(d.line);
-      const from = Math.min(line.from + d.column - 1, line.to);
-      const word = /^[\w.]+|^\S/.exec(doc.sliceString(from, line.to));
-      return { from, to: from + (word ? word[0].length : 0), severity: "error", message: `${d.code}: ${d.message}` };
-    });
-}
 
 /** CodeMirror 6 con el lenguaje ETL-DSL. Tab indenta; Esc y luego Tab salen del editor. */
 export function Editor({ value, onChange, onRun, diagnostics = [], label }: Props) {
@@ -78,7 +67,7 @@ export function Editor({ value, onChange, onRun, diagnostics = [], label }: Prop
 
   useEffect(() => {
     const v = view.current;
-    if (v) v.dispatch(setDiagnostics(v.state, toCm(v, diagnostics)));
+    if (v) v.dispatch(setDiagnostics(v.state, editorDiagnostics(v.state.doc.toString(), diagnostics)));
   }, [diagnostics]);
 
   return <div className="cm-host" ref={host} />;

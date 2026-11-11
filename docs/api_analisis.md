@@ -58,3 +58,12 @@ Si falla el léxico, no hay una lista de tokens completa. Si falla la sintaxis, 
 `etl_dsl.analysis.artifacts_for_format(fmt)` selecciona los artefactos para `check`, `tokens`, `tree`, `ast`, `ir` y `python`. `format_output(result, fmt)` conserva los formatos de texto de la CLI y puede mostrar un artefacto disponible de un análisis parcial. `format_diagnostics(result, source)` produce el texto de consola; la web recibe los diagnósticos como objetos.
 
 La CLI conserva sus flags, archivos de salida y códigos de retorno. La vista compacta de la web puede ocultar posiciones del AST, pero el contrato conserva los intervalos originales. Los nombres de archivos del puente son lógicos: compilar `carpeta/programa.etl` no crea ni sobrescribe ese archivo.
+
+Los snapshots de `web/src/data/compiled.json` son presentaciones precalculadas, con texto y resumen del análisis, no instancias completas del contrato: omiten `artifacts` para no duplicar los árboles dentro del paquete inicial. El resultado en vivo del worker entrega el contrato completo. La presentación web de Python normaliza la ruta base a `'.'`, tanto en el texto como en el artefacto, para mantener paridad entre CPython y Pyodide.
+
+## Verificación de C1
+
+- `.venv/bin/python -m unittest discover`: 70 pruebas Python, incluyendo selección de artefactos, errores parciales, ausencia de IO y paridad CLI/puente.
+- `cd web && npm test`: 4 pruebas de conversión de rangos Unicode, multilineales y EOF.
+- `cd web && npm run build`: comprobación TypeScript y build de producción.
+- Con Vite iniciado, `.venv/bin/python web/scripts/verify_browser.py --url http://127.0.0.1:5173/`: prueba mediante `playwright-cli` del compilador real en WASM, 32 comparaciones con snapshots CPython y recorrido de corrección de errores en CodeMirror. Este verificador requiere el servidor de desarrollo porque inspecciona los módulos del cliente.

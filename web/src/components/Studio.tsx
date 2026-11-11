@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { compile, parseDiagnostics, useRuntime } from "../compiler/client";
-import type { CompileResult, Format } from "../compiler/types";
+import { compile, useRuntime } from "../compiler/client";
+import type { CompilePresentation, CompileResult, Format } from "../compiler/types";
 import { programs } from "../data";
 import { highlight } from "./highlight";
 
@@ -19,7 +19,7 @@ const FORMATS: [Format, string][] = [
   ["python", "Python"],
 ];
 
-function Output({ fmt, result }: { fmt: Format; result: CompileResult }) {
+function Output({ fmt, result }: { fmt: Format; result: CompilePresentation }) {
   if (!result.ok) {
     return (
       <pre className="studio-pre">
@@ -63,7 +63,7 @@ export function Studio() {
   const shown = fresh ?? pre ?? live?.result ?? null;
   const origin = fresh ? "en vivo" : pre ? "precalculado" : "desactualizado";
 
-  const diagnostics = useMemo(() => (shown && (fresh || pre) ? parseDiagnostics(shown.err) : []), [shown, fresh, pre]);
+  const diagnostics = useMemo(() => (shown && (fresh || pre) ? shown.analysis?.diagnostics ?? [] : []), [shown, fresh, pre]);
 
   const latest = useRef({ key, source, name, fmt, optimize });
   latest.current = { key, source, name, fmt, optimize };
@@ -75,7 +75,7 @@ export function Studio() {
       const result = await compile({ source: req.source, name: req.name, fmt: req.fmt, passes: req.optimize ? null : [] });
       setLive({ key: req.key, result });
     } catch (e) {
-      setLive({ key: req.key, result: { ok: false, out: "", err: String(e) } });
+      setLive({ key: req.key, result: { ok: false, out: "", err: String(e), analysis: null } });
     } finally {
       setBusy(false);
     }
