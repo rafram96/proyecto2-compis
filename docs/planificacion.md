@@ -1,5 +1,7 @@
 # Estado de la planificación
 
+> **Plan inicial / historial.** Para el estado contrastado con el código al 11 de noviembre de 2026 y los próximos pasos del compilador y la web, consultar [el plan de desarrollo actualizado](plan_desarrollo.md). Este documento conserva decisiones anteriores que ya cambiaron, como Monaco, FastAPI y la sintaxis `.fetl`.
+
 > Mapa de todo lo que exige el enunciado (Tipo 4) y de qué tan maduro está cada punto.
 > Se actualiza a medida que se cierran decisiones.
 
