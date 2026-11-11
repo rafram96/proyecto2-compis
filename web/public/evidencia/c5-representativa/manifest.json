@@ -1,0 +1,145 @@
+{
+  "format_version": 1,
+  "campaign": {
+    "id": "c5-representativa",
+    "mode": "measure",
+    "started_utc": "2026-11-11T20:38:57.911816+00:00",
+    "finished_utc": "2026-11-11T20:41:02.354606+00:00",
+    "measured_revision": "efe13996d9201788c9fc8cd7c6f458ca68035a04",
+    "seed": 20261111,
+    "sizes": [
+      10000,
+      200000,
+      1000000
+    ],
+    "scenarios": [
+      "normal",
+      "final_flags_none"
+    ],
+    "warmups": 2,
+    "repetitions": 10,
+    "counts": {
+      "samples": 4400,
+      "cells": 440,
+      "structure": 56,
+      "errors": 285,
+      "equivalence": 1024
+    }
+  },
+  "provenance": {
+    "source_directory": "benchmarks/results/representativa",
+    "producer": "python -m benchmarks (benchmarks/harness.py, benchmarks/report.py)",
+    "publisher": "web/scripts/gen_evaluation.py --import-campaign",
+    "notes": [
+      "Campaña histórica generada por el arnés C5; esta publicación no vuelve a medir ni recalcula cifras distintas.",
+      "Los archivos idénticos conservan los bytes del original. metadata.public.json es una versión depurada: solo sustituye la ruta local del intérprete.",
+      "report.md se conserva tal como lo escribió el arnés; su frase sobre artefactos no versionados describe la campaña original, anterior a esta instantánea pública."
+    ]
+  },
+  "files": [
+    {
+      "path": "samples.csv",
+      "role": "Muestras individuales en ms: fase, workload, filas, configuración, escenario, repetición y secuencia medida.",
+      "media_type": "text/csv",
+      "bytes": 373227,
+      "sha256": "f528877c4d9cddca0d387e835a7f822cd82d1db09731733bf1858e97425f29ad",
+      "original": {
+        "path": "samples.csv",
+        "bytes": 373227,
+        "sha256": "f528877c4d9cddca0d387e835a7f822cd82d1db09731733bf1858e97425f29ad"
+      },
+      "identical_to_original": true,
+      "redactions": []
+    },
+    {
+      "path": "summary.csv",
+      "role": "Resumen por celda: N, mediana, P25, P75, IQR, mínimo, máximo y razón O0/configuración.",
+      "media_type": "text/csv",
+      "bytes": 70918,
+      "sha256": "fe3989b1b38b52d3b0500be8847b393a157b92d34e18989734a309c93ae61b77",
+      "original": {
+        "path": "summary.csv",
+        "bytes": 70918,
+        "sha256": "fe3989b1b38b52d3b0500be8847b393a157b92d34e18989734a309c93ae61b77"
+      },
+      "identical_to_original": true,
+      "redactions": []
+    },
+    {
+      "path": "structure.csv",
+      "role": "Recuentos de nodos y nodos eliminados, añadidos o modificados por configuración.",
+      "media_type": "text/csv",
+      "bytes": 3199,
+      "sha256": "e4f660355908dd7ace65eeb3206699cf4c12bb5792c3cbbc308808e4bac7e0df",
+      "original": {
+        "path": "structure.csv",
+        "bytes": 3199,
+        "sha256": "e4f660355908dd7ace65eeb3206699cf4c12bb5792c3cbbc308808e4bac7e0df"
+      },
+      "identical_to_original": true,
+      "redactions": []
+    },
+    {
+      "path": "structure.json",
+      "role": "IR completas antes/después y pruebas de reescritura de rangos y joins (2 MiB).",
+      "media_type": "application/json",
+      "bytes": 2216710,
+      "sha256": "ec70664fde09464afcfd8dcc7de2e6792b9ade5a01ff11e47b92af6d125a78c2",
+      "original": {
+        "path": "structure.json",
+        "bytes": 2216710,
+        "sha256": "ec70664fde09464afcfd8dcc7de2e6792b9ade5a01ff11e47b92af6d125a78c2"
+      },
+      "identical_to_original": true,
+      "redactions": []
+    },
+    {
+      "path": "errors.csv",
+      "role": "Corpus de errores estáticos y dinámicos con código exigido y observado.",
+      "media_type": "text/csv",
+      "bytes": 33048,
+      "sha256": "9488b82613f729f2df449dad481cf82d4c526c35253cd615be6ac4caa63d36db",
+      "original": {
+        "path": "errors.csv",
+        "bytes": 33048,
+        "sha256": "9488b82613f729f2df449dad481cf82d4c526c35253cd615be6ac4caa63d36db"
+      },
+      "identical_to_original": true,
+      "redactions": []
+    },
+    {
+      "path": "metadata.public.json",
+      "role": "Protocolo, entorno, versiones, hashes de fuentes, datasets y equivalencias. Versión depurada.",
+      "media_type": "application/json",
+      "bytes": 198527,
+      "sha256": "7fcbf82b1e275450907ad55a70b7ebfb85fe45f09029dbdc5d64f1cf146c8d20",
+      "original": {
+        "path": "metadata.json",
+        "bytes": 198545,
+        "sha256": "20a6ba132e0c1550ee71b4cc202511329fc96cef9d28811275ab815872ee6185"
+      },
+      "identical_to_original": false,
+      "redactions": [
+        {
+          "pointer": "/environment/python_executable",
+          "replacement": "[redactado en la publicación: ruta local del intérprete]",
+          "reason": "Ruta absoluta del host con el usuario local; la versión de Python se conserva en environment.python."
+        }
+      ]
+    },
+    {
+      "path": "report.md",
+      "role": "Reporte generado por el arnés al terminar la campaña.",
+      "media_type": "text/markdown",
+      "bytes": 44581,
+      "sha256": "42157ec5c4b0caf29ceff1057ce2e187c95d23e71470a67f9634fed3c021364b",
+      "original": {
+        "path": "report.md",
+        "bytes": 44581,
+        "sha256": "42157ec5c4b0caf29ceff1057ce2e187c95d23e71470a67f9634fed3c021364b"
+      },
+      "identical_to_original": true,
+      "redactions": []
+    }
+  ]
+}

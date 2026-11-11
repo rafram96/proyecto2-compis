@@ -19,6 +19,8 @@ docker-compose.yml
 # Fuentes canónicas del catálogo privado (excepciones al patrón CSV).
 !demo/joins_pedidos.csv
 !demo/joins_clientes.csv
+# Instantánea pública C5 (las descargas de /evaluacion).
+!web/public/evidencia/c5-representativa/*.csv
 web/node_modules
 web/dist
 web/.playwright-cli

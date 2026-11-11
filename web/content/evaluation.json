@@ -1,0 +1,30 @@
+{
+  "campaign": "c5-representativa",
+  "source": "benchmarks/results/representativa",
+  "snapshot": "web/public/evidencia/c5-representativa",
+  "href": "/evidencia/c5-representativa/",
+  "provenance_notes": [
+    "Campaña histórica generada por el arnés C5; esta publicación no vuelve a medir ni recalcula cifras distintas.",
+    "Los archivos idénticos conservan los bytes del original. metadata.public.json es una versión depurada: solo sustituye la ruta local del intérprete.",
+    "report.md se conserva tal como lo escribió el arnés; su frase sobre artefactos no versionados describe la campaña original, anterior a esta instantánea pública."
+  ],
+  "files": [
+    {"path": "samples.csv", "source": "samples.csv", "publish": "copy", "media_type": "text/csv", "role": "Muestras individuales en ms: fase, workload, filas, configuración, escenario, repetición y secuencia medida."},
+    {"path": "summary.csv", "source": "summary.csv", "publish": "copy", "media_type": "text/csv", "role": "Resumen por celda: N, mediana, P25, P75, IQR, mínimo, máximo y razón O0/configuración."},
+    {"path": "structure.csv", "source": "structure.csv", "publish": "copy", "media_type": "text/csv", "role": "Recuentos de nodos y nodos eliminados, añadidos o modificados por configuración."},
+    {"path": "structure.json", "source": "structure.json", "publish": "copy", "media_type": "application/json", "role": "IR completas antes/después y pruebas de reescritura de rangos y joins (2 MiB)."},
+    {"path": "errors.csv", "source": "errors.csv", "publish": "copy", "media_type": "text/csv", "role": "Corpus de errores estáticos y dinámicos con código exigido y observado."},
+    {"path": "metadata.public.json", "source": "metadata.json", "publish": "redact_metadata", "media_type": "application/json", "role": "Protocolo, entorno, versiones, hashes de fuentes, datasets y equivalencias. Versión depurada."},
+    {"path": "report.md", "source": "report.md", "publish": "copy", "media_type": "text/markdown", "role": "Reporte generado por el arnés al terminar la campaña."}
+  ],
+  "workloads": {
+    "rangos": {"title": "Rangos", "role": "oportunidad", "purpose": "[100, 900) implica monto >= 0, monto <= 900 e IS NOT NULL; el filtro > 100 debe sobrevivir.", "expected": ["rangos", "filtros"]},
+    "clasicas": {"title": "Pases clásicos", "role": "oportunidad", "purpose": "Aritmética constante, FILTER TRUE, filtros consecutivos y una rama sin uso.", "expected": ["constantes", "filtros", "muertos"]},
+    "join": {"title": "JOIN verificado", "role": "oportunidad", "purpose": "INNER con VERIFY MANY_TO_ONE seguido de un SELECT que solo usa columnas izquierdas.", "expected": ["joins"]},
+    "combinado": {"title": "Combinado", "role": "oportunidad", "purpose": "Los cinco pases a la vez: filtros antes y después del JOIN, DERIVE y SUM/COUNT.", "expected": ["constantes", "rangos", "filtros", "joins", "muertos"]},
+    "control_limites": {"title": "Control de límites", "role": "control", "purpose": ">= 100 no implica > 100: el pase de rangos debe abstenerse (filtros sí fusiona).", "expected": ["filtros"]},
+    "control_join": {"title": "Control de JOIN observable", "role": "control", "purpose": "Se proyectan ambas claves y una columna derecha: O3 debe abstenerse.", "expected": []},
+    "control_sin_garantia": {"title": "Control sin garantía", "role": "control", "purpose": "INNER sin VERIFY: no hay declaración que permita eliminar el JOIN.", "expected": []},
+    "agregados": {"title": "Agregados", "role": "control", "purpose": "SUM con semántica SQL, COUNT de filas y no NULL, grupos en orden de aparición; ningún pase transforma operadores.", "expected": []}
+  }
+}

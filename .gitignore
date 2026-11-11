@@ -31,6 +31,8 @@ benchmarks/results/
 *.parquet
 *.csv
 !tests/**/*.csv
+# Instantánea pública C5 versionada explícitamente (manifest.json con hashes).
+!web/public/evidencia/**/*.csv
 
 # LaTeX
 *.aux

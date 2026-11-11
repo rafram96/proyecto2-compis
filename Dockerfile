@@ -22,6 +22,9 @@ COPY web/content ./web/content
 COPY web/scripts ./web/scripts
 COPY web/src/compiler ./web/src/compiler
 COPY web/src/content/generated.json ./web/src/content/generated.json
+# Evidencia C5 publicada (instantánea versionada) y datos generados de /evaluacion.
+COPY web/public/evidencia ./web/public/evidencia
+COPY web/src/evaluation/generated.json ./web/src/evaluation/generated.json
 CMD ["sh", "-c", "python scripts/create_demo_data.py && python main.py --run"]
 
 FROM node:24-slim AS web-build
