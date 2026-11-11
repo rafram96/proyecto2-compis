@@ -1,6 +1,8 @@
 services:
   etl:
-    build: .
+    build:
+      context: .
+      target: compiler
     image: etl-dsl:polars
     volumes:
       # Programas y datos de demo; los SINK escriben junto a cada .etl.
@@ -12,6 +14,26 @@ services:
 
   tests:
     image: etl-dsl:polars
-    build: .
+    build:
+      context: .
+      target: compiler
     command: ["python", "-m", "unittest", "discover", "-v"]
     profiles: ["tests"]
+
+
+  cauce:
+    build:
+      context: .
+      target: service
+    profiles: [web]
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - cauce-data:/app/data
+    # Límite del contenedor completo adicional al RSS muestreado por trabajo.
+    mem_limit: 1g
+    cpus: 2
+    init: true
+
+volumes:
+  cauce-data:

@@ -1,0 +1,1141 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Cauce · ejecución privada",
+    "version": "1"
+  },
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/capabilities": {
+      "get": {
+        "summary": "Capabilities",
+        "operationId": "capabilities_api_v1_capabilities_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Capabilities"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs": {
+      "post": {
+        "summary": "Submit",
+        "operationId": "submit_api_v1_runs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Run"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}": {
+      "get": {
+        "summary": "Status",
+        "operationId": "status_api_v1_runs__run_id__get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Run"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/cancel": {
+      "post": {
+        "summary": "Cancel",
+        "operationId": "cancel_api_v1_runs__run_id__cancel_post",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Run"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/outputs/{output_id}/preview": {
+      "get": {
+        "summary": "Preview",
+        "operationId": "preview_api_v1_runs__run_id__outputs__output_id__preview_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "output_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Output Id"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Preview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/artifacts/{artifact_id}": {
+      "get": {
+        "summary": "Artifact",
+        "operationId": "artifact_api_v1_runs__run_id__artifacts__artifact_id__get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "artifact_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Artifact Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/vnd.apache.parquet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Artifact": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "media_type": {
+            "type": "string",
+            "title": "Media Type"
+          },
+          "bytes": {
+            "type": "integer",
+            "title": "Bytes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "media_type",
+          "bytes"
+        ],
+        "title": "Artifact"
+      },
+      "Binding": {
+        "properties": {
+          "pipeline": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Pipeline"
+          },
+          "declaration": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Declaration"
+          },
+          "dataset_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Dataset Id"
+          },
+          "version": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Version"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "pipeline",
+          "declaration",
+          "dataset_id",
+          "version"
+        ],
+        "title": "Binding"
+      },
+      "Capabilities": {
+        "properties": {
+          "contract_version": {
+            "type": "string",
+            "const": "1",
+            "title": "Contract Version",
+            "default": "1"
+          },
+          "compiler_version": {
+            "type": "string",
+            "title": "Compiler Version"
+          },
+          "analysis_version": {
+            "type": "string",
+            "title": "Analysis Version"
+          },
+          "passes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Passes"
+          },
+          "default_passes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Default Passes"
+          },
+          "source_connectors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Source Connectors"
+          },
+          "sink_connectors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sink Connectors"
+          },
+          "datasets": {
+            "items": {
+              "$ref": "#/components/schemas/Dataset"
+            },
+            "type": "array",
+            "title": "Datasets"
+          },
+          "limits": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Limits"
+          },
+          "isolation": {
+            "type": "string",
+            "title": "Isolation"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "compiler_version",
+          "analysis_version",
+          "passes",
+          "default_passes",
+          "source_connectors",
+          "sink_connectors",
+          "datasets",
+          "limits",
+          "isolation"
+        ],
+        "title": "Capabilities"
+      },
+      "Column": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "dtype": {
+            "type": "string",
+            "title": "Dtype"
+          },
+          "nullable": {
+            "type": "boolean",
+            "title": "Nullable"
+          },
+          "declared_nullable": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Declared Nullable"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "dtype",
+          "nullable"
+        ],
+        "title": "Column"
+      },
+      "Dataset": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "driver": {
+            "type": "string",
+            "title": "Driver"
+          },
+          "options": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Options"
+          },
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          },
+          "sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sha256"
+          },
+          "bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bytes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "version",
+          "title",
+          "driver",
+          "options",
+          "available",
+          "sha256",
+          "bytes"
+        ],
+        "title": "Dataset"
+      },
+      "Diagnostic": {
+        "properties": {
+          "phase": {
+            "type": "string",
+            "title": "Phase"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "span": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Span"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "phase",
+          "code",
+          "severity",
+          "message",
+          "filename"
+        ],
+        "title": "Diagnostic"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Health": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ok",
+            "title": "Status",
+            "default": "ok"
+          },
+          "contract_version": {
+            "type": "string",
+            "const": "1",
+            "title": "Contract Version",
+            "default": "1"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "Health"
+      },
+      "Metrics": {
+        "properties": {
+          "worker_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Worker Seconds"
+          },
+          "peak_rss_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peak Rss Bytes"
+          },
+          "rss_sample_ms": {
+            "type": "integer",
+            "title": "Rss Sample Ms",
+            "default": 50
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "Metrics"
+      },
+      "Output": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "pipeline": {
+            "type": "string",
+            "title": "Pipeline"
+          },
+          "declaration": {
+            "type": "string",
+            "title": "Declaration"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "SINK",
+              "OUTPUT"
+            ],
+            "title": "Kind"
+          },
+          "rows": {
+            "type": "integer",
+            "title": "Rows"
+          },
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/Column"
+            },
+            "type": "array",
+            "title": "Columns"
+          },
+          "artifact_id": {
+            "type": "string",
+            "title": "Artifact Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "pipeline",
+          "declaration",
+          "kind",
+          "rows",
+          "columns",
+          "artifact_id"
+        ],
+        "title": "Output"
+      },
+      "Preview": {
+        "properties": {
+          "output_id": {
+            "type": "string",
+            "title": "Output Id"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "total_rows": {
+            "type": "integer",
+            "title": "Total Rows"
+          },
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/Column"
+            },
+            "type": "array",
+            "title": "Columns"
+          },
+          "rows": {
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "$ref": "#/components/schemas/TaggedValue"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "output_id",
+          "offset",
+          "limit",
+          "total_rows",
+          "columns",
+          "rows"
+        ],
+        "title": "Preview"
+      },
+      "Run": {
+        "properties": {
+          "contract_version": {
+            "type": "string",
+            "const": "1",
+            "title": "Contract Version",
+            "default": "1"
+          },
+          "compiler_version": {
+            "type": "string",
+            "title": "Compiler Version"
+          },
+          "analysis_version": {
+            "type": "string",
+            "title": "Analysis Version"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "status_url": {
+            "type": "string",
+            "title": "Status Url"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "failed",
+              "cancelled",
+              "timed_out"
+            ],
+            "title": "State"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id"
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "source_hash": {
+            "type": "string",
+            "title": "Source Hash"
+          },
+          "pipeline": {
+            "type": "string",
+            "title": "Pipeline"
+          },
+          "passes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passes"
+          },
+          "effective_passes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Effective Passes"
+          },
+          "bindings": {
+            "items": {
+              "$ref": "#/components/schemas/Binding"
+            },
+            "type": "array",
+            "title": "Bindings"
+          },
+          "dataset_hashes": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Dataset Hashes"
+          },
+          "created_at": {
+            "type": "number",
+            "title": "Created At"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "expired": {
+            "type": "boolean",
+            "title": "Expired",
+            "default": false
+          },
+          "diagnostics": {
+            "items": {
+              "$ref": "#/components/schemas/Diagnostic"
+            },
+            "type": "array",
+            "title": "Diagnostics"
+          },
+          "outputs": {
+            "items": {
+              "$ref": "#/components/schemas/Output"
+            },
+            "type": "array",
+            "title": "Outputs"
+          },
+          "artifacts": {
+            "items": {
+              "$ref": "#/components/schemas/Artifact"
+            },
+            "type": "array",
+            "title": "Artifacts"
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/Metrics"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "compiler_version",
+          "analysis_version",
+          "id",
+          "status_url",
+          "state",
+          "document_id",
+          "revision",
+          "filename",
+          "source_hash",
+          "pipeline",
+          "passes",
+          "effective_passes",
+          "bindings",
+          "dataset_hashes",
+          "created_at"
+        ],
+        "title": "Run"
+      },
+      "RunRequest": {
+        "properties": {
+          "contract_version": {
+            "type": "string",
+            "const": "1",
+            "title": "Contract Version",
+            "default": "1"
+          },
+          "source": {
+            "type": "string",
+            "maxLength": 131072,
+            "minLength": 1,
+            "title": "Source"
+          },
+          "filename": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[^/\\\\\\x00-\\x1f]+$",
+            "title": "Filename"
+          },
+          "document_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Document Id"
+          },
+          "revision": {
+            "type": "integer",
+            "maximum": 9007199254740991.0,
+            "minimum": 1.0,
+            "title": "Revision"
+          },
+          "pipeline": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Pipeline"
+          },
+          "passes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passes"
+          },
+          "bindings": {
+            "items": {
+              "$ref": "#/components/schemas/Binding"
+            },
+            "type": "array",
+            "maxItems": 64,
+            "title": "Bindings"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "filename",
+          "document_id",
+          "revision",
+          "pipeline",
+          "bindings"
+        ],
+        "title": "RunRequest"
+      },
+      "Span": {
+        "properties": {
+          "line": {
+            "type": "integer",
+            "title": "Line"
+          },
+          "column": {
+            "type": "integer",
+            "title": "Column"
+          },
+          "end_line": {
+            "type": "integer",
+            "title": "End Line"
+          },
+          "end_column": {
+            "type": "integer",
+            "title": "End Column"
+          },
+          "start": {
+            "type": "integer",
+            "title": "Start"
+          },
+          "end": {
+            "type": "integer",
+            "title": "End"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "line",
+          "column",
+          "end_line",
+          "end_column",
+          "start",
+          "end"
+        ],
+        "title": "Span"
+      },
+      "TaggedValue": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "non_finite",
+              "binary",
+              "duration"
+            ],
+            "title": "Kind"
+          },
+          "value": {
+            "type": "string",
+            "title": "Value"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind",
+          "value"
+        ],
+        "title": "TaggedValue"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

@@ -6,7 +6,6 @@ venv
 **/*.py[cod]
 .pytest_cache
 Referencias
-docs
 output/*
 input/*.duckdb
 input/*.duckdb.wal
@@ -16,3 +15,15 @@ input/*.db
 *.pdf
 Dockerfile
 docker-compose.yml
+
+# Fuentes canónicas del catálogo privado (excepciones al patrón CSV).
+!demo/joins_pedidos.csv
+!demo/joins_clientes.csv
+web/node_modules
+web/dist
+web/.playwright-cli
+.agents
+.claude
+.codex
+ejemplos_diseno
+benchmarks/results
