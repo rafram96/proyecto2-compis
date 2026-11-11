@@ -1,45 +1,20 @@
 """Entrada del compilador: procesa archivos individuales o una carpeta de entrada."""
 import argparse
-import json
 from pathlib import Path
 import sys
 
-from .ast import to_dict
-from .backend import build_ir, compile_program
+from .analysis import analyze, artifacts_for_format, format_diagnostics, format_output
 from .diagnostics import ParseError
-from .ir import format_module
 from .passes import DEFAULT, PASSES
-from .parser import parse_tree
-from .scanner import scan
-from .validation import validate
-from .visitor import ASTBuilder
 
 
 def _analyze(path: Path, fmt: str, base_dir=None, passes=DEFAULT) -> str:
     source = path.read_text(encoding="utf-8-sig")
-    tree = parse_tree(source, filename=str(path))
-    program = ASTBuilder().transform(tree)
-    issues = validate(program)
-    if issues:
-        for issue in issues:
-            print(issue.format(source, str(path)), file=sys.stderr)
-        raise ValueError(f"{path}: {len(issues)} error(es) de validación.")
-    if fmt == "python":
-        return compile_program(program, filename=str(path), base_dir=base_dir or path.resolve().parent,
-                               passes=passes)
-    if fmt == "ir":
-        before, after = build_ir(program, passes)
-        if not passes:
-            return format_module(before)
-        return (f"// IR antes de optimizar\n{format_module(before)}\n"
-                f"// IR después de: {', '.join(passes)}\n{format_module(after)}")
-    if fmt == "ast":
-        return json.dumps(to_dict(program), ensure_ascii=True, indent=2) + "\n"
-    if fmt == "tokens":
-        return json.dumps([to_dict(token) for token in scan(source, filename=str(path))], indent=2) + "\n"
-    if fmt == "tree":
-        return tree.pretty()
-    return f"OK: {path}: {len(program.pipelines)} pipeline(s); sintaxis y estructura válidas.\n"
+    result = analyze(source, filename=str(path), base_dir=base_dir or path.resolve().parent,
+                     passes=passes, artifacts=artifacts_for_format(fmt))
+    if not result.ok:
+        raise ValueError(format_diagnostics(result, source).rstrip("\n"))
+    return format_output(result, fmt)
 
 
 def main(argv=None) -> int:

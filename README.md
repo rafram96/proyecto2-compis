@@ -88,6 +88,11 @@ Path("output/duckdb.py").write_text(python, encoding="utf-8")
 error sintáctico. `parse_tree(text)` permite inspeccionar el árbol concreto de
 Lark. `validate(program)` devuelve diagnósticos estructurales sin acceder a datos.
 
+`analyze(text, filename="programa.etl", artifacts=("ast", "ir_before", "ir_after", "python"))`
+analiza texto en memoria y devuelve artefactos y diagnósticos estructurados, conservando
+las fases disponibles si otra falla. `result.to_dict()` expone el contrato JSON
+compartido por CLI y web. Véase [la API de análisis](docs/api_analisis.md).
+
 ## Docker
 
 Imagen `python:3.12-slim` con las dependencias de `requirements.txt`:

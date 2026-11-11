@@ -1,5 +1,6 @@
 """Diagnósticos compartidos por sintaxis y validación estructural."""
 from dataclasses import dataclass
+from typing import Literal
 
 from .token import Span
 
@@ -9,6 +10,15 @@ class Diagnostic:
     code: str
     message: str
     span: Span
+    phase: Literal["lexical", "syntax", "semantic", "backend"] = "semantic"
+    severity: Literal["error", "warning", "info"] = "error"
+
+    def to_dict(self, filename: str = "<string>") -> dict:
+        """Contrato JSON. Posiciones Unicode, base 1; offsets base 0 y fin exclusivo."""
+        from dataclasses import asdict
+
+        return {"code": self.code, "message": self.message, "phase": self.phase,
+                "severity": self.severity, "filename": filename, "span": asdict(self.span)}
 
     def format(self, source: str, filename: str = "<string>") -> str:
         lines = source.splitlines()
@@ -36,5 +46,10 @@ def unexpected_input(exc, source: str, filename: str, *, code="E_SYNTAX") -> Par
     message = "Fin de archivo inesperado" if eof else "Símbolo inesperado"
     if expected:
         message += "; se esperaba: " + ", ".join(expected)
-    span = Span(line, column, line, column + 1, pos, pos)
-    return ParseError(Diagnostic(code, message, span), source, filename)
+    token_end = getattr(getattr(exc, "token", None), "end_pos", None)
+    end = pos if eof else min(len(source), max(pos + 1, token_end or pos))
+    end_line = source.count("\n", 0, end) + 1
+    end_column = end - source.rfind("\n", 0, end)
+    span = Span(line, column, end_line, end_column, pos, end)
+    phase = "lexical" if code == "E_LEXICAL" else "syntax"
+    return ParseError(Diagnostic(code, message, span, phase=phase), source, filename)

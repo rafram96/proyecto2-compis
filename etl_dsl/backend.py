@@ -3,13 +3,16 @@ from pathlib import Path
 
 from . import ast as a
 from . import ir
+from .diagnostics import Diagnostic
 from .passes import DEFAULT, optimize
 from .validation import validate
 from .visitor import walk
 
 
 class CompileError(ValueError):
-    pass
+    def __init__(self, message: str, *, diagnostic: Diagnostic | None = None):
+        super().__init__(message)
+        self.diagnostic = diagnostic
 
 
 def col(name: str) -> str:
@@ -122,7 +125,8 @@ class PythonGenerator:
         try:
             return _connector(connector, sink=sink)
         except ValueError as exc:
-            raise CompileError(f"{label}: E_CONNECTOR: {exc}") from exc
+            raise CompileError(f"{label}: E_CONNECTOR: {exc}", diagnostic=Diagnostic(
+                "E_CONNECTOR", str(exc), connector.span, phase="backend")) from exc
 
     def pipeline(self, pipe):
         self.lines.extend(["", f"def {self.functions[pipe.name]}(rt, inputs=None):",
@@ -182,7 +186,9 @@ class PythonGenerator:
         table = producer()
         columns = [n.name for n in walk(operation) if isinstance(n, a.Column)]
         if any(n.qualifier for n in walk(operation) if isinstance(n, a.Column)):
-            raise CompileError(f"{label}: solo JOIN admite calificadores left/right.")
+            raise CompileError(f"{label}: solo JOIN admite calificadores left/right.", diagnostic=Diagnostic(
+                "E_QUALIFIER", "Solo JOIN admite calificadores left/right.", operation.span,
+                phase="backend"))
         if isinstance(operation, (a.Select, a.Distinct, a.DropNulls)):
             columns.extend(operation.columns)
         elif isinstance(operation, a.Aggregate):
