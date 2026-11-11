@@ -1,0 +1,2 @@
+# Fallback SPA para alojamientos compatibles con _redirects (los archivos existentes prevalecen).
+/* /index.html 200

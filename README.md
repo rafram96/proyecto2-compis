@@ -230,3 +230,26 @@ validaciones de C4; exporta muestras, medianas/IQR, evidencia IR, entorno y un
 reporte Markdown. Los artefactos generados quedan fuera de Git.
 El segundo escenario controla solo los collect finales de Polars.
 Comandos, workloads, resultados y límites: [evaluación C5](docs/evaluacion.md).
+
+### Estudio web Cauce (W1, paso A + W4 esencial)
+
+La web Vite/React conserva el landing en `/` y ofrece el espacio de trabajo en `/estudio`:
+editor CodeMirror, compilación local real con Pyodide, fases textuales y diagnósticos seleccionables.
+Permite importar/exportar `.etl`, descargar Python vigente y recuperar borradores versionados
+tras recargar. No ejecuta Polars ni lee datasets en el navegador.
+
+```sh
+cd web
+npm install
+npm run dev -- --host 127.0.0.1 --port 5174
+npm test
+npm run build
+# Desde la raíz, con Vite activo y playwright-cli en PATH:
+.venv/bin/python web/scripts/verify_browser.py --url http://127.0.0.1:5174/
+```
+
+Las revisiones invalidan resultados anteriores; el worker limita carga/compilación y permite reiniciar
+sin perder el documento. Persistencia local: hasta 128 KiB por documento, 8 anteriores y 512 KiB total;
+si falla el guardado, descargar antes de salir. Rutas, fallback de hosting, comandos, recuperación y
+límites en [web/README.md](web/README.md). W1 sigue parcial; W2 gráfico, W3 de ejecución y las páginas
+`/ejemplos`, `/docs` y `/evaluacion` quedan pendientes. Las cifras experimentales de C5 no cambian.

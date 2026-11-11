@@ -3,7 +3,8 @@ async (page) => {
   page.on("pageerror", (error) => errors.push(error.message));
   await page.reload();
   await page.getByRole("button", { name: "Compilar", exact: true }).click();
-  await page.locator(".studio-status[data-status=ready]").waitFor({ timeout: 45000 });
+  await page.locator(".studio-status[data-status=ready], .studio-status[data-status=error]").waitFor({ timeout: 65000 });
+  if (await page.locator(".studio-status[data-status=error]").count()) throw new Error(await page.locator(".studio-status").innerText());
   await page.locator('.studio-out[data-origin="en vivo"]').waitFor();
 
   // Compara el mismo puente en CPython (snapshots) y Python/WASM, no un mock.
@@ -17,6 +18,9 @@ async (page) => {
         for (const [fmt, expected] of Object.entries(snapshots)) {
           const live = await compile({ source: program.source, name, fmt, passes });
           const { artifacts, ...summary } = live.analysis;
+          if (Object.values(artifacts).some(a => a.status !== "available" && a.data !== null)) {
+            throw new Error("El transporte perdió data:null en un artefacto sin datos");
+          }
           const actual = { ...live, analysis: summary };
           if (JSON.stringify(actual) !== JSON.stringify(expected)) {
             throw new Error(`Diferencia CPython/Pyodide: ${key}, ${fmt}, ${JSON.stringify(passes)}`);

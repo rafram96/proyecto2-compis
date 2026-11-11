@@ -2,9 +2,9 @@
 
 Fecha de revisión: **11 de noviembre de 2026**.
 
-Este plan parte del código actual de `etl_dsl/`, `tests/` y `web/`, y lo contrasta con [el enunciado](Enunciado_DSL.md). Cubre el compilador y la continuación de la web. C1, C2, C3, C4 y C5 están implementados; las siguientes entregas continúan pendientes.
+Este plan parte del código actual de `etl_dsl/`, `tests/` y `web/`, y lo contrasta con [el enunciado](Enunciado_DSL.md). Cubre el compilador y la continuación de la web. C1, C2, C3, C4 y C5 están implementados. La continuación web entrega W1 paso A y la robustez esencial de W4; W1 global, W2 y W3 siguen parciales o pendientes.
 
-Ampliación del plan: arquitectura de conexión, páginas adicionales y evaluación de edición visual, tomando como referencia el proyecto local `csharp-x86-compi/`. Se mantiene la libertad de adaptar sus ideas al dominio ETL. Esta ampliación documenta decisiones; no implementa todavía las páginas ni el editor por bloques.
+Ampliación del plan: arquitectura de conexión, páginas adicionales y evaluación de edición visual, tomando como referencia el proyecto local `csharp-x86-compi/`. Se mantiene la libertad de adaptar sus ideas al dominio ETL. La ruta `/estudio` ya implementa el paso A. Las páginas auxiliares y el editor por bloques siguen siendo planificación.
 
 La [definición de arquitectura de la aplicación](arquitectura_aplicacion.md) concreta API, procesos, contratos, persistencia y decisiones pendientes. Sus rutas `/api/v1` y su ciclo de trabajos sustituyen los nombres tentativos iniciales.
 
@@ -29,14 +29,14 @@ La [definición de arquitectura de la aplicación](arquitectura_aplicacion.md) c
 | Conectores | ✅ | Lectura CSV, Parquet, SQLite y DuckDB; escritura CSV, Parquet y DuckDB: `runtime.py`. DuckDB es un conector; las transformaciones usan Polars. |
 | Ejecución | ✅ | `LazyFrame`, selección de pipelines, entradas externas mediante API Python y comprobaciones en ejecución. |
 | CLI | ✅ | Compilación individual y por carpetas, seis formatos, ejecución, selección de pases, rutas base y continuación del lote tras errores: `main.py`. |
-| Pruebas y entorno | ✅ | Suite `unittest`, dependencias, Docker y datos de demostración. Tras C5 pasan **131 pruebas Python**, más 4 del adaptador web. |
+| Pruebas y entorno | ✅ | Suite `unittest`, dependencias, Docker y datos de demostración. Tras W1-A/W4 pasan **132 pruebas Python** y **21 pruebas web**; la evidencia histórica C5 conserva sus 131 pruebas. |
 | Evaluación experimental | ✅ | `benchmarks/`: ocho workloads, baselines contractuales, equivalencia obligatoria, compilación/ejecución separadas y CSV/JSON/reporte. Campaña real hasta un millón de filas; [metodología y límites](evaluacion.md). |
 
 **Distinción importante:** el compilador ya funciona de punta a punta por terminal. La brecha principal está en verificar propiedades de los datos antes de ejecutarlos y usarlas para optimizar.
 
 ## 2. Estado actual de la web
 
-La web ya contiene un estudio funcional, además del landing. Tras C1 se verificó también su recorrido interactivo con `playwright-cli`: Pyodide, paridad de resultados, diagnósticos y corrección en CodeMirror. Esta comprobación funcional no es una auditoría visual del diseño.
+La web conserva la demo breve del landing y amplía el estudio en `/estudio`. Se verificaron con `playwright-cli` la compilación Pyodide, paridad CPython, diagnósticos, archivos, recarga, navegación y recuperación del worker. Se inspeccionaron capturas de escritorio/móvil en ambos temas; esto no es una evaluación de usabilidad.
 
 | Funcionalidad | Estado | Evidencia y límite actual |
 |---|---|---|
@@ -49,9 +49,10 @@ La web ya contiene un estudio funcional, además del landing. Tras C1 se verific
 | Compilación al editar | ✅ | Tras cargar Python, espera de 320 ms; ejemplos editables, restauración y switch de optimización: `Studio.tsx`. |
 | Demostración de pases | ✅ | Comparación progresiva de constantes, filtros y pasos muertos: `Optimizer.tsx`. |
 | AST y FLOW como gráficos | ⬜ | Se muestran representaciones textuales; falta navegación visual entre nodos y código. |
-| Estudio en pantalla completa | ⬜ | El editor está integrado como sección final del landing. |
+| Estudio ampliado | ✅ | `/estudio` con editor/inspector paralelos en escritorio y alternancia móvil; el landing conserva su demo. |
 | Ejecución y resultados | ⬜ | La web compila, pero no ejecuta Polars ni lee datasets; no hay tabla de resultados de ejecución. |
-| Archivos y persistencia del trabajo | ⬜ | Las ediciones viven en el estado React; falta importar/exportar programas y restaurar borradores al recargar. |
+| Archivos y persistencia del trabajo | ✅ | Importación/exportación `.etl`, Python vigente, revisión/pases y borradores locales versionados/validados. 128 KiB por documento, 8 anteriores, 512 KiB total; aviso si falla el guardado. |
+| Robustez esencial W4 | ✅ | Cola acotada, respuestas antiguas ignoradas, validación de mensajes, errores del canal, carga 60 s/compilación 12 s y reinicio sin perder documento. |
 | Build de producción | ✅ | `npm run build` pasó durante esta revisión. Esto no verifica la descarga de Pyodide ni su funcionamiento en una sesión real. |
 
 ### Decisiones que se mantienen
@@ -158,16 +159,22 @@ Verificación: 131 pruebas Python (11 C5), modo pequeño, campaña, demos regene
 
 ## 5. Plan de continuación de la web
 
-### W1. Estudio ampliado — P1
+### W1. Estudio ampliado — P1 — 🟡 parcial (paso A implementado)
 
-- [ ] Extraer el área de trabajo de `Studio.tsx` a componentes reutilizables y ofrecer una vista ampliada enlazada desde el landing.
-- [ ] Implementar la ruta `/estudio` y las páginas auxiliares descritas en la sección 9, conservando un único documento activo entre vistas del estudio.
-- [ ] Distribuir editor y resultados en paneles adaptables, con selección de fase, estado de compilación y acceso por teclado.
-- [ ] Mantener visibles los errores junto al editor; permitir pulsar un diagnóstico para seleccionar su intervalo.
-- [ ] Incorporar importación/exportación `.etl`, descarga de Python y borradores locales versionados.
-- [ ] Conservar la carga diferida de editor y Python.
+- [x] Reutilizar CodeMirror y el inspector textual (`CompilerOutput.tsx`); ampliar a `pages/StudioPage.tsx`.
+- [x] Implementar `/estudio`, acceso directo, atrás/adelante, recuperación de rutas desconocidas y transferencia de una copia desde la demo.
+- [ ] Implementar las páginas auxiliares `/ejemplos`, `/docs` y `/evaluacion` de la sección 9.
+- [x] Mantener un documento activo en `src/workspace/`: texto, nombre, revisión, pases e inspector; ninguna selección de fase desmonta el editor.
+- [x] Paneles paralelos en escritorio, alternancia Código/Inspector en móvil y estados de foco/teclado.
+- [x] Diagnósticos accesibles desde cualquier fase; selección del intervalo Unicode convertido a UTF-16, multilínea y EOF.
+- [x] Importación/exportación `.etl`, descarga del Python vigente y persistencia local versionada/validada con borradores anteriores recuperables.
+- [x] Conservar carga diferida de editor, página ampliada y Python.
 
-**Criterio de cierre:** abrir el estudio, editar, compilar, corregir un error y descargar el código sin perder el borrador al recargar.
+**Paso A cerrado:** editar → compilar → localizar/corregir → inspeccionar → descargar → recargar/restaurar, comprobado en navegador.
+El estudio pide todos los artefactos una vez por revisión/pases; cambiar inspector no recompila. Conserva fases parciales, marca resultados
+anteriores y no ofrece Python de otra revisión. No hay ejecución Polars en la web. Hosting: fallback SPA en Vite/preview,
+`web/public/_redirects` y ejemplo `web/nginx.conf`; el alojamiento final debe aplicar el fallback de `/estudio`.
+Persistencia y recuperación detalladas en [web/README.md](../web/README.md).
 
 ### W2. Fases y optimizaciones explorables — P1/P2
 
@@ -193,15 +200,19 @@ Verificación: 131 pruebas Python (11 C5), modo pequeño, campaña, demos regene
 
 **Criterio de cierre:** ejecutar un ejemplo genera filas y un archivo real; un archivo ausente o un contrato inválido produce un error comprensible; la interfaz sigue respondiendo durante la ejecución.
 
-### W4. Robustez del editor y worker — P1/P2
+### W4. Robustez del editor y worker — P1/P2 — 🟡 esencial implementado
 
-- [ ] Ignorar resultados de solicitudes antiguas al cambiar texto, formato o pases; agrupar trabajo pendiente para no compilar todas las versiones intermedias.
-- [ ] Manejar `worker.onerror` y errores de mensajes, rechazar promesas pendientes y permitir reiniciar el worker.
-- [ ] Incorporar tiempo máximo y reinicio para solicitudes bloqueadas; el identificador de solicitud debe llegar hasta la actualización de la vista.
-- [ ] Probar pérdida de red al cargar Python, recuperación, ediciones rápidas y cambios de ejemplo durante la carga.
+- [x] Ignorar resultados de solicitudes antiguas al cambiar texto, formato o pases; agrupar trabajo pendiente para no compilar todas las versiones intermedias.
+- [x] Manejar `worker.onerror` y errores de mensajes, rechazar promesas pendientes y permitir reiniciar el worker.
+- [x] Incorporar tiempo máximo y reinicio para solicitudes bloqueadas; el identificador de solicitud debe llegar hasta la actualización de la vista.
+- [x] Probar pérdida de red al cargar Python, recuperación, ediciones rápidas y cambios de ejemplo durante la carga.
 - [ ] Mejorar después las sugerencias con columnas, pasos y puertos disponibles a partir del análisis semántico.
 
-**Criterio de cierre:** la salida visible corresponde siempre a la versión actual o está marcada como desactualizada; los fallos del worker no dejan la aplicación compilando indefinidamente.
+**Esencial cerrado:** resultado asociado a documento/revisión/pases; una solicitud en curso y una pendiente sustituible, promesas terminadas
+al fallar/reiniciar y callbacks de workers reemplazados ignorados. Mensajes validados con contrato 4 y serialización JSON Python para conservar
+`null`. Tiempo máximo de carga 60 s y compilación 12 s. Reinicio explícito conserva el documento y deja la descarga bajo acción Compilar.
+Pruebas con temporizadores/canales simulados y fallo real de descarga Pyodide/recuperación, cambios durante carga y ediciones rápidas en navegador.
+Las sugerencias semánticas siguen pendientes; W4 no implica cerrar W2 ni W3.
 
 ## 6. Orden recomendado y entregas verificables
 
@@ -218,15 +229,16 @@ El contrato del servicio y un primer recorrido con un dataset incluido pueden de
 
 ## 7. Pruebas y documentación para cerrar el proyecto
 
-- [x] Suite actual: `.venv/bin/python -m unittest discover` — **131 pruebas, OK**.
-- [x] Adaptador de diagnósticos: `cd web && npm test` — **4 pruebas, OK**.
+- [x] Suite actual: `.venv/bin/python -m unittest discover` — **132 pruebas, OK**.
+- [x] Diagnósticos, revisiones, persistencia y worker: `cd web && npm test` — **21 pruebas, OK**.
 - [x] C1/C2/C3/C4 en navegador: `.venv/bin/python web/scripts/verify_browser.py` — **32 comparaciones CPython/Pyodide, dos casos C2, prueba O1, eliminación O3 con obligaciones, abstenciones y recorrido de corrección, OK**.
 - [x] Build actual: `cd web && npm run build` — **OK**.
 - [x] Agregar pruebas de tipos/esquemas y de propagación de nulabilidad, especialmente en JOIN y `USE`.
 - [x] Probar equivalencia de los cinco pases actuales y casos donde deben abstenerse de optimizar, también en la evaluación C5.
-- [ ] Automatizar el recorrido web: cargar Pyodide, editar, diagnosticar, comparar IR y ejecutar un ejemplo.
-- [ ] Verificar el estudio en móvil y escritorio, teclado, foco, temas y movimiento reducido.
-- [ ] Comprobar paridad entre CLI, puente y navegador después de cambiar el compilador; regenerar `compiled.json`.
+- [x] Automatizar el recorrido local: Pyodide, transferencia desde demo, editar, corregir, fases sin recompilar, importación/exportación byte a byte, recarga, rutas y recuperación.
+- [ ] Completar comparación avanzada de IR y ejecutar un ejemplo (W2/W3).
+- [x] Verificar `/estudio` en móvil y escritorio, teclado, foco, ambos temas y movimiento reducido.
+- [x] Paridad CPython/Pyodide (32 presentaciones), diagnósticos y O1/O3 conservados; demos regeneradas con 132 pruebas.
 - [ ] Actualizar `docs/lenguaje.md` y `docs/backend_polars.md`; escribir un tutorial desde un CSV hasta un resultado.
 - [ ] Preparar reporte LaTeX de 6–10 páginas con evaluación, limitaciones, referencias y declaración de uso de IA.
 - [ ] Preparar demo técnica y ensayo de explicación de todas las fases por el equipo.
@@ -312,7 +324,7 @@ El contrato debe distinguir `no solicitado`, `disponible`, `bloqueado por error`
 | Ruta | Estado | Propósito y prioridad |
 |---|---|---|
 | `/` | ✅ Composición existente; falta adaptar navegación | Presentación de Cauce y demostración breve. |
-| `/estudio` | ⬜ Nueva página, P1 | Crear, inspeccionar y ejecutar un programa. Página principal del compilador. |
+| `/estudio` | 🟡 Paso A implementado | Editar, compilar, inspeccionar fases y descargar/restaurar documentos. Ejecución pendiente W3. |
 | `/ejemplos` y `/ejemplos/:slug` | ⬜ Nuevas páginas, P1 | Elegir un problema ETL y abrir una copia editable. |
 | `/docs` y `/docs/:slug` | ⬜ Nuevas páginas, P1 | Aprender a usar el lenguaje y consultar sus reglas. |
 | `/evaluacion` | ⬜ Nueva página, P1 tras C5 | Consultar evidencia de expresividad, errores y rendimiento. |
@@ -324,7 +336,7 @@ El contrato debe distinguir `no solicitado`, `disponible`, `bloqueado por error`
 
 **Usuario y resultado esperado:** una persona que quiere transformar datos o inspeccionar la compilación. Debe poder abrir un ejemplo, editarlo, localizar un error y obtener un resultado real.
 
-**Composición:** barra de documento con ejemplo/importación, estado de guardado, Compilar y Ejecutar; editor como área estable; inspector con vistas seleccionables; diagnósticos accesibles desde cualquier vista. En escritorio, editor e inspector en paralelo con ajuste de tamaño. En móvil, alternancia entre código e inspector sin comprimir ambos en columnas estrechas.
+**Composición objetivo (Ejecución y ajuste de tamaño pendientes):** barra de documento con ejemplo/importación, estado de guardado, Compilar y Ejecutar; editor como área estable; inspector con vistas seleccionables; diagnósticos accesibles desde cualquier vista. En escritorio, editor e inspector en paralelo con ajuste de tamaño. En móvil, alternancia entre código e inspector sin comprimir ambos en columnas estrechas.
 
 | Vista del estudio | Qué muestra | Implementación sobre el proyecto actual |
 |---|---|---|
@@ -335,7 +347,7 @@ El contrato debe distinguir `no solicitado`, `disponible`, `bloqueado por error`
 | Datos | Fuentes del programa, contratos declarados y bindings disponibles. | Extraer declaraciones del AST; unirlas al catálogo autorizado del servicio. Diferenciar contrato declarado, esquema observado e inferido estáticamente. |
 | Resultados | Estado de ejecución, tabla, esquema y archivos de salida. | Consumir W3; seleccionar salida si hay varios `SINK`/`OUTPUT`, limitar vista previa y conservar tipos/nulos en la serialización. |
 
-**Enlaces internos:** `/estudio?vista=optimizacion` abre ese inspector; un identificador local de documento puede acompañarlo. Un enlace con identificador local solo se puede restaurar en ese navegador: compartir un trabajo requiere exportar `.etl`; no se promete colaboración o almacenamiento remoto.
+**Enlaces internos propuestos (pendientes):** `/estudio?vista=optimizacion` abrirá ese inspector; un identificador local de documento puede acompañarlo. Un enlace con identificador local solo se puede restaurar en ese navegador: compartir un trabajo requiere exportar `.etl`; no se promete colaboración o almacenamiento remoto.
 
 **Conexión entre vistas:** seleccionar un nodo enfoca su rango en CodeMirror y su entrada/salida en el inspector. Mantener identificadores de nodos dentro de cada revisión, posiciones completas y `origin` para fusiones; no asumir que esos identificadores sobreviven sin cambios a cualquier edición.
 
@@ -449,11 +461,27 @@ Antes de desarrollarlo completo, probar un prototipo con tareas de filtrar venta
 
 | Paso | Alcance web | Dependencia | Resultado revisable |
 |---|---|---|---|
-| A | Enrutamiento, navegación y `/estudio` reutilizando CodeMirror y salidas textuales. | Código actual. | El landing abre un espacio de trabajo completo con borradores. |
-| B | `/ejemplos` y `/docs`, detalles y acciones hacia el estudio. | Manifiestos y contenido existente. | Recorrido problema → explicación → programa editable. |
+| A ✅ | Enrutamiento, navegación y `/estudio` reutilizando CodeMirror y salidas textuales. | Código actual. | El landing abre un espacio de trabajo completo con borradores. |
+| B ⬜ | `/ejemplos` y `/docs`, detalles y acciones hacia el estudio. | Manifiestos y contenido existente. | Recorrido problema → explicación → programa editable. |
 | C | API C1, estados por fase, AST expandible, FLOW de lectura y comparación de IR. | C1; C2–C4 se incorporan progresivamente. | Recorrido código ↔ fases con datos reales y posiciones. |
 | D | Servicio de ejecución, bindings de ejemplos y vista Resultados. | W3 y runtime actual. | Recorrido código → ejecución → tabla → archivo. |
 | E | `/evaluacion`, revisión de documentación y pruebas de navegador. | C5 para publicar métricas. | Evidencia reproducible y recorrido final comprobado. |
 | F | Prototipo de constructor visual, solo si se decide avanzar tras evaluarlo. | Documento compartido, FLOW y pruebas de ida/vuelta. | Experimento separado que no retrasa el entorno funcional. |
 
 Este orden permite construir las páginas del compilador actual desde el paso A. El trabajo semántico P0 continúa siendo prioritario para la entrega académica, pero no es condición para ofrecer una interfaz útil sobre las funciones que ya existen.
+
+
+### Evidencia de esta entrega W1-A/W4 (11 de noviembre de 2026)
+
+- `.venv/bin/python -m unittest discover`: 132 pruebas OK; el puente prueba seis vistas conjuntas y artefactos parciales.
+- `cd web && npm test`: 21 pruebas OK; `npm run build`: OK; demos regeneradas.
+- `.venv/bin/python web/scripts/verify_browser.py --url http://127.0.0.1:5174/`: Vite en puerto alternativo sin detener el 5173 ajeno;
+  32 comparaciones CPython/Pyodide, C2, O1/O0 y O3 con obligaciones, abstenciones y diagnósticos.
+- Recorrido real `/estudio`: transferencia texto/pases, foco Unicode/multilínea/EOF, corrección, fases sin recompilar ni perder selección/scroll,
+  descargas `.etl` y Python comparadas byte a byte con CPython, importación UTF-8/CRLF conservando borrador anterior, recarga e inspector restaurados,
+  atrás/adelante, acceso directo y ruta desconocida, fallo de descarga Pyodide/recuperación, cambios de ejemplo durante carga y ediciones rápidas.
+- Build servido con `vite preview` en 5184: acceso directo a `/estudio`, compilación real, Python vigente y consola sin errores/advertencias.
+- Capturas revisadas en escritorio y móvil, claro/oscuro y movimiento reducido; navegación de diagnósticos y salida del editor con teclado.
+  Los artefactos quedan en `web/.playwright-cli/`, fuera de Git. No se alteraron cifras ni archivos experimentales C5.
+
+Siguiente entrega: paso B (`/ejemplos` y `/docs`) y luego inspectores avanzados del paso C; ejecución HTTP corresponde al paso D/W3.

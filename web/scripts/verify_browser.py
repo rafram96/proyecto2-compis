@@ -1,4 +1,4 @@
-"""Prueba C1/C2/C3/C4 con playwright-cli contra Vite ya iniciado (sin instalar SDKs).
+"""Prueba C1–C4 y el estudio W1/W4 con playwright-cli contra Vite iniciado.
 
 Desde la raíz: python web/scripts/verify_browser.py --url http://127.0.0.1:5173/
 Los artefactos del navegador quedan en web/.playwright-cli/ (ignorado por Git).
@@ -7,6 +7,7 @@ import argparse
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 from uuid import uuid4
 
 
@@ -18,18 +19,30 @@ def main():
     if cli is None:
         parser.error("Se necesita playwright-cli en PATH.")
     web = Path(__file__).resolve().parents[1]
-    session = f"cauce-c4-{uuid4().hex[:8]}"
+    session = f"cauce-web-{uuid4().hex[:8]}"
     command = [cli, f"-s={session}"]
-    code = (web / "tests/browser/analysis.js").read_text(encoding="utf-8")
     try:
         subprocess.run([*command, "open", args.url], cwd=web, check=True, timeout=45)
-        completed = subprocess.run([*command, "run-code", code], cwd=web, check=False,
-                                   capture_output=True, text=True, timeout=90)
-        print(completed.stdout, end="")
-        print(completed.stderr, end="")
-        # playwright-cli puede informar errores del snippet con código de salida 0.
-        if completed.returncode or "### Error" in completed.stdout or '"compared":32' not in completed.stdout or '"eliminated":true' not in completed.stdout:
-            raise SystemExit("Falló la verificación de C1/C2/C3/C4; revisar la salida de playwright-cli.")
+        for script, required in (("analysis.js", ('"compared":32', '"eliminated":true')),
+                                 ("workspace.js", ('"workspace":true', '"loadFailureRecovery":true'))):
+            code = (web / "tests/browser" / script).read_text(encoding="utf-8")
+            completed = subprocess.run([*command, "run-code", code], cwd=web, check=False,
+                                       capture_output=True, text=True, timeout=150)
+            (web / ".playwright-cli" / f"{script}.log").write_text(completed.stdout + completed.stderr, encoding="utf-8")
+            print(completed.stdout.split("### Ran Playwright code")[0], end="", flush=True)
+            print(completed.stderr, end="", flush=True)
+            # playwright-cli puede informar errores del snippet con código de salida 0.
+            if completed.returncode or "### Error" in completed.stdout or any(s not in completed.stdout for s in required):
+                raise SystemExit(f"Falló {script}; revisar la salida de playwright-cli.")
+        sys.path[:0] = [str(web.parent), str(web / "src/compiler")]
+        from studio import compile_etl
+        source = ('PIPELINE p { INPUT data: TABLE[x: INT?]; STEP f = FILTER { WHERE "😀" == "é" AND x\n'
+                  ' IS NULL; } OUTPUT o: TABLE; FLOW { data -> f -> o; } }')
+        exported = (web / ".playwright-cli/workspace-export.etl").read_bytes().decode("utf-8")
+        generated = (web / ".playwright-cli/workspace-export.py").read_bytes().decode("utf-8")
+        if exported != source or generated != compile_etl(source, "pendientes.etl", "python", [])['out']:
+            raise SystemExit("Los bytes descargados no coinciden con el documento y el Python de CPython.")
+        print("Descargas .etl/Python verificadas byte a byte.")
     finally:
         subprocess.run([*command, "close"], cwd=web, timeout=15)
 
