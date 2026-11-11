@@ -2,6 +2,8 @@ import type { Diagnostic } from "./types";
 
 /** Convierte rangos Unicode de Python a offsets UTF-16, incluidos emoji y varias líneas. */
 export function editorDiagnostics(source: string, diagnostics: readonly Diagnostic[]) {
+  // CodeMirror normaliza saltos de línea; un archivo importado CRLF sigue guardado sin editar.
+  source = source.replace(/\r\n?/g, "\n");
   const lines = source.split("\n");
   const starts: number[] = [];
   let offset = 0;

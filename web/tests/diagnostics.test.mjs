@@ -24,6 +24,9 @@ test("conserva el rango de una expresión en varias líneas", () => {
   const source = "FILTER { WHERE x\n == NULL; }";
   const [marker] = editorDiagnostics(source, [diagnostic(1, 16, 2, 9)]);
   assert.equal(source.slice(marker.from, marker.to), "x\n == NULL");
+  const imported = "// 😀\r\nFILTER { WHERE x\r\n == NULL; }";
+  const [crlf] = editorDiagnostics(imported, [diagnostic(2, 16, 3, 9)]);
+  assert.equal(imported.replace(/\r\n/g, "\n").slice(crlf.from, crlf.to), "x\n == NULL");
 });
 
 test("admite diagnóstico vacío al final del documento", () => {

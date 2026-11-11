@@ -37,10 +37,10 @@ def _compact(fmt: str, out: str) -> str:
     return out
 
 
-def compile_etl(source: str, name: str = "programa.etl", fmt: str = "check", passes=None, compact=True) -> dict:
+def compile_etl(source: str, name: str = "programa.etl", fmt: str = "check", passes=None, compact=True, all_artifacts=False) -> dict:
     """`name` es lógico, no una ruta que se lea o escriba en el navegador/host."""
     result = analyze(source, filename=name, base_dir=".", passes=passes,
-                     artifacts=artifacts_for_format(fmt))
+                     artifacts=None if all_artifacts else artifacts_for_format(fmt))
     out = format_output(result, fmt) if result.ok else ""
     payload = result.to_dict()
     if result.ok and compact:
@@ -48,5 +48,15 @@ def compile_etl(source: str, name: str = "programa.etl", fmt: str = "check", pas
     python = payload["artifacts"]["python"]
     if compact and python["status"] == "available":
         python["data"] = _compact("python", python["data"])
-    return {"ok": result.ok, "out": out, "err": format_diagnostics(result, source),
-            "analysis": payload}
+    response = {"ok": result.ok, "out": out, "err": format_diagnostics(result, source),
+                "analysis": payload}
+    if all_artifacts:
+        views = {}
+        for view in FORMATS:
+            try:
+                text = format_output(result, view)
+            except ValueError:
+                text = ""
+            views[view] = _compact(view, text) if compact and text else text
+        response["views"] = views
+    return response

@@ -17,7 +17,7 @@ const SOURCES = import.meta.glob("../../../etl_dsl/*.{py,lark}", {
   eager: true,
 }) as Record<string, string>;
 
-type PyProxy = { toJs(o?: object): unknown; destroy(): void };
+type PyProxy = { destroy(): void };
 type Pyodide = {
   loadPackage(name: string): Promise<void>;
   pyimport(name: string): { install(url: string): Promise<void> };
@@ -28,7 +28,7 @@ type Pyodide = {
 
 const post = (m: WorkerMessage) => (self as DedicatedWorkerGlobalScope).postMessage(m);
 
-let boot: Promise<{ py: Pyodide; compile: (...a: unknown[]) => PyProxy }> | null = null;
+let boot: Promise<{ py: Pyodide; compile: (...a: unknown[]) => string }> | null = null;
 
 async function start() {
   post({ type: "status", status: "loading", detail: "Descargando Python 3.14 (Pyodide)…" });
@@ -49,14 +49,16 @@ async function start() {
   }
   py.FS.writeFile("/home/pyodide/studio.py", studioSrc);
   py.runPython(`import os, sys\nsys.path.insert(0, "/home/pyodide")\nos.chdir("/work")`);
-  const compile = py.runPython("from studio import compile_etl\ncompile_etl") as (...a: unknown[]) => PyProxy;
+  // toJs convierte None en undefined y pierde campos al serializar (p. ej. data:null).
+  // JSON de Python conserva exactamente el contrato público, también en artefactos parciales.
+  const compile = py.runPython("from studio import compile_etl\nimport json\nlambda *args: json.dumps(compile_etl(*args), ensure_ascii=False)") as (...a: unknown[]) => string;
   const version = String(py.runPython("import sys, lark; f'Python {sys.version.split()[0]} · lark {lark.__version__}'"));
   post({ type: "status", status: "ready", detail: version });
   return { py, compile };
 }
 
 self.onmessage = async (e: MessageEvent<CompileRequest>) => {
-  const { id, source, name, fmt, passes } = e.data;
+  const { id, source, name, fmt, passes, allArtifacts = false } = e.data;
   let runtime;
   try {
     boot ??= start();
@@ -73,13 +75,8 @@ self.onmessage = async (e: MessageEvent<CompileRequest>) => {
     // `undefined` llega a Python como None (los pases por defecto); `null` llegaría como JsNull.
     const pyPasses = passes === null ? undefined : py.toPy(passes);
     try {
-      const res = compile(source, name, fmt, pyPasses);
-      try {
-        const out = res.toJs({ dict_converter: Object.fromEntries }) as CompileResult;
-        post({ type: "result", id, result: out });
-      } finally {
-        res.destroy();
-      }
+      const out = JSON.parse(compile(source, name, fmt, pyPasses, true, allArtifacts)) as CompileResult;
+      post({ type: "result", id, result: out });
     } finally {
       pyPasses?.destroy();
     }

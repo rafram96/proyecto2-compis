@@ -52,10 +52,10 @@ export type CompilePresentation = {
 };
 
 /** Los resultados en vivo incluyen artefactos; el landing solo precarga su presentación. */
-export type CompileResult = CompilePresentation & { analysis: AnalysisResult | null };
+export type CompileResult = CompilePresentation & { analysis: AnalysisResult | null; views?: Record<Format, string> };
 
 /** `passes: null` usa los pases por defecto; `[]` equivale a -O0. */
-export type CompileRequest = { id: number; source: string; name: string; fmt: Format; passes: string[] | null };
+export type CompileRequest = { id: number; source: string; name: string; fmt: Format; passes: string[] | null; allArtifacts?: boolean };
 
 export type RuntimeStatus = "idle" | "loading" | "ready" | "error";
 

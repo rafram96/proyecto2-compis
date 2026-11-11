@@ -68,6 +68,32 @@ class WebBridgeTests(unittest.TestCase):
         span = diagnostic["span"]
         self.assertEqual(source[span["start"]:span["end"]], "status == NULL")
 
+    def test_workspace_collects_all_views_with_partial_artifacts(self):
+        valid = (ROOT / "web/scripts/programs/ventas.etl").read_text(encoding="utf-8")
+        for source, expected in ((valid, True), (valid.replace("amount > 2 * 5", "missing > 0"), True),
+                                 ("PIPELINE p {", False)):
+            # La fuente CSV de ventas no tiene esquema: missing conserva conocimiento parcial.
+            result = studio.compile_etl(source, "copia.etl", all_artifacts=True)
+            self.assertEqual(set(result["views"]), set(FORMATS))
+            self.assertEqual(result["analysis"]["contract_version"], "4")
+            if expected:
+                self.assertTrue(result["ok"])
+                self.assertEqual(result["views"]["python"], result["analysis"]["artifacts"]["python"]["data"])
+                self.assertTrue(all(a["status"] == "available" for a in result["analysis"]["artifacts"].values()))
+            else:
+                self.assertFalse(result["ok"])
+                self.assertEqual(result["analysis"]["artifacts"]["tokens"]["status"], "available")
+                self.assertTrue(result["views"]["tokens"])
+                self.assertEqual(result["views"]["ast"], "")
+        semantic = 'PIPELINE p { INPUT i: TABLE[x: INT]; STEP f = FILTER { WHERE missing > 0; } OUTPUT o: TABLE; FLOW { i -> f -> o; } }'
+        result = studio.compile_etl(semantic, "parcial.etl", all_artifacts=True)
+        self.assertFalse(result["ok"])
+        self.assertIn("E_COLUMN", result["err"])
+        self.assertTrue(result["views"]["ast"])
+        self.assertTrue(result["views"]["ir"])
+        self.assertEqual(result["analysis"]["artifacts"]["ir_after"]["status"], "blocked")
+        self.assertEqual(result["views"]["python"], "")
+
 
 if __name__ == "__main__":
     unittest.main()
