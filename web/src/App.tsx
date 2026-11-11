@@ -12,6 +12,22 @@ import { navigate, usePath } from "./lib/router";
 const ExamplesPage = lazy(() => import("./pages/ExamplesPage"));
 const DocsPage = lazy(() => import("./pages/DocsPage"));
 const StudioPage = lazy(() => import("./pages/StudioPage"));
+// Si el chunk de evaluación no llega (red/caché), se informa sin inventar datos ni afectar al estudio.
+const EvaluationPage = lazy(() =>
+  import("./pages/EvaluationPage").catch(() => ({
+    default: () => (
+      <main className="content-page not-found" id="contenido">
+        <h1>No se pudo cargar la evaluación</h1>
+        <p role="alert">
+          Falló la descarga de la página. Tu documento del estudio no se ha modificado.
+        </p>
+        <button type="button" className="btn" onClick={() => location.reload()}>
+          Reintentar
+        </button>
+      </main>
+    ),
+  })),
+);
 
 export default function App() {
   const path = usePath();
@@ -78,6 +94,16 @@ export default function App() {
           }
         >
           <StudioPage />
+        </Suspense>
+      ) : /^\/evaluacion\/?$/.test(path) ? (
+        <Suspense
+          fallback={
+            <main className="content-page" id="contenido">
+              <p role="status">Abriendo la evaluación…</p>
+            </main>
+          }
+        >
+          <EvaluationPage />
         </Suspense>
       ) : /^\/(ejemplos|docs)(\/[^/]+)?\/?$/.test(path) ? (
         <Suspense

@@ -448,12 +448,16 @@ class ServiceTests(unittest.TestCase):
             root = Path(temp)
             (root / 'index.html').write_text('SPA')
             (root / 'asset.js').write_text('JS')
+            (root / 'evidencia/c5').mkdir(parents=True)
+            (root / 'evidencia/c5/summary.csv').write_text('a,b\n')
             with self.client(static=root) as (c, _, _):
-                for route in ('/', '/estudio', '/docs', '/ejemplos', '/docs/conectores', '/ejemplos/ventas'):
+                for route in ('/', '/estudio', '/docs', '/ejemplos', '/docs/conectores', '/ejemplos/ventas', '/evaluacion'):
                     self.assertEqual(c.get(route).text, 'SPA')
-                for route in ('/api/missing', '/api/v1/missing', '/assets/missing.js', '/py/missing.whl'):
-                    self.assertEqual(c.get(route).status_code, 404)
+                for route in ('/api/missing', '/api/v1/missing', '/assets/missing.js', '/py/missing.whl',
+                              '/evidencia/c5/ausente.csv', '/evidencia/c5', '/evidencia/otra'):
+                    self.assertEqual(c.get(route).status_code, 404, route)
                 self.assertEqual(c.get('/asset.js').text, 'JS')
+                self.assertEqual(c.get('/evidencia/c5/summary.csv').text, 'a,b\n')
 
 
 if __name__ == '__main__':

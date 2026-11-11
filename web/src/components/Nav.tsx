@@ -95,6 +95,12 @@ export function Nav({ inStudio = false }: { inStudio?: boolean }) {
         >
           Documentación
         </a>
+        <a
+          href="/evaluacion"
+          aria-current={path.startsWith("/evaluacion") ? "page" : undefined}
+        >
+          Evaluación
+        </a>
       </div>
       <ThemeToggle />
       <a className="btn sm nav-cta" href={inStudio ? "/" : "/estudio"}>

@@ -157,7 +157,7 @@ def create_app(settings=None):
             raise HTTPException(404)
         if path.is_file():
             return FileResponse(path)
-        spa = '.' not in route and not route.startswith(('assets/', 'py/', 'img/'))
+        spa = '.' not in route and not route.startswith(('assets/', 'py/', 'img/', 'evidencia/'))
         if spa and (root / 'index.html').is_file():
             return FileResponse(root / 'index.html')
         raise HTTPException(404, 'Recurso no encontrado.')

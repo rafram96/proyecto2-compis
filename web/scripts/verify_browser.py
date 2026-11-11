@@ -17,6 +17,7 @@ def main():
     parser.add_argument("--timeout-api", default="", help="API de prueba con CAUCE_TIMEOUT=0.02, necesaria para --execution-only")
     parser.add_argument("--inspectors-only", action="store_true", help="Inspectores reales, también en vite preview; no importa /src/")
     parser.add_argument("--content-only", action="store_true", help="Recorrido de contenido, también en vite preview")
+    parser.add_argument("--evaluation-only", action="store_true", help="Recorrido /evaluacion y descargas C5; también en producción")
     parser.add_argument("--url", default="http://127.0.0.1:5173/")
     args = parser.parse_args()
     if args.execution_only and not args.timeout_api:
@@ -32,13 +33,16 @@ def main():
         suites = [("analysis.js", ('"compared":32', '"eliminated":true')),
                   ("workspace.js", ('"workspace":true', '"loadFailureRecovery":true')),
                   ("content.js", ('"content":true', '"storageFailure":true')),
-                  ("inspectors.js", ('"inspectors":true', '"noRecompileOnExplore":true'))]
+                  ("inspectors.js", ('"inspectors":true', '"noRecompileOnExplore":true')),
+                  ("evaluation.js", ('"evaluation":true', '"downloads":8', '"apiWhileReading":0'))]
         if args.execution_only:
             suites = [("execution.js", ('"execution":true', '"timeout":true', '"download":true'))]
         if args.content_only:
             suites = suites[2:3]
         if args.inspectors_only:
-            suites = suites[-1:]
+            suites = suites[3:4]
+        if args.evaluation_only:
+            suites = suites[4:5]
         for script, required in suites:
             code = (web / "tests/browser" / script).read_text(encoding="utf-8").strip().removesuffix(";")
             code = code.replace("__CAUCE_TIMEOUT_API__", args.timeout_api)
@@ -53,6 +57,21 @@ def main():
                 subprocess.run([*command, "snapshot"], cwd=web, timeout=15)
                 raise SystemExit(f"Falló {script}; revisar la salida de playwright-cli.")
         sys.path[:0] = [str(web.parent), str(web / "src/compiler")]
+        if args.evaluation_only or not (args.content_only or args.inspectors_only or args.execution_only):
+            import hashlib
+            import json
+            snapshot = web / "public/evidencia/c5-representativa"
+            manifest_bytes = (snapshot / "manifest.json").read_bytes()
+            manifest = json.loads(manifest_bytes)
+            expected = {f["path"]: f["sha256"] for f in manifest["files"]}
+            expected["manifest.json"] = hashlib.sha256(manifest_bytes).hexdigest()
+            for name, digest in expected.items():
+                saved = (web / f".playwright-cli/e-download-{name}").read_bytes()
+                if hashlib.sha256(saved).hexdigest() != digest:
+                    raise SystemExit(f"La descarga {name} no coincide con el hash publicado.")
+            print(f"Descargas de evaluación verificadas: {len(expected)} archivos con el SHA-256 del manifiesto.")
+            if args.evaluation_only:
+                return
         from studio import compile_etl
         if args.execution_only:
             import tempfile
