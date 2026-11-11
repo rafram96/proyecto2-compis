@@ -38,7 +38,7 @@ async (page) => {
       const source = base.replace("EXPR", expr);
       const live = await compile({ source, name: "c2.etl", fmt: "ir", passes: null });
       const d = live.analysis.diagnostics[0];
-      if (live.ok || d.code !== code || d.phase !== "semantic" || live.analysis.contract_version !== "2") {
+      if (live.ok || d.code !== code || d.phase !== "semantic" || live.analysis.contract_version !== "3") {
         throw new Error(`Diagnóstico C2 incorrecto: ${JSON.stringify(live)}`);
       }
       const fragment = source.slice(d.span.start, d.span.end);
@@ -48,6 +48,25 @@ async (page) => {
       }
     }
     return { cases: 2 };
+  });
+
+  const ranges = await page.evaluate(async () => {
+    const { compile } = await import("/src/compiler/client.ts");
+    const source = 'PIPELINE p { INPUT i: TABLE[x: DECIMAL?]; STEP a = FILTER { WHERE x >= 100; } STEP b = FILTER { WHERE x >= 0; } OUTPUT o: TABLE; FLOW { i -> a -> b -> o; } }';
+    const optimized = await compile({ source, name: "rangos.etl", fmt: "ir", passes: ["rangos"] });
+    const plain = await compile({ source, name: "rangos.etl", fmt: "ir", passes: [] });
+    const module = optimized.analysis.artifacts.ir_after.data.module;
+    if (!optimized.ok || !plain.ok || module.pipelines[0].nodes.some(n => n.name === "b")) {
+      throw new Error("El pase rangos no eliminó el filtro implicado en Pyodide");
+    }
+    const proof = module.range_rewrites[0];
+    if (proof.node !== "b" || proof.proof[0].lower.value !== 100 || proof.proof[0].nullable || !module.range_facts.length) {
+      throw new Error("Faltan los hechos o la prueba del pase rangos");
+    }
+    if (!plain.analysis.artifacts.ir_after.data.module.pipelines[0].nodes.some(n => n.name === "b")) {
+      throw new Error("-O0 eliminó un filtro");
+    }
+    return { removed: proof.node, evidence: proof.proof[0].lower.evidence[0].condition };
   });
 
   await page.getByRole("tab", { name: "pendientes.etl", exact: true }).click();
@@ -73,5 +92,5 @@ async (page) => {
   if (unicodeMarked.join("\n") !== "x\n == NULL") throw new Error(`Rango Unicode incorrecto: ${JSON.stringify(unicodeMarked)}`);
   if (errors.length) throw new Error(errors.join("\n"));
 
-  return { ...parity, semantic, corrected: true, marked, unicodeMarked, pageErrors: errors };
+  return { ...parity, semantic, ranges, corrected: true, marked, unicodeMarked, pageErrors: errors };
 }

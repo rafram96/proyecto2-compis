@@ -1,5 +1,9 @@
 """Pases de optimización sobre la IR. Cada pase recibe y devuelve un ir.Module.
 
+O1 (dominio):
+- rangos: elimina predicados implicados por intervalos y ausencia de NULL,
+  conservando pruebas y hechos por nodo en la IR.
+
 O4 (optimizaciones clásicas):
 - constantes: pliega expresiones entre literales y simplifica AND/OR/NOT con
   TRUE/FALSE; un FILTER cuya condición queda en TRUE desaparece.
@@ -12,6 +16,7 @@ import operator
 
 from . import ast as a
 from .ir import Module, Node, Pipeline, Ref
+from .facts import ranges
 
 
 def _number(value) -> bool:
@@ -133,7 +138,7 @@ def dead(module: Module) -> Module:
     return replace(module, pipelines=tuple(pipelines))
 
 
-PASSES = {"constantes": constants, "filtros": filters, "muertos": dead}
+PASSES = {"constantes": constants, "rangos": ranges, "filtros": filters, "muertos": dead}
 DEFAULT = tuple(PASSES)
 
 

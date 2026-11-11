@@ -31,7 +31,7 @@ class AnalysisTests(unittest.TestCase):
         result = analyze(SOURCE, filename="memory.etl")
         payload = json.loads(json.dumps(result.to_dict()))
         self.assertTrue(payload["ok"])
-        self.assertEqual(payload["contract_version"], "2")
+        self.assertEqual(payload["contract_version"], "3")
         self.assertEqual(payload["offset_encoding"], "unicode-codepoints")
         self.assertEqual(len(payload["source_hash"]), 64)
         self.assertEqual(payload["artifacts"]["ast"]["data"], to_dict(parse(SOURCE)))

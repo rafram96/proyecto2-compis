@@ -1,0 +1,12 @@
+// Compilar sin consultar ventas.csv:
+// python main.py demo/rangos.etl --format ir --pases constantes,rangos
+// Comparar con: python main.py demo/rangos.etl --format ir -O0
+PIPELINE rangos {
+    SOURCE ventas: TABLE[id: INT, monto: DECIMAL?] = CSV(file: "ventas.csv");
+    STEP grandes = FILTER { WHERE monto >= 100; }
+    STEP no_negativas = FILTER { WHERE monto >= 0; }
+    STEP vista = SELECT { COLUMNS id, monto; }
+    STEP validas = FILTER { WHERE monto IS NOT NULL AND monto < 1000; }
+    OUTPUT resultado: TABLE[id: INT, monto: DECIMAL];
+    FLOW { ventas -> grandes -> no_negativas -> vista -> validas -> resultado; }
+}

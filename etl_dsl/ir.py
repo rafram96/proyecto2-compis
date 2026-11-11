@@ -12,6 +12,10 @@ from dataclasses import dataclass
 from decimal import Decimal
 from graphlib import TopologicalSorter
 import json
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .facts import NodeFacts, RangeRewrite
 
 from . import ast as a
 from .token import Span
@@ -53,6 +57,8 @@ class Pipeline:
 class Module:
     pipelines: tuple[Pipeline, ...]
     defaults: tuple[str, ...]  # pipelines raíz: sin INPUT y no usados por USE
+    range_facts: tuple[NodeFacts, ...] = ()
+    range_rewrites: tuple[RangeRewrite, ...] = ()
 
 
 KINDS = {a.Filter: "FILTER", a.Select: "SELECT", a.Derive: "DERIVE", a.Aggregate: "AGGREGATE",
@@ -177,4 +183,13 @@ def format_module(module: Module) -> str:
                 line += "  // " + " + ".join(node.origin)
             out.append(line)
         out.append("}")
+    for rewrite in module.range_rewrites:
+        out.append(f"// rangos: {rewrite.pipeline}.{rewrite.node}: {rewrite.action}; "
+                   f"{rewrite.before} -> {rewrite.after or 'entrada directa'}")
+        for fact in rewrite.proof:
+            lower = ('[' if fact.lower.inclusive else '(') + str(fact.lower.value) if fact.lower else '(-inf'
+            upper = str(fact.upper.value) + (']' if fact.upper.inclusive else ')') if fact.upper else '+inf)'
+            sources = ', '.join(dict.fromkeys(f'{e.pipeline}.{e.node}' for e in fact.evidence))
+            nulls = "solo NULL" if fact.null_only else "puede contener NULL" if fact.nullable else "sin NULL"
+            out.append(f"//   garantía: {fact.name} en {lower}, {upper}; {nulls}; {sources}")
     return "\n".join(out) + "\n"
