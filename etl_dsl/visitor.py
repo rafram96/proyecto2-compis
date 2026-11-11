@@ -42,6 +42,14 @@ def _span(meta) -> a.Span:
                   meta.start_pos, meta.end_pos)
 
 
+class LocatedName(str):
+    """Nombre textual con posición interna; JSON y la API AST conservan strings."""
+    def __new__(cls, token):
+        value = super().__new__(cls, str(token))
+        value.span = _span(token)
+        return value
+
+
 @v_args(meta=True)
 class ASTBuilder(Transformer):
     def start(self, meta, children):
@@ -164,7 +172,7 @@ class ASTBuilder(Transformer):
         return a.UnaryExpr("IS NOT NULL", children[0], span=_span(meta))
 
     def names(self, meta, children):
-        return tuple(map(str, children))
+        return tuple(map(LocatedName, children))
 
     def filter_op(self, meta, children):
         return a.Filter(children[0], span=_span(meta))
@@ -173,7 +181,7 @@ class ASTBuilder(Transformer):
         return a.Select(children[0], span=_span(meta))
 
     def assignment(self, meta, children):
-        return a.Assignment(str(children[0]), children[1], span=_span(meta))
+        return a.Assignment(LocatedName(children[0]), children[1], span=_span(meta))
 
     def derive_op(self, meta, children):
         return a.Derive(tuple(children), span=_span(meta))
@@ -206,7 +214,7 @@ class ASTBuilder(Transformer):
         return str(children[0])
 
     def sort_key(self, meta, children):
-        return a.SortKey(str(children[0]), children[1] if len(children) > 1 else "ASC", span=_span(meta))
+        return a.SortKey(LocatedName(children[0]), children[1] if len(children) > 1 else "ASC", span=_span(meta))
 
     def sort_op(self, meta, children):
         return a.Sort(tuple(children), span=_span(meta))
@@ -218,7 +226,7 @@ class ASTBuilder(Transformer):
         return a.DropNulls(children[0], span=_span(meta))
 
     def rename_item(self, meta, children):
-        return a.RenameItem(str(children[0]), str(children[1]), span=_span(meta))
+        return a.RenameItem(LocatedName(children[0]), LocatedName(children[1]), span=_span(meta))
 
     def rename_op(self, meta, children):
         return a.Rename(tuple(children), span=_span(meta))

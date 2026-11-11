@@ -31,6 +31,25 @@ async (page) => {
     return { compared };
   });
 
+  const semantic = await page.evaluate(async () => {
+    const { compile } = await import("/src/compiler/client.ts");
+    const base = 'PIPELINE p { INPUT i: TABLE[x: INT]; STEP f = FILTER { WHERE EXPR; } OUTPUT o: TABLE; FLOW { i -> f -> o; } }';
+    for (const [expr, code] of [["x + 1", "E_TYPE"], ["missing > 0", "E_COLUMN"]]) {
+      const source = base.replace("EXPR", expr);
+      const live = await compile({ source, name: "c2.etl", fmt: "ir", passes: null });
+      const d = live.analysis.diagnostics[0];
+      if (live.ok || d.code !== code || d.phase !== "semantic" || live.analysis.contract_version !== "2") {
+        throw new Error(`Diagnóstico C2 incorrecto: ${JSON.stringify(live)}`);
+      }
+      const fragment = source.slice(d.span.start, d.span.end);
+      if (fragment !== (code === "E_COLUMN" ? "missing" : expr)) throw new Error(`Rango C2: ${fragment}`);
+      if (live.analysis.artifacts.ir_before.status !== "available" || live.analysis.artifacts.ir_after.status !== "blocked") {
+        throw new Error("No se conservaron los artefactos parciales de C2");
+      }
+    }
+    return { cases: 2 };
+  });
+
   await page.getByRole("tab", { name: "pendientes.etl", exact: true }).click();
   await page.waitForFunction(() => document.querySelector('.studio-out[data-origin="en vivo"]')?.textContent.includes("E_NULL_COMPARISON"));
   await page.locator(".cm-lintRange-error").first().waitFor();
@@ -54,5 +73,5 @@ async (page) => {
   if (unicodeMarked.join("\n") !== "x\n == NULL") throw new Error(`Rango Unicode incorrecto: ${JSON.stringify(unicodeMarked)}`);
   if (errors.length) throw new Error(errors.join("\n"));
 
-  return { ...parity, corrected: true, marked, unicodeMarked, pageErrors: errors };
+  return { ...parity, semantic, corrected: true, marked, unicodeMarked, pageErrors: errors };
 }

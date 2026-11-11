@@ -136,17 +136,15 @@ class BackendTests(unittest.TestCase):
                    'FILL_NULL { missing = 0; }', 'SELECT { COLUMNS ID; }',
                    'RENAME { id AS x; }', 'RENAME { missing AS new; }',
                    'DERIVE { ID = 1; }', 'DERIVE { bad = s + 1; }']:
-            with self.subTest(op=op), self.assertRaises(ExecutionError):
+            with self.subTest(op=op), self.assertRaises(CompileError):
                 self.evaluate(single(op), frame([(1, 2.0, '')]))
 
     def test_join_ambiguous_columns_rejected(self):
         source = '''PIPELINE p { INPUT a: TABLE[id: INT]; INPUT b: TABLE[id: INT];
  STEP j = JOIN { TYPE INNER; ON left.id == right.id; }
  OUTPUT o: TABLE; FLOW { a -> j.left; b -> j.right; j -> o; } }'''
-        module = generated(source)
-        table = frame([(1,)], {"id": pl.Int64})
-        with self.assertRaisesRegex(ExecutionError, 'E_AMBIGUOUS_COLUMNS'):
-            module['PIPELINES']['p'](self.rt, {'a': table, 'b': table})
+        with self.assertRaisesRegex(CompileError, 'E_AMBIGUOUS_COLUMNS'):
+            generated(source)
 
     def test_contracts_and_case_sensitive_columns(self):
         for data, schema, code in [

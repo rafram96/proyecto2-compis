@@ -1,4 +1,4 @@
-"""Prueba C1 con playwright-cli contra Vite ya iniciado (sin instalar SDKs).
+"""Prueba C1/C2 con playwright-cli contra Vite ya iniciado (sin instalar SDKs).
 
 Desde la raíz: python web/scripts/verify_browser.py --url http://127.0.0.1:5173/
 Los artefactos del navegador quedan en web/.playwright-cli/ (ignorado por Git).
@@ -18,7 +18,7 @@ def main():
     if cli is None:
         parser.error("Se necesita playwright-cli en PATH.")
     web = Path(__file__).resolve().parents[1]
-    session = f"cauce-c1-{uuid4().hex[:8]}"
+    session = f"cauce-c2-{uuid4().hex[:8]}"
     command = [cli, f"-s={session}"]
     code = (web / "tests/browser/analysis.js").read_text(encoding="utf-8")
     try:
@@ -29,7 +29,7 @@ def main():
         print(completed.stderr, end="")
         # playwright-cli puede informar errores del snippet con código de salida 0.
         if "### Error" in completed.stdout or '"compared":32' not in completed.stdout:
-            raise SystemExit("Falló la verificación de C1; revisar la salida de playwright-cli.")
+            raise SystemExit("Falló la verificación de C1/C2; revisar la salida de playwright-cli.")
     finally:
         subprocess.run([*command, "close"], cwd=web, timeout=15)
 

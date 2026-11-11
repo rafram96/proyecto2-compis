@@ -16,8 +16,13 @@ export type Artifact<T = unknown> =
   | { status: "available"; data: T }
   | { status: "not_requested" | "blocked"; data: null };
 
+export type InferredColumn = { name: string; types: string[] | null; nullable: boolean };
+export type InferredSchema = { complete: boolean; absent: string[]; columns: InferredColumn[] };
+/** Pipeline → nodo → puerto ("" para salida ordinaria). Esquemas de la IR original. */
+export type InferredSchemas = Record<string, Record<string, Record<string, InferredSchema>>>;
+
 export type AnalysisResult = {
-  contract_version: "1";
+  contract_version: "2";
   compiler_version: string;
   offset_encoding: "unicode-codepoints";
   ok: boolean;
@@ -31,6 +36,7 @@ export type AnalysisResult = {
     ir_before: Artifact<{ module: unknown; text: string }>;
     ir_after: Artifact<{ module: unknown; text: string }>;
     python: Artifact<string>;
+    schemas: Artifact<InferredSchemas>;
   };
   passes: string[];
   applied_passes: string[];

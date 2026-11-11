@@ -15,12 +15,13 @@ from .ir import format_module, lower
 from .parser import parse_tree
 from .passes import DEFAULT, PASSES, optimize
 from .scanner import scan
+from .semantic import infer
 from .validation import validate
 from .version import COMPILER_VERSION, CONTRACT_VERSION
 from .visitor import ASTBuilder
 
 
-ARTIFACTS = ("tokens", "tree", "ast", "ir_before", "ir_after", "python")
+ARTIFACTS = ("tokens", "tree", "ast", "ir_before", "ir_after", "python", "schemas")
 FORMATS = ("check", "tokens", "tree", "ast", "ir", "python")
 
 
@@ -78,8 +79,7 @@ def analyze(source: str, *, filename: str = "<string>", base_dir=".",
     """Analiza una vez; produce solo los artefactos solicitados y sus prerrequisitos.
 
     ``artifacts=None`` solicita todos; ``artifacts=()`` solo valida sintaxis y
-    estructura. ``passes=None`` usa los predeterminados y ``passes=()`` es -O0.
-    Los esquemas y tipos de datos todavía no se infieren estáticamente (C2).
+    semántica. ``passes=None`` usa los predeterminados y ``passes=()`` es -O0.
     """
     selected = _selection(DEFAULT if passes is None else passes, PASSES, "Pases")
     requested = _selection(ARTIFACTS if artifacts is None else artifacts, ARTIFACTS, "Artefactos")
@@ -122,11 +122,13 @@ def analyze(source: str, *, filename: str = "<string>", base_dir=".",
     if diagnostics:
         return finish()
 
-    if not {"ir_before", "ir_after", "python"}.intersection(requested):
-        return finish()
     before = lower(program)
     if "ir_before" in requested:
         available("ir_before", {"module": to_dict(before), "text": format_module(before)})
+    diagnostics, schemas = infer(before)
+    if diagnostics:
+        return finish()
+    available("schemas", schemas)
     if not {"ir_after", "python"}.intersection(requested):
         return finish()
     after = optimize(before, selected)

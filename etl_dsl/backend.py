@@ -6,6 +6,7 @@ from . import ir
 from .diagnostics import Diagnostic
 from .passes import DEFAULT, optimize
 from .validation import validate
+from .semantic import infer
 from .visitor import walk
 
 
@@ -241,6 +242,9 @@ def build_ir(program: a.Program, passes=DEFAULT) -> tuple[ir.Module, ir.Module]:
     if issues:
         raise CompileError("\n".join(f"{i.code}: {i.message}" for i in issues))
     module = ir.lower(program)
+    issues, _ = infer(module)
+    if issues:
+        raise CompileError("\n".join(f"{i.code}: {i.message}" for i in issues), diagnostic=issues[0])
     try:
         return module, optimize(module, passes)
     except ValueError as exc:

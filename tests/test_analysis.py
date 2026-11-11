@@ -31,7 +31,7 @@ class AnalysisTests(unittest.TestCase):
         result = analyze(SOURCE, filename="memory.etl")
         payload = json.loads(json.dumps(result.to_dict()))
         self.assertTrue(payload["ok"])
-        self.assertEqual(payload["contract_version"], "1")
+        self.assertEqual(payload["contract_version"], "2")
         self.assertEqual(payload["offset_encoding"], "unicode-codepoints")
         self.assertEqual(len(payload["source_hash"]), 64)
         self.assertEqual(payload["artifacts"]["ast"]["data"], to_dict(parse(SOURCE)))
@@ -51,9 +51,8 @@ class AnalysisTests(unittest.TestCase):
         self.assertIn(format_module(after), format_output(result, "ir"))
         self.assertEqual(json.loads(format_output(result, "tokens")), [to_dict(t) for t in scan(SOURCE)])
 
-    def test_only_check_does_not_lower_optimize_or_generate(self):
-        with patch("etl_dsl.analysis.lower", side_effect=AssertionError("unexpected lowering")), \
-             patch("etl_dsl.analysis.optimize", side_effect=AssertionError("unexpected pass")), \
+    def test_only_check_does_not_optimize_or_generate(self):
+        with patch("etl_dsl.analysis.optimize", side_effect=AssertionError("unexpected pass")), \
              patch("etl_dsl.analysis.generate", side_effect=AssertionError("unexpected codegen")):
             result = analyze(SOURCE, artifacts=())
         self.assertTrue(result.ok)
