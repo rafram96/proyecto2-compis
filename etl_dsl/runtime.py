@@ -148,6 +148,33 @@ class PolarsRuntime:
                 raise ExecutionError(f"{label}: E_NULL: columnas no anulables contienen NULL: {invalid}.")
         return table
 
+    def verify_many_to_one(self, left, right, left_key, right_key, label):
+        """Ejecuta la obligación y devuelve snapshots usados por JOIN o CHECK_JOIN.
+
+        No deja una validación lazy pendiente: incluso OUTPUT TABLE sin collect
+        ejecuta estas comprobaciones. No se vuelve a leer la fuente tras probarla.
+        """
+        self.require_columns(left, [left_key], label)
+        self.require_columns(right, [right_key], label)
+        self.disjoint(left, right, label)
+        ltype = self.schema(left, label)[left_key]
+        rtype = self.schema(right, label)[right_key]
+        if ltype != rtype:
+            raise ExecutionError(f"{label}: E_JOIN_KEY_TYPE: las claves requieren el mismo dtype: {ltype}, {rtype}.")
+        # Usar exactamente la comparación Polars para unicidad y pertenencia.
+        lframe, rframe = self.collect(left, label), self.collect(right, label)
+        lk, rk = lframe[left_key], rframe[right_key]
+        if lk.null_count() or rk.null_count():
+            raise ExecutionError(f"{label}: E_JOIN_NULL: VERIFY MANY_TO_ONE no admite claves NULL.")
+        if rk.n_unique() != len(rk):
+            raise ExecutionError(f"{label}: E_JOIN_UNIQUE: la clave derecha contiene duplicados.")
+        missing = self.collect(lframe.lazy().join(
+            rframe.lazy().select(right_key), left_on=left_key, right_on=right_key,
+            how="anti"), label)
+        if missing.height:
+            raise ExecutionError(f"{label}: E_JOIN_REFERENCE: hay referencias izquierdas sin coincidencia.")
+        return lframe.lazy(), rframe.lazy()
+
     def input(self, inputs, name, schema, label):
         if name not in inputs:
             raise ExecutionError(f"{label}: falta enlazar INPUT {name}.")

@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .facts import NodeFacts, RangeRewrite
+    from .joins import JoinRewrite
 
 from . import ast as a
 from .token import Span
@@ -59,6 +60,7 @@ class Module:
     defaults: tuple[str, ...]  # pipelines raíz: sin INPUT y no usados por USE
     range_facts: tuple[NodeFacts, ...] = ()
     range_rewrites: tuple[RangeRewrite, ...] = ()
+    join_rewrites: tuple[JoinRewrite, ...] = ()
 
 
 KINDS = {a.Filter: "FILTER", a.Select: "SELECT", a.Derive: "DERIVE", a.Aggregate: "AGGREGATE",
@@ -153,9 +155,9 @@ def _body(node: Node) -> str:
         items = [f"{i.function}({expr_text(i.expression) if i.expression else ''}) AS {i.alias}"
                  for i in p.aggregations]
         return "; ".join(([f"GROUP_BY {', '.join(p.group_by)}"] if p.group_by else []) + items)
-    if node.kind == "JOIN":
+    if node.kind in {"JOIN", "CHECK_JOIN"}:
         return f"{p.kind} ON " + " AND ".join(f"{expr_text(c.left)} == {expr_text(c.right)}"
-                                             for c in p.conditions)
+                                             for c in p.conditions) + ("; VERIFY MANY_TO_ONE" if p.guarantee else "")
     if node.kind == "SORT":
         return ", ".join(f"{k.name} {k.direction}" for k in p.keys)
     if node.kind == "RENAME":
@@ -192,4 +194,7 @@ def format_module(module: Module) -> str:
             sources = ', '.join(dict.fromkeys(f'{e.pipeline}.{e.node}' for e in fact.evidence))
             nulls = "solo NULL" if fact.null_only else "puede contener NULL" if fact.nullable else "sin NULL"
             out.append(f"//   garantía: {fact.name} en {lower}, {upper}; {nulls}; {sources}")
+    for rewrite in module.join_rewrites:
+        out.append(f"// joins: {rewrite.pipeline}.{rewrite.node}: remove_inner_join; "
+                   f"{rewrite.guarantee}; verificación: {rewrite.verification}")
     return "\n".join(out) + "\n"

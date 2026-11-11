@@ -60,6 +60,9 @@ def validate(program: a.Program) -> tuple[Diagnostic, ...]:
         elif isinstance(node, a.Aggregation):
             if node.function != "COUNT" and node.expression is None:
                 error("E_ARITY", f"{node.function} requiere una expresión; solo COUNT() admite cero argumentos.", node)
+        elif isinstance(node, a.Join) and node.guarantee is not None:
+            if node.kind != "INNER" or len(node.conditions) != 1:
+                error("E_JOIN_GUARANTEE", "VERIFY MANY_TO_ONE exige INNER JOIN con una clave simple.", node.guarantee)
         elif isinstance(node, a.JoinCondition):
             if {node.left.qualifier, node.right.qualifier} != {"left", "right"}:
                 error("E_JOIN_CONDITION", "JOIN debe comparar una columna left con una columna right.", node)

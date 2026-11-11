@@ -46,7 +46,8 @@ aggregate_op: "AGGREGATE" "{" group_by? aggregation+ "}"
 group_by: "GROUP_BY" names ";"
 aggregation: AGG_FUNC "(" [expr] ")" "AS" NAME ";"
 
-join_op: "JOIN" "{" "TYPE" join_type ";" "ON" join_condition ("AND" join_condition)* ";" "}"
+join_op: "JOIN" "{" "TYPE" join_type ";" "ON" join_condition ("AND" join_condition)* ";" join_guarantee? "}"
+join_guarantee: "VERIFY" "MANY_TO_ONE" ";"
 join_type: JOIN_KIND
 join_condition: qualified_column EQ qualified_column
 

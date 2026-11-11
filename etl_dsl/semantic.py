@@ -247,6 +247,8 @@ class Analyzer:
     def operation(self, node, inputs):
         p = node.payload
         s = inputs.get(None, Schema())
+        if node.kind == "CHECK_JOIN":
+            return inputs["left"]
         if isinstance(p, a.Join):
             left, right = inputs['left'], inputs['right']
             keys = {'left': set(), 'right': set()}

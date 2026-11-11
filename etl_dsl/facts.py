@@ -194,7 +194,7 @@ def ranges(module):
             facts, contradictory = incoming.get(None, ({}, False))
             facts = dict(facts)
             p = node.payload
-            if node.kind in {'SOURCE', 'INPUT', 'JOIN', 'AGGREGATE'}:
+            if node.kind in {'SOURCE', 'INPUT', 'JOIN', 'CHECK_JOIN', 'AGGREGATE'}:
                 facts, contradictory = initial(schema, evidence), False
             elif node.kind == 'FILTER':
                 before = expr_text(p.predicate)

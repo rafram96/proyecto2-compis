@@ -180,9 +180,18 @@ class PythonGenerator:
                      for c in operation.conditions]
             left_on = [l.name for l, _ in pairs]
             right_on = [r.name for _, r in pairs]
+            if operation.guarantee is not None:
+                self.emit(f"{var}_left, {var}_right = rt.verify_many_to_one({left}, {right}, "
+                          f"{left_on[0]!r}, {right_on[0]!r}, {label!r})")
+                left, right = f"{var}_left", f"{var}_right"
+                if node.kind == "CHECK_JOIN":
+                    self.emit(f"{var} = {left}")
+                    return
             # coalesce=False conserva las claves de ambos lados, como SELECT left.*, right.*.
+            order = ", maintain_order='left'" if operation.guarantee else ""
             self.emit(f"{var} = rt.step({left}.join({right}, left_on={left_on!r}, right_on={right_on!r}, "
-                      f"how={operation.kind.lower()!r}, coalesce=False), {label!r})")
+                      f"how={operation.kind.lower()!r}, coalesce=False"
+                      f"{order}), {label!r})")
             return
         table = producer()
         columns = [n.name for n in walk(operation) if isinstance(n, a.Column)]

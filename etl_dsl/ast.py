@@ -126,9 +126,15 @@ class Aggregate(Node):
 
 
 @dataclass(frozen=True, slots=True)
+class JoinGuarantee(Node):
+    """Declaración que exige validación en ejecución; no es un hecho estático."""
+
+
+@dataclass(frozen=True, slots=True)
 class Join(Node):
     kind: str
     conditions: tuple[JoinCondition, ...]
+    guarantee: JoinGuarantee | None = None
 
 
 @dataclass(frozen=True, slots=True)

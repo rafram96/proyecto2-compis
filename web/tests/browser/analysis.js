@@ -38,7 +38,7 @@ async (page) => {
       const source = base.replace("EXPR", expr);
       const live = await compile({ source, name: "c2.etl", fmt: "ir", passes: null });
       const d = live.analysis.diagnostics[0];
-      if (live.ok || d.code !== code || d.phase !== "semantic" || live.analysis.contract_version !== "3") {
+      if (live.ok || d.code !== code || d.phase !== "semantic" || live.analysis.contract_version !== "4") {
         throw new Error(`Diagnóstico C2 incorrecto: ${JSON.stringify(live)}`);
       }
       const fragment = source.slice(d.span.start, d.span.end);
@@ -69,6 +69,40 @@ async (page) => {
     return { removed: proof.node, evidence: proof.proof[0].lower.evidence[0].condition };
   });
 
+  const joins = await page.evaluate(async () => {
+    const { compile } = await import("/src/compiler/client.ts");
+    const source = 'PIPELINE p { INPUT l: TABLE[x: INT?]; INPUT r: TABLE[y: INT?]; STEP j = JOIN { TYPE INNER; ON left.x == right.y; VERIFY MANY_TO_ONE; } STEP s = SELECT { COLUMNS x; } OUTPUT o: TABLE; FLOW { l -> j.left; r -> j.right; j -> s -> o; } }';
+    for (const passes of [null, ["joins", "muertos"], ["muertos", "joins", "rangos"]]) {
+      const live = await compile({ source, name: "joins.etl", fmt: "ir", passes });
+      const python = await compile({ source, name: "joins.etl", fmt: "python", passes });
+      const module = live.analysis.artifacts.ir_after.data.module;
+      const proof = module.join_rewrites[0];
+      if (!live.ok || !module.pipelines[0].nodes.some(n => n.kind === "CHECK_JOIN") ||
+          proof.node !== "j" || proof.consumers.join() !== "s" ||
+          !python.ok || !python.out.includes("verify_many_to_one") || python.out.includes(".join(")) {
+        throw new Error(`Eliminación C4 sin obligación: ${JSON.stringify(live)}`);
+      }
+      if (source.slice(proof.declaration_span.start, proof.declaration_span.end) !== "VERIFY MANY_TO_ONE;") {
+        throw new Error("Procedencia C4 incorrecta");
+      }
+    }
+    const plain = await compile({ source, name: "joins.etl", fmt: "python", passes: [] });
+    if (!plain.ok || !plain.out.includes("verify_many_to_one") || !plain.out.includes(".join(")) {
+      throw new Error("-O0 perdió el contrato C4");
+    }
+    for (const fragment of ["COLUMNS y", "COLUMNS x, y"]) {
+      const live = await compile({ source: source.replace("COLUMNS x", fragment), name: "joins.etl", fmt: "ir", passes: null });
+      if (!live.ok || live.analysis.artifacts.ir_after.data.module.join_rewrites.length) throw new Error("C4 eliminó columnas observables");
+    }
+    const invalid = source.replace("TYPE INNER", "TYPE LEFT");
+    const error = await compile({ source: invalid, name: "joins.etl", fmt: "ast", passes: null });
+    const d = error.analysis.diagnostics[0];
+    if (error.ok || d.code !== "E_JOIN_GUARANTEE" || invalid.slice(d.span.start, d.span.end) !== "VERIFY MANY_TO_ONE;") {
+      throw new Error("Diagnóstico C4 incorrecto");
+    }
+    return { eliminated: true, obligations: true, O0: true, abstentions: 2, diagnostic: d.code };
+  });
+
   await page.getByRole("tab", { name: "pendientes.etl", exact: true }).click();
   await page.waitForFunction(() => document.querySelector('.studio-out[data-origin="en vivo"]')?.textContent.includes("E_NULL_COMPARISON"));
   await page.locator(".cm-lintRange-error").first().waitFor();
@@ -92,5 +126,5 @@ async (page) => {
   if (unicodeMarked.join("\n") !== "x\n == NULL") throw new Error(`Rango Unicode incorrecto: ${JSON.stringify(unicodeMarked)}`);
   if (errors.length) throw new Error(errors.join("\n"));
 
-  return { ...parity, semantic, ranges, corrected: true, marked, unicodeMarked, pageErrors: errors };
+  return { ...parity, semantic, ranges, joins, corrected: true, marked, unicodeMarked, pageErrors: errors };
 }

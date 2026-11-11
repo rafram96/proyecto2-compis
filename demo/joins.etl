@@ -1,0 +1,14 @@
+// Ejecutar desde la raíz: .venv/bin/python main.py demo/joins.etl --run --base-dir demo
+// Genera demo/joins_result.csv. Comparar IR con --format ir y con -O0.
+PIPELINE join_verificado {
+  SOURCE pedidos: TABLE[cliente: INT, importe: INT] = CSV(file: "joins_pedidos.csv");
+  SOURCE clientes: TABLE[clave: INT, nombre: STRING] = CSV(file: "joins_clientes.csv");
+  STEP unidos = JOIN {
+    TYPE INNER;
+    ON left.cliente == right.clave;
+    VERIFY MANY_TO_ONE;
+  }
+  STEP visibles = SELECT { COLUMNS cliente, importe; }
+  SINK salida = CSV(file: "joins_result.csv");
+  FLOW { pedidos -> unidos.left; clientes -> unidos.right; unidos -> visibles -> salida; }
+}

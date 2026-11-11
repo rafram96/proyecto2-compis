@@ -22,7 +22,7 @@ export type InferredSchema = { complete: boolean; absent: string[]; columns: Inf
 export type InferredSchemas = Record<string, Record<string, Record<string, InferredSchema>>>;
 
 export type AnalysisResult = {
-  contract_version: "3";
+  contract_version: "4";
   compiler_version: string;
   offset_encoding: "unicode-codepoints";
   ok: boolean;

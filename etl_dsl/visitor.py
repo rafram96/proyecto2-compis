@@ -207,8 +207,13 @@ class ASTBuilder(Transformer):
     def join_condition(self, meta, children):
         return a.JoinCondition(children[0], children[2], span=_span(meta))
 
+    def join_guarantee(self, meta, children):
+        return a.JoinGuarantee(span=_span(meta))
+
     def join_op(self, meta, children):
-        return a.Join(children[0], tuple(children[1:]), span=_span(meta))
+        verified = isinstance(children[-1], a.JoinGuarantee)
+        return a.Join(children[0], tuple(children[1:-1] if verified else children[1:]),
+                      children[-1] if verified else None, span=_span(meta))
 
     def sort_dir(self, meta, children):
         return str(children[0])

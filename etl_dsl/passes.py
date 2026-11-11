@@ -4,6 +4,10 @@ O1 (dominio):
 - rangos: elimina predicados implicados por intervalos y ausencia de NULL,
   conservando pruebas y hechos por nodo en la IR.
 
+O3 (dominio):
+- joins: sustituye INNER JOIN verificado por CHECK_JOIN si cada consumidor
+  inmediato proyecta exclusivamente columnas izquierdas.
+
 O4 (optimizaciones clásicas):
 - constantes: pliega expresiones entre literales y simplifica AND/OR/NOT con
   TRUE/FALSE; un FILTER cuya condición queda en TRUE desaparece.
@@ -17,6 +21,7 @@ import operator
 from . import ast as a
 from .ir import Module, Node, Pipeline, Ref
 from .facts import ranges
+from .joins import joins
 
 
 def _number(value) -> bool:
@@ -126,8 +131,10 @@ def dead(module: Module) -> Module:
     pipelines = []
     for pipe in module.pipelines:
         nodes = {n.name: n for n in pipe.nodes}
-        # SINK y OUTPUT son el resultado; USE puede escribir SINK propios; INPUT es la interfaz.
-        live = {n.name for n in pipe.nodes if n.kind in {"SINK", "OUTPUT", "USE", "INPUT"}}
+        # SINK/OUTPUT son resultados; USE puede tener efectos; INPUT es interfaz.
+        # Toda garantía explícita es un efecto, con o sin consumidores.
+        live = {n.name for n in pipe.nodes if n.kind in {"SINK", "OUTPUT", "USE", "INPUT", "CHECK_JOIN"}
+                or isinstance(n.payload, a.Join) and n.payload.guarantee is not None}
         pending = list(live)
         while pending:
             for _, ref in nodes[pending.pop()].inputs:
@@ -138,7 +145,7 @@ def dead(module: Module) -> Module:
     return replace(module, pipelines=tuple(pipelines))
 
 
-PASSES = {"constantes": constants, "rangos": ranges, "filtros": filters, "muertos": dead}
+PASSES = {"constantes": constants, "rangos": ranges, "filtros": filters, "joins": joins, "muertos": dead}
 DEFAULT = tuple(PASSES)
 
 
