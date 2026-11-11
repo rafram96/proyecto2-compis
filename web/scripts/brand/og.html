@@ -1,0 +1,40 @@
+<!doctype html>
+<!-- Plantilla de la imagen para redes (1200 × 630). La renderiza scripts/gen_icons.sh con Chrome headless. -->
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @font-face { font-family: M; src: url(../../node_modules/@fontsource-variable/montserrat/files/montserrat-latin-wght-normal.woff2); font-weight: 100 900; }
+      @font-face { font-family: R; src: url(../../node_modules/@fontsource-variable/rubik/files/rubik-latin-wght-normal.woff2); font-weight: 300 900; }
+      @font-face { font-family: G; src: url(../../node_modules/@fontsource/geist-mono/files/geist-mono-latin-400-normal.woff2); }
+      * { box-sizing: border-box; }
+      body { margin: 0; width: 1200px; height: 630px; background: #f3fafd; color: #0b1f3a; font-family: R; overflow: hidden; position: relative; }
+      .mark { position: absolute; left: 64px; top: 56px; display: flex; align-items: center; gap: 16px; font: 700 40px/1 M; letter-spacing: -0.04em; }
+      .mark img { width: 56px; height: 56px; }
+      h1 { position: absolute; left: 64px; top: 210px; margin: 0; font: 700 96px/0.98 M; letter-spacing: -0.04em; width: 620px; }
+      p { position: absolute; left: 64px; bottom: 60px; margin: 0; font-size: 26px; line-height: 1.35; width: 560px; color: #0b1f3a; }
+      .field { position: absolute; right: 0; top: 0; bottom: 0; width: 470px; background: #0077b6; }
+      .card { position: absolute; right: 56px; top: 150px; width: 520px; background: #fff; }
+      .bar { background: #e1f2f9; padding: 14px 18px; font: 500 18px/1 R; color: #3d566f; display: flex; gap: 10px; align-items: center; }
+      .dot { width: 12px; height: 12px; border-radius: 50%; background: #cde9f4; } .dot.on { background: #ffcc00; }
+      pre { margin: 0; padding: 22px 24px 26px; font: 21px/1.6 G; }
+      .k { color: #023e8a; } .s { color: #1a6b3f; } .f { color: #0077b6; } .n { color: #964208; }
+    </style>
+  </head>
+  <body>
+    <div class="mark"><img src="../../public/favicon.svg" alt="" />Cauce</div>
+    <h1>Pipelines que se leen.</h1>
+    <p>Un lenguaje para datos que compila a Python con Polars.</p>
+    <div class="field"></div>
+    <div class="card">
+      <div class="bar"><span class="dot on"></span><span class="dot"></span>ventas.etl</div>
+<pre><span class="k">STEP</span> <span class="f">pagados</span> = <span class="k">FILTER</span> {
+  <span class="k">WHERE</span> status <span class="k">IS NOT NULL</span>;
+}
+<span class="k">SINK</span> <span class="f">reporte</span> = <span class="f">PARQUET</span>(…);
+<span class="k">FLOW</span> {
+  pedidos -> pagados -> reporte;
+}</pre>
+    </div>
+  </body>
+</html>
