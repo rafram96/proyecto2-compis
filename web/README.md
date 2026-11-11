@@ -1,13 +1,15 @@
 # Cauce, web del compilador ETL-DSL
 
-Landing (`/`) y estudio ampliado (`/estudio`) del compilador de `etl_dsl/`. Se llama **Cauce**: el lecho por donde corre el agua, como el `->` de `FLOW`
+Landing (`/`), catálogo (`/ejemplos`), documentación (`/docs`) y estudio ampliado (`/estudio`) del compilador de `etl_dsl/`. Se llama **Cauce**: el lecho por donde corre el agua, como el `->` de `FLOW`
 lleva los datos. La marca es `~>` (agua que se vuelve flecha) y la historia del nombre son los canales prehispánicos de
 Cumbemayo y Nazca.
 
 ```bash
 cd web && npm install && npm run dev            # http://localhost:5173
 npm run build                                    # tsc + vite build
-npm test                                         # 21 pruebas de rangos, documentos y worker; Node >= 22.18
+npm test                                         # 24 pruebas de contenido, rangos, documentos y worker; Node >= 22.18
+.venv/bin/python web/scripts/gen_content.py      # (raíz del repo) genera src/content/generated.json
+.venv/bin/python web/scripts/gen_content.py --check # detecta contenido desactualizado
 .venv/bin/python web/scripts/gen_compiled.py     # (raíz del repo) regenera src/data/compiled.json
 .venv/bin/python web/scripts/verify_browser.py --url http://127.0.0.1:5173/ # raíz, Vite iniciado y playwright-cli en PATH
 bash web/scripts/gen_icons.sh                    # regenera iconos PNG/ICO y og.png (Chrome + ffmpeg)
@@ -69,7 +71,10 @@ Polars y DuckDB no hacen falta para compilar: el estudio no ejecuta pipelines ni
 
 - `/`: landing y demo breve. **Continuar en el estudio** copia el texto editado y los pases al documento activo, conservando el anterior.
 - `/estudio`: editor estable, inspectores Resultado/Tokens/Árbol/AST/IR/Python y diagnósticos accesibles desde cualquier fase.
-- Las demás rutas muestran recuperación hacia Inicio y Estudio. `/ejemplos`, `/docs` y `/evaluacion` todavía no existen.
+- `/ejemplos`: catálogo de cinco intenciones. `/ejemplos/:slug`: explicación, programa completo, expectativas y requisitos.
+- `/docs`: índice de seis guías. `/docs/:slug`: lectura con navegación entre artículos, anclas, tablas y resaltado existente.
+- Slugs inexistentes muestran recuperación al catálogo correspondiente y al estudio. Las demás rutas recuperan hacia Inicio/Estudio.
+  `/evaluacion` sigue pendiente. No hay URLs con programas ni datos personales.
 - La navegación interna usa History API; atrás/adelante conserva el documento. La URL no contiene programas ni datos.
 - Editor e inspector quedan en paralelo en escritorio. En móvil, Código/Inspector alterna su visibilidad sin desmontar CodeMirror.
   Un diagnóstico selecciona su intervalo y devuelve al código. Ctrl/⌘ + Enter compila; Esc y después Tab permite salir del editor.
@@ -77,7 +82,40 @@ Polars y DuckDB no hacen falta para compilar: el estudio no ejecuta pipelines ni
 Vite dev y preview ya aplican fallback SPA. En hosting, servir `dist/index.html` para rutas de la aplicación que no sean archivos.
 `public/_redirects` se copia al build para hosts compatibles; en Nginx puede usarse [nginx.conf](nginx.conf), montando `dist` en
 `/usr/share/nginx/html`. Los assets y la rueda Python deben servirse como archivos reales, con sus errores 404. El ejemplo Nginx
-no constituye un despliegue realizado. Verificar siempre el acceso directo a `/estudio` en el alojamiento elegido.
+no constituye un despliegue realizado. Verificar siempre el acceso directo a `/estudio`, `/ejemplos/:slug` y `/docs/:slug` en el alojamiento elegido.
+
+## Catálogo y documentación: fuente de verdad
+
+Los manifiestos explícitos viven en `web/content/` (rutas relativas a la raíz del repositorio):
+
+- `examples.json`: slug, nombre, título, objetivo, ruta canónica `.etl`, operaciones, requisitos, expectativas y artículos relacionados.
+  Publica `ventas`, `riesgo-crediticio`, `corregir-nulos`, `rangos` y `join-verificado`. El último conserva las obligaciones
+  de `VERIFY MANY_TO_ONE`; el tercero se identifica como inválido y declara la sustitución que lo corrige.
+- `articles.json`: `primer-programa`, `estructura`, `operaciones`, `null-contratos`, `conectores` y `composicion`.
+  Cada artículo selecciona secciones exactas de `docs/lenguaje.md`, `semantica_estatica.md`, `backend_polars.md`
+  o la guía canónica `docs/guia_estudio.md`. Incluye introducción adaptada, enlaces y referencia a un programa válido completo.
+
+`gen_content.py` lee únicamente esa selección y genera `src/content/generated.json` con fuentes y hashes.
+Una sección renombrada falla en generación; `--check` y las pruebas detectan un resultado desactualizado.
+Los programas nunca se editan en JSON generado ni en componentes. `gen_compiled.py` también toma las rutas de ese manifiesto
+para las tres demos históricas y deriva la corrección de NULL de la misma regla. Sus salidas siguen siendo precalculadas;
+el catálogo y los artículos no presentan IR/Python precalculados nuevos. No se publica automáticamente el árbol del repositorio.
+
+El lector procesa un subconjunto de Markdown sin HTML crudo ni ejecución, conserva tablas/listas/código y adapta enlaces técnicos
+publicados a rutas reales. Los fragmentos incompletos están etiquetados; el programa completo se lee de la fuente canónica y usa
+el resaltado existente. Catálogo y documentación se cargan en diferido por página; no cargan CodeMirror ni Pyodide al consultar.
+No se añadieron dependencias.
+
+**Abrir una copia en el estudio** usa `createDocument` + `openDocument` de `src/workspace/`: id nuevo, nombre canónico,
+revisión 1, inspector Resultado y `passes=null`. El documento anterior conserva exactamente nombre/texto/revisión/pases/inspector.
+Consultar páginas, artículos, ejemplos o enlaces de diagnóstico no lo modifica. Dos aperturas del mismo ejemplo tienen ids distintos.
+Si hay ocho anteriores, se muestra un error y enlace para gestionar borradores, sin cambiar de ruta ni documento.
+Si el almacenamiento falla, la copia abre en memoria y el estudio muestra **Sin guardar**, con indicación de descargar antes de salir.
+No se garantiza recuperación tras cerrar/recargar en ese caso. El límite total de 512 KiB se mantiene.
+
+Los requisitos distinguen datasets incluidos (`demo/joins_*.csv`), generables localmente (`scripts/create_demo_data.py`)
+y ausentes (`ventas.csv` de rangos). Compilar no los consulta, no certifica sus valores y no ejecuta pipelines.
+La ejecución y el Python descargado requieren el entorno Python del proyecto, sus dependencias y los archivos declarados.
 
 ## Documento, archivos y persistencia
 
@@ -113,8 +151,8 @@ el documento y requiere pulsar Compilar para descargar/cargar Python otra vez. N
 
 ## Verificación reproducible
 
-Desde la raíz: `.venv/bin/python -m unittest discover` (**132 pruebas**) y `.venv/bin/python web/scripts/gen_compiled.py`.
-Desde `web`: `npm test` (**21 pruebas**) y `npm run build`. El worker se prueba con canales/temporizadores simulados para fallos y plazos.
+Desde la raíz: `.venv/bin/python -m unittest discover` (**137 pruebas**) y `.venv/bin/python web/scripts/gen_compiled.py`.
+Desde `web`: `npm test` (**24 pruebas**) y `npm run build`. El worker se prueba con canales/temporizadores simulados para fallos y plazos.
 
 Con Vite iniciado en un puerto libre (no detener procesos ajenos):
 
@@ -126,11 +164,28 @@ Requiere `playwright-cli` y Chromium/Chrome. Usa un perfil aislado; las capturas
 Comprueba 32 comparaciones CPython/Pyodide, C2, O1/O0, O3 y obligaciones, Unicode/multilínea/EOF, transferencia desde la demo,
 corrección, fases sin recompilar, archivos descargados byte a byte, importación UTF-8/CRLF, recarga, atrás/adelante, ruta desconocida,
 fallo real de descarga de Pyodide con recuperación, cambios durante la carga, ediciones rápidas, ambos temas y alternancia móvil/teclado.
+La suite `content.js` añade acceso directo a catálogo/detalle y artículos/anclas, apertura y compilación válida, ejercicio
+NULL con selección/corrección real, consulta sin alterar documento, recuperación de borrador exacto con O0/IR,
+artículo → ejemplo → estudio, copias independientes, atrás/adelante, slugs/rutas desconocidos, límite de ocho y fallo de cuota.
+Captura índices y detalles de ejemplos/docs en 1440×1000 y 390×844, en ambos temas; verifica teclado, foco y ausencia de desbordamiento.
+También comprueba que entrar al catálogo no descarga el editor ni Python.
 Las capturas se revisan visualmente; las pruebas no sustituyen una evaluación de usabilidad. También se comprobó el acceso directo a
 `/estudio` con `vite preview` (puerto 5184), compilación real y Python descargable; consola sin errores ni advertencias.
 
+Para repetir el recorrido de contenido sobre el **build servido**, sin las importaciones de módulos dev que necesitan
+las suites históricas:
+
+```sh
+# web/, en un puerto libre
+npm run preview -- --host 127.0.0.1 --port 5185
+# raíz
+.venv/bin/python web/scripts/verify_browser.py --url http://127.0.0.1:5185/ --content-only
+```
+
+Esta opción no sustituye la suite completa de desarrollo; añade verificación real de rutas directas y compilación en producción.
+
 ## Pendiente
 
-W1 queda **parcial**: se entregó el paso A, no las páginas auxiliares. W4 esencial implementado; las sugerencias semánticas siguen pendientes.
+W1 queda **parcial**: pasos A y B implementados; `/evaluacion` y otros requisitos de su definición siguen pendientes. W4 esencial implementado; las sugerencias semánticas siguen pendientes.
 W2 conserva pendientes AST/FLOW gráficos y comparación avanzada de IR. W3 (servicio HTTP, bindings y ejecución Polars con datos) no se implementó.
 No hay cuentas, colaboración, persistencia remota ni editor por bloques.

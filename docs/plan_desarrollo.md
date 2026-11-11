@@ -2,9 +2,9 @@
 
 Fecha de revisión: **11 de noviembre de 2026**.
 
-Este plan parte del código actual de `etl_dsl/`, `tests/` y `web/`, y lo contrasta con [el enunciado](Enunciado_DSL.md). Cubre el compilador y la continuación de la web. C1, C2, C3, C4 y C5 están implementados. La continuación web entrega W1 paso A y la robustez esencial de W4; W1 global, W2 y W3 siguen parciales o pendientes.
+Este plan parte del código actual de `etl_dsl/`, `tests/` y `web/`, y lo contrasta con [el enunciado](Enunciado_DSL.md). Cubre el compilador y la continuación de la web. C1, C2, C3, C4 y C5 están implementados. La continuación web entrega W1 pasos A y B y la robustez esencial de W4; W1 global, W2 y W3 siguen parciales o pendientes.
 
-Ampliación del plan: arquitectura de conexión, páginas adicionales y evaluación de edición visual, tomando como referencia el proyecto local `csharp-x86-compi/`. Se mantiene la libertad de adaptar sus ideas al dominio ETL. La ruta `/estudio` ya implementa el paso A. Las páginas auxiliares y el editor por bloques siguen siendo planificación.
+Ampliación del plan: arquitectura de conexión, páginas adicionales y evaluación de edición visual, tomando como referencia el proyecto local `csharp-x86-compi/`. Se mantiene la libertad de adaptar sus ideas al dominio ETL. La ruta `/estudio` ya implementa el paso A. `/ejemplos` y `/docs` ya implementan el paso B; `/evaluacion` y el editor por bloques siguen pendientes.
 
 La [definición de arquitectura de la aplicación](arquitectura_aplicacion.md) concreta API, procesos, contratos, persistencia y decisiones pendientes. Sus rutas `/api/v1` y su ciclo de trabajos sustituyen los nombres tentativos iniciales.
 
@@ -29,7 +29,7 @@ La [definición de arquitectura de la aplicación](arquitectura_aplicacion.md) c
 | Conectores | ✅ | Lectura CSV, Parquet, SQLite y DuckDB; escritura CSV, Parquet y DuckDB: `runtime.py`. DuckDB es un conector; las transformaciones usan Polars. |
 | Ejecución | ✅ | `LazyFrame`, selección de pipelines, entradas externas mediante API Python y comprobaciones en ejecución. |
 | CLI | ✅ | Compilación individual y por carpetas, seis formatos, ejecución, selección de pases, rutas base y continuación del lote tras errores: `main.py`. |
-| Pruebas y entorno | ✅ | Suite `unittest`, dependencias, Docker y datos de demostración. Tras W1-A/W4 pasan **132 pruebas Python** y **21 pruebas web**; la evidencia histórica C5 conserva sus 131 pruebas. |
+| Pruebas y entorno | ✅ | Suite `unittest`, dependencias, Docker y datos de demostración. Tras W1-B pasan **137 pruebas Python** y **24 pruebas web**; la evidencia histórica C5 conserva sus 131 pruebas. |
 | Evaluación experimental | ✅ | `benchmarks/`: ocho workloads, baselines contractuales, equivalencia obligatoria, compilación/ejecución separadas y CSV/JSON/reporte. Campaña real hasta un millón de filas; [metodología y límites](evaluacion.md). |
 
 **Distinción importante:** el compilador ya funciona de punta a punta por terminal. La brecha principal está en verificar propiedades de los datos antes de ejecutarlos y usarlas para optimizar.
@@ -49,6 +49,7 @@ La web conserva la demo breve del landing y amplía el estudio en `/estudio`. Se
 | Compilación al editar | ✅ | Tras cargar Python, espera de 320 ms; ejemplos editables, restauración y switch de optimización: `Studio.tsx`. |
 | Demostración de pases | ✅ | Comparación progresiva de constantes, filtros y pasos muertos: `Optimizer.tsx`. |
 | AST y FLOW como gráficos | ⬜ | Se muestran representaciones textuales; falta navegación visual entre nodos y código. |
+| Catálogo y documentación | ✅ | Paso B: cinco ejemplos, seis artículos, slugs explícitos, código de fuente canónica, anclas y copias independientes mediante el workspace. |
 | Estudio ampliado | ✅ | `/estudio` con editor/inspector paralelos en escritorio y alternancia móvil; el landing conserva su demo. |
 | Ejecución y resultados | ⬜ | La web compila, pero no ejecuta Polars ni lee datasets; no hay tabla de resultados de ejecución. |
 | Archivos y persistencia del trabajo | ✅ | Importación/exportación `.etl`, Python vigente, revisión/pases y borradores locales versionados/validados. 128 KiB por documento, 8 anteriores, 512 KiB total; aviso si falla el guardado. |
@@ -159,11 +160,12 @@ Verificación: 131 pruebas Python (11 C5), modo pequeño, campaña, demos regene
 
 ## 5. Plan de continuación de la web
 
-### W1. Estudio ampliado — P1 — 🟡 parcial (paso A implementado)
+### W1. Estudio ampliado — P1 — 🟡 parcial (pasos A y B implementados)
 
 - [x] Reutilizar CodeMirror y el inspector textual (`CompilerOutput.tsx`); ampliar a `pages/StudioPage.tsx`.
 - [x] Implementar `/estudio`, acceso directo, atrás/adelante, recuperación de rutas desconocidas y transferencia de una copia desde la demo.
-- [ ] Implementar las páginas auxiliares `/ejemplos`, `/docs` y `/evaluacion` de la sección 9.
+- [x] Implementar `/ejemplos`, `/ejemplos/:slug`, `/docs` y `/docs/:slug` (paso B).
+- [ ] Implementar `/evaluacion` y los requisitos restantes de la sección 9.
 - [x] Mantener un documento activo en `src/workspace/`: texto, nombre, revisión, pases e inspector; ninguna selección de fase desmonta el editor.
 - [x] Paneles paralelos en escritorio, alternancia Código/Inspector en móvil y estados de foco/teclado.
 - [x] Diagnósticos accesibles desde cualquier fase; selección del intervalo Unicode convertido a UTF-16, multilínea y EOF.
@@ -229,8 +231,8 @@ El contrato del servicio y un primer recorrido con un dataset incluido pueden de
 
 ## 7. Pruebas y documentación para cerrar el proyecto
 
-- [x] Suite actual: `.venv/bin/python -m unittest discover` — **132 pruebas, OK**.
-- [x] Diagnósticos, revisiones, persistencia y worker: `cd web && npm test` — **21 pruebas, OK**.
+- [x] Suite actual: `.venv/bin/python -m unittest discover` — **137 pruebas, OK**.
+- [x] Diagnósticos, revisiones, persistencia y worker: `cd web && npm test` — **24 pruebas, OK**.
 - [x] C1/C2/C3/C4 en navegador: `.venv/bin/python web/scripts/verify_browser.py` — **32 comparaciones CPython/Pyodide, dos casos C2, prueba O1, eliminación O3 con obligaciones, abstenciones y recorrido de corrección, OK**.
 - [x] Build actual: `cd web && npm run build` — **OK**.
 - [x] Agregar pruebas de tipos/esquemas y de propagación de nulabilidad, especialmente en JOIN y `USE`.
@@ -238,7 +240,7 @@ El contrato del servicio y un primer recorrido con un dataset incluido pueden de
 - [x] Automatizar el recorrido local: Pyodide, transferencia desde demo, editar, corregir, fases sin recompilar, importación/exportación byte a byte, recarga, rutas y recuperación.
 - [ ] Completar comparación avanzada de IR y ejecutar un ejemplo (W2/W3).
 - [x] Verificar `/estudio` en móvil y escritorio, teclado, foco, ambos temas y movimiento reducido.
-- [x] Paridad CPython/Pyodide (32 presentaciones), diagnósticos y O1/O3 conservados; demos regeneradas con 132 pruebas.
+- [x] Paridad CPython/Pyodide (32 presentaciones), diagnósticos y O1/O3 conservados; demos regeneradas con 137 pruebas.
 - [ ] Actualizar `docs/lenguaje.md` y `docs/backend_polars.md`; escribir un tutorial desde un CSV hasta un resultado.
 - [ ] Preparar reporte LaTeX de 6–10 páginas con evaluación, limitaciones, referencias y declaración de uso de IA.
 - [ ] Preparar demo técnica y ensayo de explicación de todas las fases por el equipo.
@@ -323,10 +325,10 @@ El contrato debe distinguir `no solicitado`, `disponible`, `bloqueado por error`
 
 | Ruta | Estado | Propósito y prioridad |
 |---|---|---|
-| `/` | ✅ Composición existente; falta adaptar navegación | Presentación de Cauce y demostración breve. |
+| `/` | ✅ Composición y navegación a estudio/ejemplos/docs | Presentación de Cauce y demostración breve. |
 | `/estudio` | 🟡 Paso A implementado | Editar, compilar, inspeccionar fases y descargar/restaurar documentos. Ejecución pendiente W3. |
-| `/ejemplos` y `/ejemplos/:slug` | ⬜ Nuevas páginas, P1 | Elegir un problema ETL y abrir una copia editable. |
-| `/docs` y `/docs/:slug` | ⬜ Nuevas páginas, P1 | Aprender a usar el lenguaje y consultar sus reglas. |
+| `/ejemplos` y `/ejemplos/:slug` | ✅ Paso B implementado | Elegir un problema ETL y abrir una copia editable. |
+| `/docs` y `/docs/:slug` | ✅ Paso B implementado | Aprender a usar el lenguaje y consultar sus reglas. |
 | `/evaluacion` | ⬜ Nueva página, P1 tras C5 | Consultar evidencia de expresividad, errores y rendimiento. |
 | `/estudio?vista=bloques` | ⬜ Candidata experimental, P2 | Evaluar edición visual más adelante; no forma parte de la implementación aprobada. |
 
@@ -355,7 +357,7 @@ El contrato debe distinguir `no solicitado`, `disponible`, `bloqueado por error`
 
 **Criterio de cierre:** completar el recorrido con `ventas.etl`, crear un error sintáctico y corregirlo, comparar IR con/sin pases, ejecutar y descargar una salida. Cambiar de vista conserva el documento y ningún resultado antiguo se presenta como actual.
 
-### 9.3. Ejemplos: `/ejemplos` y `/ejemplos/:slug`
+### 9.3. Ejemplos: `/ejemplos` y `/ejemplos/:slug` — ✅ paso B
 
 **Usuario y resultado esperado:** quien aún no sabe qué escribir. Debe encontrar un caso cercano a su problema y entender qué hace antes de abrirlo.
 
@@ -363,7 +365,7 @@ El contrato debe distinguir `no solicitado`, `disponible`, `bloqueado por error`
 
 **Implementación:**
 
-- Crear un manifiesto en `src/examples/` con slug estable, título, objetivo, ruta del fuente y requisitos. Reutilizar `scripts/programs/`, `input/` y `demo/` mediante selección explícita; no publicar automáticamente todo archivo del repositorio.
+- Manifiesto implementado en `web/content/examples.json` con slug estable, título, objetivo, ruta del fuente y requisitos. Reutilizar `scripts/programs/`, `input/` y `demo/` mediante selección explícita; no publicar automáticamente todo archivo del repositorio.
 - Guardar expectativas verificables para cada ejemplo: compila, produce determinado diagnóstico o requiere un dataset concreto. Los ejemplos inválidos se identifican como ejercicios de diagnóstico.
 - Mantener una sola copia del `.etl`; generar salidas de demostración con el compilador real. Las previsualizaciones precalculadas llevan esa etiqueta y no se confunden con ejecuciones en vivo.
 - Abrir una copia en el estudio mediante su slug y el estado compartido. Si hay cambios sin guardar, conservar el borrador anterior antes de abrir el ejemplo nuevo.
@@ -372,19 +374,19 @@ El contrato debe distinguir `no solicitado`, `disponible`, `bloqueado por error`
 
 **Criterio de cierre:** acceder directamente a un detalle, abrirlo en el estudio y comprobar que su código y datasets corresponden al ejemplo seleccionado.
 
-### 9.4. Documentación: `/docs` y `/docs/:slug`
+### 9.4. Documentación: `/docs` y `/docs/:slug` — ✅ selección inicial del paso B
 
 **Usuario y resultado esperado:** quien necesita aprender una operación o resolver un error. Debe llegar de la explicación a un ejemplo ejecutable sin perder su borrador.
 
-**Secciones iniciales:** primeros pasos, estructura `PIPELINE`/`FLOW`, operaciones, funciones y `NULL`, conectores, composición con `USE`, diagnósticos y funcionamiento local/servidor.
+**Secciones iniciales:** primeros pasos, estructura `PIPELINE`/`FLOW`, operaciones, funciones y `NULL`, conectores, composición con `USE`, diagnósticos y límites de la compilación local. El servicio de ejecución sigue pendiente.
 
 **Implementación:**
 
 - Reutilizar contenido vigente de `docs/lenguaje.md` y `docs/backend_polars.md`, con un manifiesto de artículos. Separar tutorial de referencia técnica; no publicar la planificación histórica como manual del lenguaje actual.
-- Renderizar el Markdown durante el build y cargar por artículo, con índice, anclas y bloques de código usando el resaltado existente.
+- Selección generada antes del build mediante `gen_content.py`; páginas cargadas en diferido con índice, anclas y código con el resaltado existente. Los seis artículos iniciales comparten un paquete pequeño de contenido.
 - Enlazar fragmentos completos a ejemplos del catálogo. Un fragmento incompleto se etiqueta como tal y no ofrece ejecución directa.
-- Enlazar códigos de diagnóstico desde el estudio a su explicación, causa y corrección. El catálogo se mantiene junto a los diagnósticos y se verifica frente a los códigos reales.
-- Mostrar claramente compatibilidad y límites: compilación sin datos, ejecución con servicio, tipos verificados actualmente en runtime y conectores de lectura/escritura efectivamente soportados.
+- `E_NULL_COMPARISON` enlaza desde el estudio a la guía NULL/contratos y su corrección. La selección se verifica con el núcleo; un catálogo exhaustivo de diagnósticos queda fuera de este paso.
+- Mostrar compatibilidad y límites: compilación sin datos, ausencia de ejecución web, entorno Python del proyecto necesario y conectores de lectura/escritura del runtime.
 
 **Criterio de cierre:** desde un diagnóstico del estudio se abre su explicación; desde primeros pasos se abre un ejemplo válido; Volver restaura el trabajo anterior.
 
@@ -462,7 +464,7 @@ Antes de desarrollarlo completo, probar un prototipo con tareas de filtrar venta
 | Paso | Alcance web | Dependencia | Resultado revisable |
 |---|---|---|---|
 | A ✅ | Enrutamiento, navegación y `/estudio` reutilizando CodeMirror y salidas textuales. | Código actual. | El landing abre un espacio de trabajo completo con borradores. |
-| B ⬜ | `/ejemplos` y `/docs`, detalles y acciones hacia el estudio. | Manifiestos y contenido existente. | Recorrido problema → explicación → programa editable. |
+| B ✅ | `/ejemplos` y `/docs`, detalles y acciones hacia el estudio. | Manifiestos y contenido existente. | Recorrido problema → explicación → programa editable. |
 | C | API C1, estados por fase, AST expandible, FLOW de lectura y comparación de IR. | C1; C2–C4 se incorporan progresivamente. | Recorrido código ↔ fases con datos reales y posiciones. |
 | D | Servicio de ejecución, bindings de ejemplos y vista Resultados. | W3 y runtime actual. | Recorrido código → ejecución → tabla → archivo. |
 | E | `/evaluacion`, revisión de documentación y pruebas de navegador. | C5 para publicar métricas. | Evidencia reproducible y recorrido final comprobado. |
@@ -484,4 +486,35 @@ Este orden permite construir las páginas del compilador actual desde el paso A.
 - Capturas revisadas en escritorio y móvil, claro/oscuro y movimiento reducido; navegación de diagnósticos y salida del editor con teclado.
   Los artefactos quedan en `web/.playwright-cli/`, fuera de Git. No se alteraron cifras ni archivos experimentales C5.
 
-Siguiente entrega: paso B (`/ejemplos` y `/docs`) y luego inspectores avanzados del paso C; ejecución HTTP corresponde al paso D/W3.
+Siguiente entrega: inspectores avanzados del paso C; ejecución HTTP corresponde al paso D/W3. El paso B se entrega a continuación.
+
+
+### Evidencia de la entrega W1-B (11 de noviembre de 2026)
+
+Paso B implementado: `/ejemplos`, `/ejemplos/:slug`, `/docs`, `/docs/:slug`, navegación desde landing/estudio,
+recuperación de slugs inexistentes y apertura explícita de copias independientes. W1 global sigue **parcial**;
+`/evaluacion`, W2 gráfico, W3 HTTP/ejecución y editor por bloques no se entregan aquí.
+
+El catálogo selecciona ventas, riesgo crediticio, ejercicio inválido NULL, rangos y JOIN verificado.
+Los seis artículos iniciales cubren primeros pasos, estructura, operaciones/expresiones, NULL/contratos/diagnósticos,
+conectores y composición. `web/content/examples.json` y `articles.json` son los manifiestos;
+`web/scripts/gen_content.py` lee fuentes canónicas `.etl` y secciones exactas de documentación vigente.
+El JSON generado incluye hashes; pruebas y `--check` detectan divergencias. No hay semántica nueva en TypeScript,
+cambio del contrato 4, ampliación O1/O3 ni modificación de cifras C5.
+
+Navegar no escribe el documento. Abrir copia usa `createDocument` y `openDocument`, conserva el anterior como borrador
+y respeta los límites existentes (128 KiB/documento, ocho anteriores, 512 KiB total), con bloqueo visible al alcanzar ocho
+y aviso de almacenamiento fallido. Recuperar conserva también revisión, inspector y pases `null`/`[]`.
+
+Verificación: **137 pruebas Python**, **24 web**, `gen_content.py --check`, demos regeneradas con `gen_compiled.py`
+y build. `verify_browser.py` conserva las 32 comparaciones CPython/Pyodide, diagnósticos, O1/O0, O3/obligaciones y
+recorrido previo del estudio/worker. La suite nueva `content.js` verifica con `playwright-cli` acceso directo,
+compilación válida, diagnóstico/corrección del ejercicio, consulta sin pérdida, recuperación de borradores,
+artículo → ejemplo → estudio, copias independientes, atrás/adelante, rutas/slugs inexistentes, límites y fallo de cuota.
+Se capturan índices/detalles en escritorio y móvil, ambos temas, con teclado y foco visible. El recorrido de contenido
+se repite sobre `vite preview` con `--content-only`, incluidos accesos directos y compilación real del build.
+No es una evaluación de usabilidad ni un despliegue realizado.
+
+Límites: la web no lee datasets ni ejecuta Polars, y compilar no certifica datos. Los CSV de JOIN están incluidos;
+los de riesgo/ventas son generables localmente; `ventas.csv` de rangos debe prepararse. El Python generado exige el
+entorno del proyecto. Próxima entrega: paso C, inspectores avanzados; `/evaluacion` pertenece al paso E.

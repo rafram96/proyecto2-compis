@@ -231,9 +231,10 @@ reporte Markdown. Los artefactos generados quedan fuera de Git.
 El segundo escenario controla solo los collect finales de Polars.
 Comandos, workloads, resultados y límites: [evaluación C5](docs/evaluacion.md).
 
-### Estudio web Cauce (W1, paso A + W4 esencial)
+### Web Cauce (W1, pasos A y B + W4 esencial)
 
-La web Vite/React conserva el landing en `/` y ofrece el espacio de trabajo en `/estudio`:
+La web Vite/React conserva el landing en `/`, ofrece `/ejemplos`, `/ejemplos/:slug`, `/docs`, `/docs/:slug`
+y el espacio de trabajo en `/estudio`:
 editor CodeMirror, compilación local real con Pyodide, fases textuales y diagnósticos seleccionables.
 Permite importar/exportar `.etl`, descargar Python vigente y recuperar borradores versionados
 tras recargar. No ejecuta Polars ni lee datasets en el navegador.
@@ -251,5 +252,16 @@ npm run build
 Las revisiones invalidan resultados anteriores; el worker limita carga/compilación y permite reiniciar
 sin perder el documento. Persistencia local: hasta 128 KiB por documento, 8 anteriores y 512 KiB total;
 si falla el guardado, descargar antes de salir. Rutas, fallback de hosting, comandos, recuperación y
-límites en [web/README.md](web/README.md). W1 sigue parcial; W2 gráfico, W3 de ejecución y las páginas
-`/ejemplos`, `/docs` y `/evaluacion` quedan pendientes. Las cifras experimentales de C5 no cambian.
+límites en [web/README.md](web/README.md). Navegar por catálogo o documentación conserva el documento;
+solo Abrir una copia lo reemplaza y guarda el anterior como borrador, sin expulsarlo al alcanzar el límite.
+
+El catálogo publica ventas, riesgo crediticio, corrección de NULL (ejercicio inválido), rangos y JOIN verificado.
+Seis guías cubren primeros pasos, estructura, operaciones/expresiones, NULL/contratos/diagnósticos,
+conectores y composición. `web/content/examples.json` y `articles.json` seleccionan las fuentes canónicas;
+`.venv/bin/python web/scripts/gen_content.py` genera el contenido web sin copiar programas a mano.
+Los artículos reutilizan secciones de documentación vigente; no publican propuestas ni planificación.
+
+Verificación de esta entrega: **137 pruebas Python**, **24 web**, demos regeneradas, build y recorridos
+reales con `playwright-cli` en Vite y preview. Se conservan las 32 comparaciones CPython/Pyodide,
+O1/O3 y recuperación del worker. W1 sigue parcial por `/evaluacion` y los requisitos pendientes;
+W2 gráfico y W3 de ejecución no se completan. Las cifras experimentales de C5 no cambian.
