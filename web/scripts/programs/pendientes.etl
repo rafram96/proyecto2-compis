@@ -1,0 +1,6 @@
+PIPELINE pendientes {
+    SOURCE pedidos = CSV(file: "orders.csv");
+    STEP sin_estado = FILTER { WHERE status == NULL; }
+    SINK salida = CSV(file: "pendientes.csv");
+    FLOW { pedidos -> sin_estado -> salida; }
+}

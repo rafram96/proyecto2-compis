@@ -1,3 +1,6 @@
 node_modules
 dist
 .playwright-cli
+
+# La regla data/ de la raíz es para datos de pipelines; estos son la salida del compilador que muestra la web.
+!src/data/

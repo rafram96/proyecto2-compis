@@ -1,0 +1,24 @@
+// Gasto por cliente a partir de los pedidos pagados
+PIPELINE ventas {
+    SOURCE pedidos = CSV(file: "orders.csv");
+
+    STEP pagados = FILTER {
+        WHERE status IS NOT NULL AND amount > 2 * 5;
+    }
+
+    STEP por_cliente = AGGREGATE {
+        GROUP_BY customer_id;
+        SUM(amount) AS gastado;
+        COUNT() AS compras;
+    }
+
+    STEP ranking = SORT {
+        BY gastado DESC;
+    }
+
+    SINK reporte = PARQUET(file: "gasto_por_cliente.parquet");
+
+    FLOW {
+        pedidos -> pagados -> por_cliente -> ranking -> reporte;
+    }
+}
