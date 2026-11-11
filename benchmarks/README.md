@@ -29,5 +29,11 @@ expresividad descriptiva y corpus de errores. Los CSV/JSON/Markdown generados
 quedan en `results/`, ignorado por Git, al igual que cualquier dataset de `data/`.
 No es necesario almacenar datasets para reproducirlos.
 
+Excepción explícita: la campaña `representativa` se publica en una instantánea versionada,
+`web/public/evidencia/c5-representativa/`, mediante `web/scripts/gen_evaluation.py --import-campaign`.
+`evidence.py` valida esquemas, celdas, recálculos con `report.summarize` y referencias cruzadas,
+y depura únicamente la ruta local del intérprete en `metadata.public.json`. Véase la
+[publicación de la evidencia](../docs/evaluacion.md#publicación-de-la-evidencia-y-página-evaluacion-paso-e).
+
 Metodología, interpretación de las razones, control parcial de Polars,
 resultados medidos y límites: [docs/evaluacion.md](../docs/evaluacion.md).

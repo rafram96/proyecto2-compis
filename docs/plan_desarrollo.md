@@ -2,9 +2,9 @@
 
 Fecha de revisión: **11 de noviembre de 2026**.
 
-Este plan parte del código actual de `etl_dsl/`, `tests/` y `web/`, y lo contrasta con [el enunciado](Enunciado_DSL.md). Cubre el compilador y la continuación de la web. C1, C2, C3, C4 y C5 están implementados. La continuación web entrega W1 pasos A/B, paso C/W2 y la robustez esencial de W4; W1 global sigue parcial; D/W3 incorpora ejecución privada real.
+Este plan parte del código actual de `etl_dsl/`, `tests/` y `web/`, y lo contrasta con [el enunciado](Enunciado_DSL.md). Cubre el compilador y la continuación de la web. C1, C2, C3, C4 y C5 están implementados. La continuación web entrega W1 pasos A/B, paso C/W2, la robustez esencial de W4, D/W3 con ejecución privada real y el paso E (`/evaluacion`); W1 global sigue parcial.
 
-Ampliación del plan: arquitectura de conexión, páginas adicionales y evaluación de edición visual, tomando como referencia el proyecto local `csharp-x86-compi/`. Se mantiene la libertad de adaptar sus ideas al dominio ETL. La ruta `/estudio` ya implementa el paso A. `/ejemplos` y `/docs` ya implementan el paso B; `/evaluacion` y el editor por bloques siguen pendientes.
+Ampliación del plan: arquitectura de conexión, páginas adicionales y evaluación de edición visual, tomando como referencia el proyecto local `csharp-x86-compi/`. Se mantiene la libertad de adaptar sus ideas al dominio ETL. La ruta `/estudio` ya implementa el paso A. `/ejemplos` y `/docs` ya implementan el paso B y `/evaluacion` el paso E; el editor por bloques sigue pendiente.
 
 La [definición de arquitectura de la aplicación](arquitectura_aplicacion.md) concreta API, procesos, contratos, persistencia y decisiones pendientes. Sus rutas `/api/v1` y su ciclo de trabajos sustituyen los nombres tentativos iniciales.
 
@@ -29,7 +29,7 @@ La [definición de arquitectura de la aplicación](arquitectura_aplicacion.md) c
 | Conectores | ✅ | Lectura CSV, Parquet, SQLite y DuckDB; escritura CSV, Parquet y DuckDB: `runtime.py`. DuckDB es un conector; las transformaciones usan Polars. |
 | Ejecución | ✅ | `LazyFrame`, selección de pipelines, entradas externas mediante API Python y comprobaciones en ejecución. |
 | CLI | ✅ | Compilación individual y por carpetas, seis formatos, ejecución, selección de pases, rutas base y continuación del lote tras errores: `main.py`. |
-| Pruebas y entorno | ✅ | Suite `unittest`, dependencias, Docker y datos de demostración. Tras el paso C pasan **137 pruebas Python** y **31 pruebas web**; la evidencia histórica C5 conserva sus 131 pruebas. |
+| Pruebas y entorno | ✅ | Suite `unittest`, dependencias, Docker y datos de demostración. Tras el paso E pasan **170 pruebas Python** y **45 pruebas web**; la evidencia histórica C5 conserva sus 131 pruebas. |
 | Evaluación experimental | ✅ | `benchmarks/`: ocho workloads, baselines contractuales, equivalencia obligatoria, compilación/ejecución separadas y CSV/JSON/reporte. Campaña real hasta un millón de filas; [metodología y límites](evaluacion.md). |
 
 **Distinción importante:** el compilador ya funciona de punta a punta por terminal. La brecha principal está en verificar propiedades de los datos antes de ejecutarlos y usarlas para optimizar.
@@ -54,6 +54,7 @@ La web conserva la demo breve del landing y amplía el estudio en `/estudio`. Se
 | Ejecución y resultados | ⬜ | La web compila, pero no ejecuta Polars ni lee datasets; no hay tabla de resultados de ejecución. |
 | Archivos y persistencia del trabajo | ✅ | Importación/exportación `.etl`, Python vigente, revisión/pases y borradores locales versionados/validados. 128 KiB por documento, 8 anteriores, 512 KiB total; aviso si falla el guardado. |
 | Robustez esencial W4 | ✅ | Cola acotada, respuestas antiguas ignoradas, validación de mensajes, errores del canal, carga 60 s/compilación 12 s y reinicio sin perder documento. |
+| Evaluación C5 | ✅ | Paso E: `/evaluacion` con la campaña histórica publicada, tabla/gráfico por celda comparable, evidencia estructural, errores, descargas con hashes. |
 | Build de producción | ✅ | `npm run build` pasó durante esta revisión. Esto no verifica la descarga de Pyodide ni su funcionamiento en una sesión real. |
 
 ### Decisiones que se mantienen
@@ -160,12 +161,13 @@ Verificación: 131 pruebas Python (11 C5), modo pequeño, campaña, demos regene
 
 ## 5. Plan de continuación de la web
 
-### W1. Estudio ampliado — P1 — 🟡 parcial (pasos A y B implementados)
+### W1. Estudio ampliado — P1 — 🟡 parcial (pasos A, B y E implementados)
 
 - [x] Reutilizar CodeMirror y el inspector textual (`CompilerOutput.tsx`); ampliar a `pages/StudioPage.tsx`.
 - [x] Implementar `/estudio`, acceso directo, atrás/adelante, recuperación de rutas desconocidas y transferencia de una copia desde la demo.
 - [x] Implementar `/ejemplos`, `/ejemplos/:slug`, `/docs` y `/docs/:slug` (paso B).
-- [ ] Implementar `/evaluacion` y los requisitos restantes de la sección 9.
+- [x] Implementar `/evaluacion` con la evidencia C5 publicada (paso E).
+- [ ] Requisitos restantes de la sección 9: ajuste de tamaño de paneles, enlaces `/estudio?vista=…`, estados pendientes del estudio y, si se decide, mapa Python → DSL.
 - [x] Mantener un documento activo en `src/workspace/`: texto, nombre, revisión, pases e inspector; ninguna selección de fase desmonta el editor.
 - [x] Paneles paralelos en escritorio, alternancia Código/Inspector en móvil y estados de foco/teclado.
 - [x] Diagnósticos accesibles desde cualquier fase; selección del intervalo Unicode convertido a UTF-16, multilínea y EOF.
@@ -231,8 +233,9 @@ El contrato del servicio y un primer recorrido con un dataset incluido pueden de
 
 ## 7. Pruebas y documentación para cerrar el proyecto
 
-- [x] Suite actual: `.venv/bin/python -m unittest discover` — **157 pruebas, OK**.
-- [x] Diagnósticos, revisiones, persistencia y worker: `cd web && npm test` — **38 pruebas, OK**.
+- [x] Suite actual: `.venv/bin/python -m unittest discover` — **170 pruebas, OK** (13 de evidencia C5 publicada).
+- [x] Diagnósticos, revisiones, persistencia, worker y evaluación: `cd web && npm test` — **45 pruebas, OK**.
+- [x] Evidencia C5 publicada: `gen_evaluation.py --check` y recorrido `/evaluacion` con `playwright-cli` en Vite, FastAPI y Docker.
 - [x] C1/C2/C3/C4 en navegador: `.venv/bin/python web/scripts/verify_browser.py` — **32 comparaciones CPython/Pyodide, dos casos C2, prueba O1, eliminación O3 con obligaciones, abstenciones y recorrido de corrección, OK**.
 - [x] Build actual: `cd web && npm run build` — **OK**.
 - [x] Agregar pruebas de tipos/esquemas y de propagación de nulabilidad, especialmente en JOIN y `USE`.
@@ -330,7 +333,7 @@ El contrato debe distinguir `no solicitado`, `disponible`, `bloqueado por error`
 | `/estudio` | ✅ Recorrido esencial A/C/D | Editar, compilar, inspeccionar, enlazar datos autorizados, ejecutar, ver filas y descargar/restaurar documentos. Ajuste de tamaño y extensiones pendientes. |
 | `/ejemplos` y `/ejemplos/:slug` | ✅ Paso B implementado | Elegir un problema ETL y abrir una copia editable. |
 | `/docs` y `/docs/:slug` | ✅ Paso B implementado | Aprender a usar el lenguaje y consultar sus reglas. |
-| `/evaluacion` | ⬜ Nueva página, P1 tras C5 | Consultar evidencia de expresividad, errores y rendimiento. |
+| `/evaluacion` | ✅ Paso E implementado | Consultar evidencia de expresividad, errores y rendimiento de la campaña C5 publicada. |
 | `/estudio?vista=bloques` | ⬜ Candidata experimental, P2 | Evaluar edición visual más adelante; no forma parte de la implementación aprobada. |
 
 **Decisión de navegación:** fases, datos, optimizaciones y resultados son vistas del mismo estudio, no páginas independientes que obliguen a recargar el programa. Ejemplos, documentación y evaluación sí tienen páginas porque responden a tareas distintas. No se necesita un dashboard de cuentas o proyectos para el compilador actual.
@@ -391,7 +394,7 @@ El contrato debe distinguir `no solicitado`, `disponible`, `bloqueado por error`
 
 **Criterio de cierre:** desde un diagnóstico del estudio se abre su explicación; desde primeros pasos se abre un ejemplo válido; Volver restaura el trabajo anterior.
 
-### 9.5. Evaluación: `/evaluacion`
+### 9.5. Evaluación: `/evaluacion` — ✅ paso E
 
 **Usuario y resultado esperado:** integrante del equipo, docente o persona que quiere comprobar las ventajas del DSL. Debe poder distinguir evidencia experimental de demostraciones ilustrativas.
 
@@ -402,6 +405,8 @@ El contrato debe distinguir `no solicitado`, `disponible`, `bloqueado por error`
 **Dependencia:** C5. Antes de disponer de mediciones, mantener la página fuera de la navegación pública o mostrar únicamente una metodología identificada como pendiente de resultados; no llenar gráficos con datos inventados.
 
 **Criterio de cierre:** cada valor mostrado se rastrea a un archivo de resultados y a un experimento reproducible; un benchmark ausente no aparece con tiempo cero.
+
+**Implementado (paso E):** instantánea versionada `web/public/evidencia/c5-representativa/` con manifiesto y hashes; `gen_evaluation.py` valida y genera los datos; cada valor de la tabla procede de `summary.csv` y se comprueba en el navegador contra el CSV servido. Compilación sin tamaño ni manual; filtros por fase/programa/filas/escenario/configuración; tabla junto al gráfico. Detalle en [evaluacion.md](evaluacion.md#publicación-de-la-evidencia-y-página-evaluacion-paso-e).
 
 ### 9.6. Ajustes de la página existente y navegación
 
@@ -467,8 +472,8 @@ Antes de desarrollarlo completo, probar un prototipo con tareas de filtrar venta
 | A ✅ | Enrutamiento, navegación y `/estudio` reutilizando CodeMirror y salidas textuales. | Código actual. | El landing abre un espacio de trabajo completo con borradores. |
 | B ✅ | `/ejemplos` y `/docs`, detalles y acciones hacia el estudio. | Manifiestos y contenido existente. | Recorrido problema → explicación → programa editable. |
 | C ✅ | API C1, estados por fase, AST expandible, FLOW de lectura y comparación de IR. | C1; C2–C4 se incorporan progresivamente. | Recorrido código ↔ fases con datos reales y posiciones. |
-| D | Servicio de ejecución, bindings de ejemplos y vista Resultados. | W3 y runtime actual. | Recorrido código → ejecución → tabla → archivo. |
-| E | `/evaluacion`, revisión de documentación y pruebas de navegador. | C5 para publicar métricas. | Evidencia reproducible y recorrido final comprobado. |
+| D ✅ | Servicio de ejecución, bindings de ejemplos y vista Resultados. | W3 y runtime actual. | Recorrido código → ejecución → tabla → archivo. |
+| E ✅ | `/evaluacion`, revisión de documentación y pruebas de navegador. | C5 para publicar métricas. | Evidencia reproducible y recorrido final comprobado. |
 | F | Prototipo de constructor visual, solo si se decide avanzar tras evaluarlo. | Documento compartido, FLOW y pruebas de ida/vuelta. | Experimento separado que no retrasa el entorno funcional. |
 
 Este orden permite construir las páginas del compilador actual desde el paso A. El trabajo semántico P0 continúa siendo prioritario para la entrega académica, pero no es condición para ofrecer una interfaz útil sobre las funciones que ya existen.
@@ -572,3 +577,39 @@ Vite dev/preview conecta por proxy; la API entrega el build bajo mismo origen co
 Paso D/W3 cubre los criterios esenciales del recorrido código → ejecución → tabla → archivo. W1 **sigue parcial** por `/evaluacion`, ajuste de tamaño y otros requisitos de alcance global; el constructor por bloques, cuentas, cargas de datasets propios y colaboración no se incorporan. La siguiente entrega es E: publicar evidencia C5 en `/evaluacion`, sin modificar las cifras existentes.
 
 **Verificación D:** 157 pruebas Python (también en Docker), 38 web, contenido/OpenAPI comprobados, demos regeneradas y builds web/Docker. `playwright-cli`: A/B/C completo y las 32 comparaciones en Vite 5177; D completo en Vite, build servido por FastAPI 8017 y build Docker 8019; contenido e inspectores también en Docker, sin imports de `/src/`. Descargas Parquet/CSV comparadas con Python; casos reales de USE, múltiples salidas, JOIN O0/O3 válido/fallido, revisión durante running, cancelación activa, timeout, desconexión con compilación local, vacío válido, navegación/persistencia v1, móvil/temas/foco. La descarga CDN de Pyodide falló en un intento de inspectores y la repetición completa pasó. Evidencia detallada en la guía del servicio; no se declara toda la continuación web completa.
+
+
+## Entrega paso E — `/evaluacion` con evidencia C5 publicada
+
+Se publica la campaña C5 `representativa` (11 de noviembre de 2026, 20:38–20:41 UTC, revisión medida
+`efe13996d9201788c9fc8cd7c6f458ca68035a04`, modo measure, 10 000/200 000/1 000 000 filas izquierdas, semilla 20261111,
+2 calentamientos y 10 repeticiones, 4 hilos, escenarios normal y final_flags_none). No se midió de nuevo ni se cambiaron cifras,
+el DSL, O1/O3 ni el contrato JSON 4.
+
+**Publicación reproducible.** `web/content/evaluation.json` autoriza siete archivos; `gen_evaluation.py --import-campaign`
+los copia desde `benchmarks/results/representativa/` (que sigue ignorado) a `web/public/evidencia/c5-representativa/` con
+`manifest.json`: campaña, recuentos, procedencia, hash y tamaño del original y del publicado, y depuraciones. Seis archivos son
+copias byte a byte; `metadata.public.json` es una versión depurada que solo sustituye `environment.python_executable` (ruta del
+host con usuario). Excepciones acotadas en `.gitignore` (`!web/public/evidencia/**/*.csv`) y `.dockerignore`. `benchmarks/evidence.py`
+valida esquemas, tipos, unidades, celdas esperadas (56 de compilación sin tamaño/escenario ni manual; 384 de ejecución),
+duplicados, ausentes, no finitos, referencias cruzadas y el recálculo exacto de las 440 celdas desde `samples.csv` con la regla
+del arnés. `gen_evaluation.py` y `--check` generan/comprueban `web/src/evaluation/generated.json` de forma determinista; la
+prueba de build desde una copia aislada de la instantánea y un clon limpio demuestran que no depende de archivos ignorados.
+
+**Página.** Propósito y alcance, campaña/entorno, equivalencia previa, selector por celda comparable con tabla y diagrama de
+puntos (eje desde 0), casos con y sin mejora y abstenciones, evidencia estructural con la distinción JOIN
+declaración/prueba/obligaciones/tiempo, corpus de errores separado, expresividad con definición de LOC, límites, reproducción
+y descargas con SHA-256 verificable. Navegación de escritorio y móvil; URL validada con fallback y aviso; atrás/adelante.
+Diferida (≈57 KiB gzip), sin CodeMirror, Pyodide, cliente de ejecución ni llamadas a la API; no modifica el documento.
+
+**Verificación.** 170 pruebas Python (también en Docker), 45 web, `gen_content`/`gen_http`/`gen_evaluation --check`, demos
+regeneradas (contador 170), builds web y Docker. `playwright-cli`: suite histórica completa (A/B/C, 32 comparaciones
+CPython/Pyodide) + evaluación en Vite 5201; evaluación, contenido, inspectores y D (API 8021, timeout real 8022) en Vite,
+build servido por FastAPI 8021 y contenedor Docker 8023, sin imports de `/src/`. Capturas revisadas en escritorio/móvil y
+ambos temas. No es una evaluación de usabilidad ni un despliegue.
+
+**Pendientes de W1 (no abordados aquí):** ajuste de tamaño de paneles del estudio, enlaces internos `/estudio?vista=…`,
+sugerencias semánticas de W4, tutorial CSV → resultado y actualización de `lenguaje.md`/`backend_polars.md` (sección 7),
+evaluación con usuarios, reporte LaTeX y verificación del fallback en el alojamiento final. El constructor por bloques (F),
+cuentas, datasets propios, colaboración y despliegue público siguen fuera de alcance. **No se declara completa toda la
+continuación web.** Siguiente entrega sugerida: cierre de W1 (ajuste de paneles y enlaces a vistas) y documentación final.

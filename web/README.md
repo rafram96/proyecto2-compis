@@ -1,15 +1,16 @@
 # Cauce, web del compilador ETL-DSL
 
-Landing (`/`), catálogo (`/ejemplos`), documentación (`/docs`) y estudio ampliado (`/estudio`) del compilador de `etl_dsl/`. Se llama **Cauce**: el lecho por donde corre el agua, como el `->` de `FLOW`
+Landing (`/`), catálogo (`/ejemplos`), documentación (`/docs`), evaluación C5 (`/evaluacion`) y estudio ampliado (`/estudio`) del compilador de `etl_dsl/`. Se llama **Cauce**: el lecho por donde corre el agua, como el `->` de `FLOW`
 lleva los datos. La marca es `~>` (agua que se vuelve flecha) y la historia del nombre son los canales prehispánicos de
 Cumbemayo y Nazca.
 
 ```bash
 cd web && npm install && npm run dev            # http://localhost:5173
 npm run build                                    # tsc + vite build
-npm test                                         # 31 pruebas de contenido, inspectores, rangos, documentos y worker; Node >= 22.18
+npm test                                         # 45 pruebas de contenido, inspectores, evaluación, documentos, ejecución y worker; Node >= 22.18
 .venv/bin/python web/scripts/gen_content.py      # (raíz del repo) genera src/content/generated.json
 .venv/bin/python web/scripts/gen_content.py --check # detecta contenido desactualizado
+.venv/bin/python web/scripts/gen_evaluation.py   # (raíz) valida la evidencia C5 publicada y genera src/evaluation/generated.json; --check
 .venv/bin/python web/scripts/gen_compiled.py     # (raíz del repo) regenera src/data/compiled.json
 .venv/bin/python web/scripts/verify_browser.py --url http://127.0.0.1:5173/ # raíz, Vite iniciado y playwright-cli en PATH
 bash web/scripts/gen_icons.sh                    # regenera iconos PNG/ICO y og.png (Chrome + ffmpeg)
@@ -74,7 +75,7 @@ Polars y DuckDB no hacen falta para compilar: el análisis local no ejecuta pipe
 - `/ejemplos`: catálogo de cinco intenciones. `/ejemplos/:slug`: explicación, programa completo, expectativas y requisitos.
 - `/docs`: índice de seis guías. `/docs/:slug`: lectura con navegación entre artículos, anclas, tablas y resaltado existente.
 - Slugs inexistentes muestran recuperación al catálogo correspondiente y al estudio. Las demás rutas recuperan hacia Inicio/Estudio.
-  `/evaluacion` sigue pendiente. No hay URLs con programas ni datos personales.
+  `/evaluacion` publica la campaña C5 histórica (paso E). No hay URLs con programas ni datos personales.
 - La navegación interna usa History API; atrás/adelante conserva el documento. La URL no contiene programas ni datos.
 - Editor e inspector quedan en paralelo en escritorio. En móvil, Código/Inspector alterna su visibilidad sin desmontar CodeMirror.
   Un diagnóstico selecciona su intervalo y devuelve al código. Ctrl/⌘ + Enter compila; Esc y después Tab permite salir del editor.
@@ -185,7 +186,7 @@ Esta opción no sustituye la suite completa de desarrollo; añade verificación 
 
 ## Pendiente
 
-W1 queda **parcial**: pasos A y B implementados; `/evaluacion` y otros requisitos de su definición siguen pendientes. W4 esencial implementado; las sugerencias semánticas siguen pendientes.
+W1 queda **parcial**: pasos A, B y E implementados; otros requisitos de su definición siguen pendientes (ver el paso E). W4 esencial implementado; las sugerencias semánticas siguen pendientes.
 Paso C/W2 implementa AST/FLOW y comparación de IR. W3 (servicio HTTP, bindings y ejecución Polars con datos) se implementa en el paso D descrito al final.
 No hay cuentas, colaboración, persistencia remota ni editor por bloques.
 
@@ -275,3 +276,48 @@ Comandos, contrato, datasets, aislamiento y verificación detallada: [servicio_e
 Paso D/W3 incorpora el recorrido esencial real; W1 global sigue parcial por `/evaluacion` y otros requisitos pendientes. Los apartados históricos anteriores describen su entrega concreta; este apartado y la guía del servicio describen la ejecución vigente.
 
 Verificación final D: **157 Python** (también en Docker), **38 web**, contenido/OpenAPI vigentes, demos regeneradas y builds web/Docker. `playwright-cli` conservó A/B/C y las 32 comparaciones en Vite 5177. D pasó en Vite, build servido por FastAPI 8017 y contenedor local 8019; contenido e inspectores también pasaron en el contenedor, sin `/src/`. Incluye descarga contra Python, varias salidas, USE, JOIN válido/fallido en O0/O3, edición durante running, cancelación, timeout real, API desconectada con Pyodide operativo, vacío, navegación, recarga v1, foco y ambos temas/móvil. Un intento de inspectores falló por descarga externa de Pyodide; la repetición íntegra pasó. Las capturas se revisaron visualmente. Detalle y comandos en la guía del servicio.
+
+## Paso E: `/evaluacion` con evidencia C5 publicada
+
+Página de lectura de la campaña **histórica** `representativa` (11 de noviembre de 2026, revisión medida
+`efe13996d920`). La página lo indica al principio: no mide el programa del estudio ni el HEAD que la sirve.
+
+- **Fuente de verdad:** instantánea versionada `public/evidencia/c5-representativa/` (siete archivos autorizados
+  por `content/evaluation.json` y `manifest.json`). Se sirve tal cual en `/evidencia/c5-representativa/` para las
+  descargas; `metadata.public.json` es la única versión depurada (sin la ruta local del intérprete) y el manifiesto
+  declara los hashes publicado y original. `benchmarks/results/` sigue ignorado y no hace falta para el build.
+- **Generación:** `scripts/gen_evaluation.py` valida hashes, esquemas, celdas y recálculos con
+  `benchmarks/evidence.py` y escribe `src/evaluation/generated.json` (determinista). `--check` detecta deriva;
+  `--originals DIR` vuelve a comprobar los originales si existen en el equipo. Nunca se editan cifras a mano.
+- **Código:** `pages/EvaluationPage.tsx` (diferida), `evaluation/model.ts` (URL, selección por celda comparable,
+  regla de lectura, escala) y `evaluation/DispersionChart.tsx` (SVG propio, sin dependencias nuevas). Si el chunk
+  no llega, se muestra un error con Reintentar; una celda incompleta muestra un aviso, nunca valores aproximados.
+- **Interpretación:** compilación sin filas/escenario ni manual; razón O0/config dentro de la misma celda y escenario;
+  `final_flags_none` explicado como flags solo en materializaciones finales; columna «Transforma la IR» y regla
+  descriptiva de lectura (no significancia); JOIN separa declaración, prueba estática, obligaciones dinámicas y tiempo
+  observado; reducción de nodos ≠ tiempo; LOC con helpers compartidos aparte y sin inferir legibilidad.
+- **URL:** `?fase=ejecucion|compilacion&workload=…&filas=…&escenario=…&config=…`. Valores inválidos se ignoran con
+  aviso; los filtros reemplazan la entrada del historial y los casos destacados añaden una, así atrás/adelante recupera
+  la selección. O0 queda siempre como referencia visible.
+- **Aislamiento:** no importa CodeMirror, Pyodide, el worker ni el cliente de ejecución; no consulta la API ni escribe
+  `cauce-workspace-v1`. FastAPI devuelve 404 reales bajo `/evidencia/` (no fallback SPA); `nginx.conf` igual.
+- **Accesibilidad:** tablas con caption y encabezados, regiones desplazables enfocables, alternativa tabular del gráfico
+  y etiquetas por fila (no depende del color), objetivos de 44 px, foco visible, ambos temas y movimiento reducido.
+
+Verificación con `playwright-cli` (`tests/browser/evaluation.js`, incluida en la suite completa y en
+`verify_browser.py --evaluation-only`): acceso directo y título; ausencia de editor/Python/ejecución y de peticiones
+`/api`; tabla comparada con `summary.csv` servido (valores exactos y redondeo) en ejecución, compilación, ambos
+escenarios y tres tamaños; mejora observada (join), sin mejora (rangos), abstención (control_join) y evidencia JOIN;
+URL inválida; atrás/adelante; descarga de los ocho archivos y SHA-256 comparado en Python con el manifiesto, además
+de la verificación en el navegador; teclado (flechas en radios, foco en la tabla); 1440×1000 y 390×844 en claro/oscuro
+con movimiento reducido, sin desbordamiento global; evaluación → estudio → docs → ejemplos → atrás a la evaluación con
+filtros recuperados y el documento/pases personalizados intactos (localStorage idéntico); API abortada.
+
+Ejecutado en Vite (5201, con API 8021 y timeout real 8022), build servido por FastAPI (8021) y contenedor Docker (8023):
+evaluación, contenido, inspectores y D completos en los tres; la suite histórica completa con las 32 comparaciones
+CPython/Pyodide en Vite. **170 pruebas Python** (también en Docker, 2 omitidas allí por falta de `.git` y de originales),
+**45 web**, `gen_content/gen_http/gen_evaluation --check`, demos regeneradas y builds web/Docker.
+
+**W1 sigue parcial.** Pendientes: ajuste de tamaño editor/inspector, enlaces internos `/estudio?vista=…`, sugerencias
+semánticas (W4), tutorial CSV → resultado y actualización de `lenguaje.md`/`backend_polars.md`, evaluación con usuarios
+y verificación del fallback en el alojamiento que se elija. No hay despliegue público ni constructor por bloques.

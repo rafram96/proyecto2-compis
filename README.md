@@ -232,10 +232,21 @@ reporte Markdown. Los artefactos generados quedan fuera de Git.
 El segundo escenario controla solo los collect finales de Polars.
 Comandos, workloads, resultados y límites: [evaluación C5](docs/evaluacion.md).
 
-### Web Cauce (W1 pasos A/B, C/W2, D/W3 y W4 esencial)
+La campaña representativa medida el 11 de noviembre de 2026 sobre `efe1399` se publica en
+`/evaluacion` como evidencia histórica, no como medición del HEAD. Una instantánea versionada
+(`web/public/evidencia/c5-representativa/`, siete archivos y `manifest.json` con hashes del original
+y del publicado) permite generar la página y sus descargas desde un checkout limpio; solo
+`metadata.public.json` está depurado (ruta local del intérprete).
 
-La web Vite/React conserva el landing en `/`, ofrece `/ejemplos`, `/ejemplos/:slug`, `/docs`, `/docs/:slug`
-y el espacio de trabajo en `/estudio`:
+```sh
+.venv/bin/python web/scripts/gen_evaluation.py          # valida la instantánea y genera los datos web
+.venv/bin/python web/scripts/gen_evaluation.py --check  # falla si algo diverge
+```
+
+### Web Cauce (W1 pasos A/B, C/W2, D/W3, E y W4 esencial)
+
+La web Vite/React conserva el landing en `/`, ofrece `/ejemplos`, `/ejemplos/:slug`, `/docs`, `/docs/:slug`,
+la evidencia experimental C5 en `/evaluacion` y el espacio de trabajo en `/estudio`:
 editor CodeMirror, compilación local real con Pyodide, inspectores estructurados y diagnósticos seleccionables.
 Permite importar/exportar `.etl`, descargar Python vigente y recuperar borradores versionados
 tras recargar. La ejecución real se realiza en el servicio Python privado descrito más abajo; el navegador no ejecuta Polars.
@@ -274,6 +285,14 @@ reales con `playwright-cli` en Vite y preview. Se conservan las 32 comparaciones
 O1/O3 y recuperación del worker. W1 sigue parcial por `/evaluacion` y los requisitos pendientes;
 Paso C/W2 queda implementado; el servicio del paso D/W3 se describe en la sección siguiente. Las cifras experimentales de C5 no cambian.
 
+El paso E añade `/evaluacion`: metodología, campaña y entorno históricos, tabla y diagrama de puntos
+por celda comparable (fase, programa, filas, escenario y configuraciones validados en la URL), evidencia
+estructural y JOIN, corpus de errores, expresividad, límites, reproducción y descargas con SHA-256.
+Se carga en diferido, no usa CodeMirror, Pyodide, el cliente de ejecución ni la API, y no modifica el
+documento del estudio. Verificación del paso E: **170 pruebas Python** (también en Docker), **45 web**,
+generadores con `--check`, build y recorridos `playwright-cli` en Vite, build servido por FastAPI y Docker.
+Detalle: [publicación de la evidencia](docs/evaluacion.md#publicación-de-la-evidencia-y-página-evaluacion-paso-e).
+
 ### Ejecución web privada (paso D / W3)
 
 El estudio ahora ejecuta mediante una API Python local/privada y conserva la compilación local Pyodide independiente. No se ha realizado un despliegue público.
@@ -293,4 +312,4 @@ La API `/api/v1` acepta fuente ETL, recompila en un proceso hijo y mantiene queu
 
 Límites privados: un activo/cuatro posiciones adicionales, 30 s, RSS muestreado de 512 MiB, archivos acotados y caducidad de una hora. Cancelar termina el hijo; reiniciar limpia huérfanos sin reanudación. Los contratos dinámicos y las obligaciones JOIN permanecen con O0 y optimización. No hay transacción global ni sandbox público. Docker: `docker compose --profile web up --build cauce`, accesible solo en loopback.
 
-Contrato HTTP 1 (distinto del análisis JSON 4), comandos, límites completos, persistencia, serialización y verificación: [guía del servicio](docs/servicio_ejecucion.md). W1 global sigue parcial; `/evaluacion`, constructor visual y otras extensiones siguen pendientes. No se modificaron las cifras C5.
+Contrato HTTP 1 (distinto del análisis JSON 4), comandos, límites completos, persistencia, serialización y verificación: [guía del servicio](docs/servicio_ejecucion.md). W1 global sigue parcial: `/evaluacion` ya está publicada (paso E); siguen pendientes el ajuste de tamaño de paneles, los enlaces internos a vistas del estudio, las sugerencias semánticas, el tutorial y la evaluación con usuarios. El constructor visual sigue fuera de alcance. No se modificaron las cifras C5.

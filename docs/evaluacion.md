@@ -299,3 +299,111 @@ campaña representativa, demos regeneradas con 131 pruebas, **4 pruebas web**,
 build de producción y comprobación Pyodide con Vite mediante `playwright-cli`.
 No se modificó el núcleo ni el contrato JSON 4; la comprobación de navegador
 cubre los snapshots regenerados. C5 no implementa el servicio ni páginas web.
+
+## Publicación de la evidencia y página `/evaluacion` (paso E)
+
+La campaña `representativa` descrita arriba se publica como **evidencia histórica**:
+fue medida el 11 de noviembre de 2026 (20:38:57–20:41:02 UTC) sobre la revisión
+`efe13996d9201788c9fc8cd7c6f458ca68035a04`. La web no vuelve a medir, no ejecuta el
+arnés y no presenta esas cifras como una medición del HEAD actual ni del programa
+abierto en el estudio. Para medir el mismo código hay que situarse en esa revisión.
+
+### Selección, procedencia y depuración
+
+`benchmarks/results/` sigue ignorado por Git y `.gitignore` no cambia globalmente.
+La selección explícita vive en [`web/content/evaluation.json`](../web/content/evaluation.json):
+campaña, directorio de origen, archivos autorizados, modo de publicación, rol de cada
+archivo y textos de los workloads. Solo se publican siete archivos en la instantánea
+versionada `web/public/evidencia/c5-representativa/`, que es exactamente lo que se
+ofrece para descarga en `/evidencia/c5-representativa/`:
+
+| Publicado | Origen | Publicación |
+|---|---|---|
+| `samples.csv`, `summary.csv`, `structure.csv`, `structure.json`, `errors.csv`, `report.md` | mismo nombre | Copia byte a byte (mismo SHA-256) |
+| `metadata.public.json` | `metadata.json` | **Versión depurada**: solo `/environment/python_executable` se sustituye por un marcador |
+| `manifest.json` | — | Generado al publicar: campaña, recuentos, procedencia, hashes publicado y original de cada archivo y depuraciones aplicadas |
+
+La ruta del intérprete contenía la ruta absoluta del host y el usuario local; no aporta
+información científica (la versión de Python sigue en `environment.python`). La depuración
+exige que `metadata.json` conserve el formato exacto del arnés, de modo que el archivo
+publicado difiere del original **solo** en ese valor. Por eso su manifiesto declara
+`identical_to_original: false` y ambos hashes; nunca se presenta como copia exacta.
+Ningún archivo publicado puede contener rutas `/Users/`, `/home/` o `C:\Users\`.
+`report.md` se publica intacto: su frase «estos artefactos generados no se versionan»
+describe la campaña original, anterior a esta instantánea (nota en el manifiesto).
+Los CSV publicados se versionan mediante una excepción acotada,
+`!web/public/evidencia/**/*.csv`, y otra equivalente en `.dockerignore`.
+
+### Validación, generación y comprobación
+
+`benchmarks/evidence.py` (solo biblioteca estándar; no importa Polars ni el arnés)
+valida una campaña original o pública y falla con mensajes comprensibles ante:
+encabezados y tipos incorrectos, valores no numéricos, negativos o no finitos, unidad
+distinta de ms, secuencias o celdas duplicadas, workloads/configuraciones/escenarios
+desconocidos, compilación con `size≠0` o escenario distinto de `not_applicable`,
+compilación del baseline manual, celdas ausentes o con repeticiones distintas de 1..10,
+semilla distinta, pases incoherentes con la configuración, resúmenes ausentes o duplicados,
+estructura CSV distinta de `structure.json` o de la IR que contiene, códigos observados
+distintos de los exigidos, recuento de errores distinto de `contract_checks`, campaña no
+válida o equivalencias no válidas. **Mediana, P25, P75, IQR, mínimo, máximo, N y razón
+frente a O0 se recalculan desde `samples.csv` con `benchmarks.report.summarize`** y
+deben coincidir exactamente con `summary.csv` (las 440 celdas coinciden). Nada se
+completa con ceros.
+
+`web/scripts/gen_evaluation.py`:
+
+```sh
+# Uso habitual, también en un checkout limpio: valida la instantánea y genera
+# web/src/evaluation/generated.json (determinista, claves ordenadas).
+.venv/bin/python web/scripts/gen_evaluation.py
+.venv/bin/python web/scripts/gen_evaluation.py --check
+# Solo en el equipo que tiene los originales ignorados:
+.venv/bin/python web/scripts/gen_evaluation.py --check --originals benchmarks/results/representativa
+# Publicar una campaña (rechaza sustituir otra ya publicada sin borrarla explícitamente):
+.venv/bin/python web/scripts/gen_evaluation.py --import-campaign benchmarks/results/representativa
+```
+
+La generación comprueba los hashes del manifiesto, rechaza archivos no autorizados en la
+instantánea, valida la campaña completa y verifica que los pases que transforman cada
+programa en la IR medida coinciden con la curaduría. El JSON de la página contiene
+resúmenes, las 4 400 muestras compactas por celda (para el gráfico), recuentos y cambios
+estructurales y un resumen de las pruebas de rangos/joins; **no** contiene las IR completas,
+que se descargan en `structure.json` bajo acción explícita. `tests/test_evaluation_evidence.py`
+cubre sincronización, generación desde una copia aislada de la instantánea, archivos no
+ignorados por Git, fidelidad de cada celda, razones/IQR, separación de fases y escenarios,
+depuración y once tipos de corrupción. `web/tests/evaluation.test.mjs` recalcula en JS
+mediana/IQR/extremos/razón de las 440 celdas y prueba parámetros de URL y lectura.
+
+### Qué muestra la página y cómo leerla
+
+Propósito y alcance; fecha, revisión, entorno y versiones; equivalencia previa; selector
+de fase, programa, filas, escenario y configuraciones con tabla (N, mediana, P25, P75, IQR,
+extremos, razón, transforma la IR y lectura) y diagrama de puntos de las mismas filas
+(muestras individuales, caja P25–P75, mediana y línea de la mediana O0; eje lineal desde 0 ms);
+evidencia estructural y pruebas; corpus de errores estático y dinámico; expresividad;
+límites; reproducción y descargas con SHA-256 verificable en el navegador.
+
+- Compilación y ejecución tienen intervalos distintos. En compilación no hay selector de filas
+  ni escenario (`size=0`, `not_applicable`) y manual no aparece: no se dibuja un cero ficticio.
+- La razón es `mediana(O0)/mediana(configuración)` dentro de una sola celda; cada escenario usa
+  su propio O0. No se promedian razones entre programas ni se anuncia una mejora global.
+- `final_flags_none` se explica como `QueryOptFlags.none()` solo en materializaciones finales,
+  con validaciones internas habituales y `type_check`/`type_coercion` activos; nunca como
+  «Polars sin optimización».
+- La columna **Lectura** es una regla descriptiva, no una prueba estadística: diferencia de
+  medianas no mayor que el mayor IQR de ambas filas → «no concluyente»; en ejecución, una
+  configuración que no cambia la IR → «sin reescritura», aunque su mediana varíe.
+- JOIN separa declaración `VERIFY MANY_TO_ONE`, prueba estática, obligaciones dinámicas que se
+  siguen ejecutando y mejora temporal observada. Los controles muestran su abstención.
+- Reducción de nodos y de tiempo son medidas distintas; LOC no demuestra legibilidad ni usabilidad.
+- Los casos destacados incluyen mejora observada (join), ausencia de mejora clara (rangos),
+  abstención (control_join) y coste de compilación; la vista inicial muestra todas las
+  configuraciones de `rangos`, sin elegir resultados favorables.
+
+Parámetros de URL validados: `fase` (`ejecucion|compilacion`), `workload`, `filas`
+(10000, 200000, 1000000), `escenario` y `config` (lista; O0 siempre incluido). Un valor
+desconocido se ignora con un aviso visible y se usa el predeterminado. Cambiar filtros
+reemplaza la entrada del historial; los casos destacados crean una nueva, de modo que
+atrás/adelante recupera la selección. Consultar la página no modifica `cauce-workspace-v1`,
+no carga CodeMirror, Pyodide ni el cliente de ejecución y no consulta la API: funciona con
+la API desconectada. La página se carga en diferido (≈57 KiB gzip con sus datos).
