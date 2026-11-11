@@ -8,6 +8,7 @@ const repo = fileURLToPath(new URL("..", import.meta.url));
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   // El worker del estudio empaqueta ../etl_dsl/*.py tal cual: hay que dejar que el servidor lea fuera de web/.
-  server: { fs: { allow: [repo] } },
+  server: { fs: { allow: [repo] }, proxy: { "/api": { target: process.env.CAUCE_API_TARGET || "http://127.0.0.1:8000", changeOrigin: false } } },
+  preview: { proxy: { "/api": { target: process.env.CAUCE_API_TARGET || "http://127.0.0.1:8000", changeOrigin: false } } },
   worker: { format: "es" },
 });

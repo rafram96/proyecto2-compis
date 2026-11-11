@@ -13,10 +13,10 @@
       ],
       "explanation": "El filtro conserva pedidos con status no nulo e importe mayor que 10; no comprueba que status sea paid. Después agrupa por customer_id, suma amount, cuenta filas y ordena por gastado descendente.",
       "requirements": [
-        "orders.csv con customer_id, amount numérico y status. Sin contrato SOURCE, la compilación conserva información parcial.",
-        "Puedes crear input/orders.csv con .venv/bin/python scripts/create_demo_data.py y usar --base-dir input al ejecutar desde el proyecto. El CSV se genera localmente; no está servido en la web."
+        "orders.csv con customer_id, amount numérico y status. Sin contrato SOURCE, el análisis conserva información parcial.",
+        "Servicio privado: python -m service.prepare prepara orders@1 con el generador canónico. En Resultados enlaza ventas.pedidos → orders@1. La API informa si está disponible."
       ],
-      "runtime": "El runtime debe encontrar las columnas y tipos compatibles. Escribe gasto_por_cliente.parquet; compilar no crea ese archivo.",
+      "runtime": "El servicio valida los datos con Polars y escribe gasto_por_cliente.parquet en un directorio por trabajo. Compilar no crea archivos.",
       "expectation": {
         "ok": true,
         "pipelines": 1
@@ -45,9 +45,9 @@
       ],
       "explanation": "credit_risk resume deuda/ingreso por segmento; no es un modelo predictivo. El mismo archivo define clean_orders con INPUT/OUTPUT tipados y order_report, que lo instancia mediante USE y conecta un LEFT JOIN.",
       "requirements": [
-        "bank.db: tabla clients con income, debt y segment; tabla customers con id para order_report.",
-        "orders.csv con id, customer_id, amount y status en ese orden para el contrato clean_orders.",
-        "Genera los datos sintéticos locales con .venv/bin/python scripts/create_demo_data.py. Quedan en input/; el navegador no los descarga ni los consulta."
+        "bank-clients@1 (tabla clients) y bank-customers@1 (tabla customers) se generan con python -m service.prepare desde scripts/create_demo_data.py.",
+        "orders@1 conserva id, customer_id, amount y status en ese orden. Se enlaza como SOURCE en order_report o como INPUT al ejecutar clean_orders directamente.",
+        "Elige un pipeline en Resultados. credit_risk.clients → bank-clients@1; order_report.raw_orders → orders@1 y order_report.customers → bank-customers@1. USE enlaza clean_orders.orders mediante FLOW."
       ],
       "runtime": "Los contratos clean_orders comprueban columnas, orden, tipos y nulos. Los pipelines superiores generan summary.parquet y orders_clean.csv. clean_orders recibe sus datos por USE o por la API Python.",
       "expectation": {
@@ -74,9 +74,9 @@
       ],
       "explanation": "Ejercicio inválido intencionalmente. status == NULL produce E_NULL_COMPARISON en validación. Abre una copia, compila y pulsa el diagnóstico. Sustituye status == NULL por status IS NULL y vuelve a compilar.",
       "requirements": [
-        "Para compilar o corregir no necesitas datos. Para ejecutar la versión corregida: orders.csv con status; puedes generarlo con scripts/create_demo_data.py en input/."
+        "Para compilar o corregir no necesitas datos. Para ejecutar la versión corregida, python -m service.prepare prepara orders@1; enlaza pendientes.pedidos en Resultados."
       ],
-      "runtime": "La corrección selecciona filas cuyo status es NULL y escribe pendientes.csv. En la web solo comprobarás el programa y su Python.",
+      "runtime": "La corrección selecciona filas cuyo status es NULL y escribe pendientes.csv. Con el servicio preparado puedes enlazar pendientes.pedidos → orders@1 y ejecutarla; el programa original permanece inválido.",
       "expectation": {
         "ok": false,
         "pipelines": 1,
@@ -107,10 +107,10 @@
       ],
       "explanation": "monto >= 100 implica monto >= 0 y ausencia de NULL. rangos elimina no_negativas y simplifica validas a monto < 1000. La IR registra los hechos y la procedencia de cada reescritura; compárala con Sin pases (O0).",
       "requirements": [
-        "ventas.csv con columnas id: INT y monto: DECIMAL nullable, en ese orden. Ese CSV no está incluido ni lo crea scripts/create_demo_data.py.",
-        "El pipeline devuelve OUTPUT resultado; para ejecutarlo se requiere preparar ese archivo y recoger el puerto con la API Python del proyecto."
+        "El fuente canónico solicita ventas.csv (id INT, monto DECIMAL nullable). No lo incluye el repositorio ni lo crea scripts/create_demo_data.py.",
+        "python -m service.prepare prepara ranges-sales@1 reproduciblemente para este contrato: enlaza rangos.ventas → ranges-sales@1. El servicio materializa OUTPUT resultado en Parquet. Sin preparación, la API lo declara no disponible."
       ],
-      "runtime": "SOURCE y OUTPUT conservan sus contratos. El runtime comprueba los datos reales; la compilación no prueba que ventas.csv exista.",
+      "runtime": "SOURCE y OUTPUT conservan sus contratos. El runtime comprueba datos y materializa explícitamente el LazyFrame de OUTPUT; las filas actuales son (2,100.0) y (3,250.5).",
       "expectation": {
         "ok": true,
         "pipelines": 1,
@@ -140,8 +140,8 @@
       ],
       "explanation": "El INNER JOIN declara VERIFY MANY_TO_ONE y su consumidor SELECT usa solo columnas izquierdas. joins lo sustituye por CHECK_JOIN, conservando ambas entradas y sus comprobaciones. No elimina la lectura derecha ni demuestra la integridad de los archivos.",
       "requirements": [
-        "demo/joins_pedidos.csv y demo/joins_clientes.csv están incluidos en el repositorio. No se leen desde el navegador.",
-        "Ejecución local: .venv/bin/python main.py demo/joins.etl --run --base-dir demo. Requiere el entorno del proyecto con Polars."
+        "demo/joins_pedidos.csv y demo/joins_clientes.csv están incluidos y disponibles como join-orders@1 y join-customers@1 sin preparación adicional.",
+        "En Resultados enlaza join_verificado.pedidos → join-orders@1 y clientes → join-customers@1. python -m service.prepare añade join-duplicates@1 para observar un fallo dinámico intencional sin cambiar archivos canónicos."
       ],
       "runtime": "También con O0: dtype físico igual, claves no nulas, unicidad derecha y referencia total izquierda. Puede fallar con E_JOIN_KEY_TYPE, E_JOIN_NULL, E_JOIN_UNIQUE o E_JOIN_REFERENCE. Materializa ambas entradas; no hay promesa de aceleración.",
       "expectation": {
@@ -168,7 +168,7 @@
         {
           "path": "docs/guia_estudio.md",
           "sections": [],
-          "hash": "d77ebe9bbf9b4f0cd4b0f75cafc0fd6a2ddebb2850c980df8a074f51c9b32720"
+          "hash": "283c927f84f82dcc8f207393b2865819bf9cbbafc77b83d0cdafda273301cadd"
         }
       ],
       "examples": [
@@ -176,7 +176,7 @@
         "corregir-nulos"
       ],
       "program": "ventas",
-      "body": "## Elegir y abrir una copia\n\nComienza por [Ventas por cliente](/ejemplos/ventas). Lee el problema, el código y los requisitos. Abrir una copia en el estudio crea un documento independiente con nombre, revisión 1, inspector Resultado y pases predeterminados. El documento anterior queda en Borradores anteriores. Navegar por ejemplos o documentación no modifica tu documento.\n\n## Compilar e inspeccionar\n\nPulsa Compilar o Ctrl/⌘ + Enter. La primera vez se descarga Python mediante Pyodide en un worker; necesitas conexión para esa carga. Después, las ediciones se analizan tras una pausa breve. Resultado, Tokens, Árbol, AST, IR y Python muestran fases textuales del mismo análisis. Cambiar de inspector no solicita otra compilación.\n\nCompilar no lee datasets ni certifica sus valores. La web no ejecuta Polars ni muestra filas de resultados. El Python generado requiere el entorno del proyecto con etl_dsl y Polars instalado. Las rutas SOURCE y SINK corresponden a ese entorno, no al equipo desde el navegador.\n\n## Corregir y comparar\n\nAbre [el ejercicio de NULL](/ejemplos/corregir-nulos). Compila, pulsa E_NULL_COMPARISON y cambia `status == NULL` por `status IS NULL`. El diagnóstico selecciona el intervalo en el editor, también desde el inspector móvil. Vuelve a compilar para obtener Python de la revisión actual.\n\nPredeterminados usa `constantes,rangos,filtros,joins,muertos`; Sin pases (O0) conserva el análisis estático y desactiva todos los pases. La IR permite leer el antes y el después. [Rangos](/ejemplos/rangos) y [JOIN verificado](/ejemplos/join-verificado) explican qué puede cambiar y qué controles permanecen en ejecución.\n\n## Conservar y recuperar\n\nPuedes consultar estas guías y volver con Estudio o con Atrás. Texto, nombre, revisión, pases e inspector permanecen en el documento. Los resultados se vinculan a su revisión; al volver puede ser necesario compilar de nuevo. No se guardan resultados, cursor ni historial de deshacer.\n\nBorradores anteriores permite recuperar, descargar o eliminar un documento. El límite es de ocho anteriores, 128 KiB por documento y 512 KiB totales. Al llegar a ocho, abrir otra copia se bloquea hasta que elimines uno; no se expulsa ninguno automáticamente.\n\nEl almacenamiento es local a este navegador y origen. Si falla por cuota o permisos, aparece Sin guardar: el documento sigue en memoria. Descarga el .etl antes de cerrar o recargar. No hay sincronización remota. Descargar Python solo está disponible cuando corresponde a la revisión y pases actuales."
+      "body": "## Elegir y abrir una copia\n\nComienza por [Ventas por cliente](/ejemplos/ventas). Lee el problema, el código y los requisitos. Abrir una copia en el estudio crea un documento independiente con nombre, revisión 1, inspector Resultado y pases predeterminados. El documento anterior queda en Borradores anteriores. Navegar por ejemplos o documentación no modifica tu documento.\n\n## Compilar e inspeccionar\n\nPulsa Compilar o Ctrl/⌘ + Enter. La primera vez se descarga Python mediante Pyodide en un worker; necesitas conexión para esa carga. Después, las ediciones se analizan tras una pausa breve. Resultado, Tokens, Árbol, AST, IR y Python muestran fases textuales del mismo análisis. Cambiar de inspector no solicita otra compilación.\n\nCompilar no lee datasets ni certifica sus valores. El análisis sigue siendo local aunque el servicio esté desconectado. Ejecutar es una acción explícita distinta: envía el fuente y las opciones al servicio privado Python, que vuelve a compilar y valida datos reales con Polars. El Python descargado también puede ejecutarse con etl_dsl y Polars instalados. Sus rutas SOURCE/SINK pertenecen a ese entorno; el servicio web las resuelve mediante bindings autorizados y archivos propios del trabajo.\n\n## Ejecutar y consultar resultados\n\nCon el servicio conectado, ve a Resultados, elige el pipeline ventas y enlaza ventas.pedidos con orders@1. Pulsa Ejecutar para enviar el programa. Si el dataset aparece sin preparar, ejecuta `python -m service.prepare` en el servidor y reinicia el servicio. JOIN utiliza datasets incluidos; ventas, riesgo y rangos requieren preparación. La compilación no realiza esa preparación.\n\nEl trabajo pasa por En cola y Ejecutando hasta Completado, Fallido, Cancelado o Tiempo agotado. Cancelar ejecución termina el proceso hijo. En Completado puedes elegir la salida, consultar una página de hasta 100 filas, desplegar su esquema y descargar el archivo completo. Una salida de cero filas es válida. OUTPUT se materializa en Parquet; SINK conserva su formato. Los contratos dinámicos de JOIN permanecen con O0 y con optimización.\n\nCada resultado muestra la revisión, pases y bindings enviados. Editar o cambiar opciones marca el resultado anterior; no ejecuta de nuevo. Navegar conserva la referencia del trabajo en memoria de esta pestaña y el sondeo se detiene al salir u ocultarla. Recargar conserva el documento pero pierde la referencia al trabajo. Los archivos caducan en el servidor a los 60 minutos; no se guardan tablas ni datasets en localStorage.\n\n## Corregir y comparar\n\nAbre [el ejercicio de NULL](/ejemplos/corregir-nulos). Compila, pulsa E_NULL_COMPARISON y cambia `status == NULL` por `status IS NULL`. El diagnóstico selecciona el intervalo en el editor, también desde el inspector móvil. Vuelve a compilar para obtener Python de la revisión actual.\n\nPredeterminados usa `constantes,rangos,filtros,joins,muertos`; Sin pases (O0) conserva el análisis estático y desactiva todos los pases. La IR permite leer el antes y el después. [Rangos](/ejemplos/rangos) y [JOIN verificado](/ejemplos/join-verificado) explican qué puede cambiar y qué controles permanecen en ejecución.\n\n## Conservar y recuperar\n\nPuedes consultar estas guías y volver con Estudio o con Atrás. Texto, nombre, revisión, pases e inspector permanecen en el documento. Los resultados se vinculan a su revisión; al volver puede ser necesario compilar de nuevo. No se guardan resultados, cursor ni historial de deshacer.\n\nBorradores anteriores permite recuperar, descargar o eliminar un documento. El límite es de ocho anteriores, 128 KiB por documento y 512 KiB totales. Al llegar a ocho, abrir otra copia se bloquea hasta que elimines uno; no se expulsa ninguno automáticamente.\n\nEl almacenamiento es local a este navegador y origen. Si falla por cuota o permisos, aparece Sin guardar: el documento sigue en memoria. Descarga el .etl antes de cerrar o recargar. No hay sincronización remota. Descargar Python solo está disponible cuando corresponde a la revisión y pases actuales."
     },
     {
       "slug": "estructura",

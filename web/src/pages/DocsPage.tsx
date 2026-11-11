@@ -120,9 +120,9 @@ export default function DocsPage({ slug }: { slug?: string }) {
                 ))}
               </ol>
               <p className="content-note">
-                Compilar analiza el programa sin leer datasets. La web no
-                ejecuta Polars; el Python generado requiere el entorno del
-                proyecto.
+                Compilar analiza el programa sin leer datasets. En el estudio,
+                Ejecutar envía el programa al servicio privado Python y muestra
+                sus resultados reales cuando los datasets están preparados.
               </p>
             </>
           )}

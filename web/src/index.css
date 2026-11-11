@@ -710,3 +710,44 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 }
 .inspector-controls .tool-button[aria-pressed="true"] { background: var(--surface-strong); border-color: var(--primary); font-weight: 600; }
 @media (max-width: 700px) { .passes-details label { min-height: 44px; } }
+
+/* Ejecución explícita: misma tipografía, tokens y controles que el estudio. */
+.execution-panel { border-top: 1px solid var(--border); padding: 24px; scroll-margin-top: 100px; font-size: var(--fs-s); min-width: 0; overflow-wrap: anywhere; }
+.execution-panel h2 { font-size: var(--fs-m); margin: 0 0 8px; }
+.execution-panel h3 { font-size: var(--fs-body); margin: 0 0 8px; color: var(--primary); }
+.execution-panel p { color: var(--muted-foreground); margin: 8px 0 16px; max-width: 75ch; }
+.execution-heading { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+.execution-heading > div { min-width: 0; }
+.execution-bindings { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 16px; margin: 20px 0; }
+.execution-panel label { display: flex; flex-direction: column; gap: 8px; font-weight: 500; min-width: 0; }
+.execution-panel select { background: var(--card); color: var(--foreground); font: inherit; border: 1px solid var(--border); border-radius: 6px; min-height: 44px; width: 100%; padding: 10px 12px; text-overflow: ellipsis; }
+.execution-panel select:disabled { opacity: .65; }
+.execution-toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 16px 0; }
+.execution-toolbar > span { color: var(--muted-foreground); }
+.execution-toolbar > label { min-width: min(100%, 260px); flex: 1; }
+.execution-panel .tool-button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; }
+.execution-panel details summary { cursor: pointer; min-height: 44px; padding-block: 12px; }
+.execution-panel code { font-family: var(--font-mono); font-size: 12px; overflow-wrap: anywhere; }
+.execution-job { border-top: 1px solid var(--border); margin-top: 24px; padding-top: 24px; }
+.execution-job ul { padding-left: 20px; }
+.execution-results table { width: 100%; border-collapse: collapse; text-align: left; font-variant-numeric: tabular-nums; }
+.execution-results th, .execution-results td { padding: 12px; border-bottom: 1px solid var(--border); max-width: 40ch; overflow-wrap: anywhere; }
+.execution-results th { background: var(--surface); font-weight: 500; }
+.execution-results td[data-null] { color: var(--muted-foreground); font-style: italic; }
+.execution-results caption { text-align: left; color: var(--muted-foreground); margin-bottom: 12px; }
+.execution-pagination { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-block: 16px; }
+.observed-schema { margin-top: 16px; border-block: 1px solid var(--border); }
+.execution-panel .execution-footnote { margin: 24px 0 0; }
+@media (max-width: 700px) {
+  .execution-panel { padding: 20px 12px; }
+  .execution-heading { flex-wrap: wrap; }
+  .execution-toolbar { align-items: stretch; }
+  .execution-toolbar > a { width: 100%; }
+  .execution-results th, .execution-results td { padding: 10px; min-width: 7ch; }
+}
+.preview-chart { margin-block: 16px; }
+.preview-chart label { max-width: 360px; }
+.preview-chart svg { width: 600px; max-width: none; height: auto; display: block; color: var(--foreground); }
+.preview-chart svg text { fill: currentColor; font-family: var(--font-sans); font-size: 14px; }
+
+.observed-schema table { min-width: 560px; }

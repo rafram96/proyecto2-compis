@@ -8,7 +8,15 @@ Comienza por [Ventas por cliente](/ejemplos/ventas). Lee el problema, el código
 
 Pulsa Compilar o Ctrl/⌘ + Enter. La primera vez se descarga Python mediante Pyodide en un worker; necesitas conexión para esa carga. Después, las ediciones se analizan tras una pausa breve. Resultado, Tokens, Árbol, AST, IR y Python muestran fases textuales del mismo análisis. Cambiar de inspector no solicita otra compilación.
 
-Compilar no lee datasets ni certifica sus valores. La web no ejecuta Polars ni muestra filas de resultados. El Python generado requiere el entorno del proyecto con etl_dsl y Polars instalado. Las rutas SOURCE y SINK corresponden a ese entorno, no al equipo desde el navegador.
+Compilar no lee datasets ni certifica sus valores. El análisis sigue siendo local aunque el servicio esté desconectado. Ejecutar es una acción explícita distinta: envía el fuente y las opciones al servicio privado Python, que vuelve a compilar y valida datos reales con Polars. El Python descargado también puede ejecutarse con etl_dsl y Polars instalados. Sus rutas SOURCE/SINK pertenecen a ese entorno; el servicio web las resuelve mediante bindings autorizados y archivos propios del trabajo.
+
+## Ejecutar y consultar resultados
+
+Con el servicio conectado, ve a Resultados, elige el pipeline ventas y enlaza ventas.pedidos con orders@1. Pulsa Ejecutar para enviar el programa. Si el dataset aparece sin preparar, ejecuta `python -m service.prepare` en el servidor y reinicia el servicio. JOIN utiliza datasets incluidos; ventas, riesgo y rangos requieren preparación. La compilación no realiza esa preparación.
+
+El trabajo pasa por En cola y Ejecutando hasta Completado, Fallido, Cancelado o Tiempo agotado. Cancelar ejecución termina el proceso hijo. En Completado puedes elegir la salida, consultar una página de hasta 100 filas, desplegar su esquema y descargar el archivo completo. Una salida de cero filas es válida. OUTPUT se materializa en Parquet; SINK conserva su formato. Los contratos dinámicos de JOIN permanecen con O0 y con optimización.
+
+Cada resultado muestra la revisión, pases y bindings enviados. Editar o cambiar opciones marca el resultado anterior; no ejecuta de nuevo. Navegar conserva la referencia del trabajo en memoria de esta pestaña y el sondeo se detiene al salir u ocultarla. Recargar conserva el documento pero pierde la referencia al trabajo. Los archivos caducan en el servidor a los 60 minutos; no se guardan tablas ni datasets en localStorage.
 
 ## Corregir y comparar
 

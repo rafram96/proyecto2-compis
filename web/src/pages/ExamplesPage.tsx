@@ -90,7 +90,7 @@ export default function ExamplesPage({ slug }: { slug?: string }) {
           </header>
           <p className="content-note">
             Puedes compilar todos sin datasets. El ejercicio de NULL contiene un
-            error para corregir. La web no ejecuta pipelines.
+            error para corregir. Para ejecutar, abre una copia y conecta el servicio privado; su catálogo informa qué datasets están preparados.
           </p>
           <div className="example-list">
             {examples.map((item) => (

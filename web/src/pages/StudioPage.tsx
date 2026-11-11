@@ -21,6 +21,7 @@ import {
 import { downloadText } from "../workspace/files";
 import { useCompilation } from "../workspace/useCompilation";
 import type { Diagnostic, Span } from "../compiler/types";
+const ExecutionPanel = lazy(() => import("../execution/ExecutionPanel"));
 const Editor = lazy(() => import("../editor/Editor"));
 const Inspector = lazy(() => import("../components/inspectors/Inspector"));
 
@@ -116,7 +117,7 @@ export default function StudioPage() {
           </p>
         </div>
         <p className="workspace-limit">
-          Compilación local · sin ejecución de datos
+          Compilación local · ejecución en servicio privado
         </p>
       </div>
       <div className="workbench" data-ui>
@@ -138,6 +139,7 @@ export default function StudioPage() {
           </label>
           <span className="revision">Revisión {doc.revision}</span>
           <div className="document-actions">
+            <a className="tool-button" href="#resultados">Ejecutar y resultados</a>
             <button
               className="tool-button"
               onClick={() => input.current?.click()}
@@ -351,6 +353,9 @@ export default function StudioPage() {
             </p>
           )}
         </section>
+        <Suspense fallback={<p>Cargando resultados…</p>}>
+          <ExecutionPanel doc={doc} analysis={analysis} current={current} />
+        </Suspense>
         <div className="workspace-runtime">
           <p
             className="studio-status"

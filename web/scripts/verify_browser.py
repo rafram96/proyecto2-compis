@@ -13,10 +13,14 @@ from uuid import uuid4
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--execution-only", action="store_true", help="Recorrido HTTP/runner/archivos; funciona en producción sin /src/")
+    parser.add_argument("--timeout-api", default="", help="API de prueba con CAUCE_TIMEOUT=0.02, necesaria para --execution-only")
     parser.add_argument("--inspectors-only", action="store_true", help="Inspectores reales, también en vite preview; no importa /src/")
     parser.add_argument("--content-only", action="store_true", help="Recorrido de contenido, también en vite preview")
     parser.add_argument("--url", default="http://127.0.0.1:5173/")
     args = parser.parse_args()
+    if args.execution_only and not args.timeout_api:
+        parser.error("--execution-only requiere --timeout-api con un runner real de plazo reducido.")
     cli = shutil.which("playwright-cli")
     if cli is None:
         parser.error("Se necesita playwright-cli en PATH.")
@@ -29,12 +33,15 @@ def main():
                   ("workspace.js", ('"workspace":true', '"loadFailureRecovery":true')),
                   ("content.js", ('"content":true', '"storageFailure":true')),
                   ("inspectors.js", ('"inspectors":true', '"noRecompileOnExplore":true'))]
+        if args.execution_only:
+            suites = [("execution.js", ('"execution":true', '"timeout":true', '"download":true'))]
         if args.content_only:
             suites = suites[2:3]
         if args.inspectors_only:
             suites = suites[-1:]
         for script, required in suites:
             code = (web / "tests/browser" / script).read_text(encoding="utf-8").strip().removesuffix(";")
+            code = code.replace("__CAUCE_TIMEOUT_API__", args.timeout_api)
             completed = subprocess.run([*command, "run-code", code], cwd=web, check=False,
                                        capture_output=True, text=True, timeout=150)
             (web / ".playwright-cli" / f"{script}.log").write_text(completed.stdout + completed.stderr, encoding="utf-8")
@@ -47,6 +54,27 @@ def main():
                 raise SystemExit(f"Falló {script}; revisar la salida de playwright-cli.")
         sys.path[:0] = [str(web.parent), str(web / "src/compiler")]
         from studio import compile_etl
+        if args.execution_only:
+            import tempfile
+            import polars as pl
+            from etl_dsl import compile_program, parse
+            from etl_dsl.runtime import PolarsRuntime
+            from service.prepare import prepare
+            with tempfile.TemporaryDirectory() as temp:
+                prepare(temp)
+                source = (web / "scripts/programs/ventas.etl").read_text()
+                namespace = {"__name__": "verify_runtime"}
+                exec(compile_program(parse(source)), namespace)
+                with PolarsRuntime(temp) as runtime:
+                    namespace["PIPELINES"]["ventas"](runtime)
+                expected = pl.read_parquet(Path(temp) / "gasto_por_cliente.parquet")
+                actual = pl.read_parquet(web / ".playwright-cli/d-ventas.parquet")
+                if not expected.equals(actual) or expected.schema != actual.schema:
+                    raise SystemExit("Ventas descargadas difieren del runtime Python.")
+            if (web / ".playwright-cli/d-joins.csv").read_bytes() != (web.parent / "demo/joins_pedidos.csv").read_bytes():
+                raise SystemExit("JOIN descargado difiere de la secuencia canónica.")
+            print("Descargas reales: ventas (filas y esquema Parquet) y JOIN (CSV byte a byte) coinciden con Python.")
+            return
         if not args.content_only:
             custom = (web / ".playwright-cli/custom-passes.py").read_text(encoding="utf-8")
             range_source = (web.parent / "demo/rangos.etl").read_text(encoding="utf-8")

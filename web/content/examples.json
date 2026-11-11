@@ -5,16 +5,26 @@
     "name": "ventas.etl",
     "source": "web/scripts/programs/ventas.etl",
     "goal": "Resumir el gasto y las compras de cada cliente, de mayor a menor gasto.",
-    "operations": ["FILTER", "AGGREGATE", "SORT"],
+    "operations": [
+      "FILTER",
+      "AGGREGATE",
+      "SORT"
+    ],
     "explanation": "El filtro conserva pedidos con status no nulo e importe mayor que 10; no comprueba que status sea paid. Después agrupa por customer_id, suma amount, cuenta filas y ordena por gastado descendente.",
     "requirements": [
-      "orders.csv con customer_id, amount numérico y status. Sin contrato SOURCE, la compilación conserva información parcial.",
-      "Puedes crear input/orders.csv con .venv/bin/python scripts/create_demo_data.py y usar --base-dir input al ejecutar desde el proyecto. El CSV se genera localmente; no está servido en la web."
+      "orders.csv con customer_id, amount numérico y status. Sin contrato SOURCE, el análisis conserva información parcial.",
+      "Servicio privado: python -m service.prepare prepara orders@1 con el generador canónico. En Resultados enlaza ventas.pedidos → orders@1. La API informa si está disponible."
     ],
-    "runtime": "El runtime debe encontrar las columnas y tipos compatibles. Escribe gasto_por_cliente.parquet; compilar no crea ese archivo.",
-    "expectation": { "ok": true, "pipelines": 1 },
+    "runtime": "El servicio valida los datos con Polars y escribe gasto_por_cliente.parquet en un directorio por trabajo. Compilar no crea archivos.",
+    "expectation": {
+      "ok": true,
+      "pipelines": 1
+    },
     "expectedText": "Compila sin diagnósticos de error. constantes reduce 2 * 5 a 10. La IR conserva filtrado, agregación y ordenación.",
-    "docs": ["primer-programa", "operaciones"]
+    "docs": [
+      "primer-programa",
+      "operaciones"
+    ]
   },
   {
     "slug": "riesgo-crediticio",
@@ -22,17 +32,31 @@
     "name": "credit_risk.etl",
     "source": "input/credit_risk.etl",
     "goal": "Estudiar limpieza de nulos, razones numéricas y reutilización entre pipelines.",
-    "operations": ["FILL_NULL", "FILTER", "DERIVE", "AGGREGATE", "USE", "JOIN"],
+    "operations": [
+      "FILL_NULL",
+      "FILTER",
+      "DERIVE",
+      "AGGREGATE",
+      "USE",
+      "JOIN"
+    ],
     "explanation": "credit_risk resume deuda/ingreso por segmento; no es un modelo predictivo. El mismo archivo define clean_orders con INPUT/OUTPUT tipados y order_report, que lo instancia mediante USE y conecta un LEFT JOIN.",
     "requirements": [
-      "bank.db: tabla clients con income, debt y segment; tabla customers con id para order_report.",
-      "orders.csv con id, customer_id, amount y status en ese orden para el contrato clean_orders.",
-      "Genera los datos sintéticos locales con .venv/bin/python scripts/create_demo_data.py. Quedan en input/; el navegador no los descarga ni los consulta."
+      "bank-clients@1 (tabla clients) y bank-customers@1 (tabla customers) se generan con python -m service.prepare desde scripts/create_demo_data.py.",
+      "orders@1 conserva id, customer_id, amount y status en ese orden. Se enlaza como SOURCE en order_report o como INPUT al ejecutar clean_orders directamente.",
+      "Elige un pipeline en Resultados. credit_risk.clients → bank-clients@1; order_report.raw_orders → orders@1 y order_report.customers → bank-customers@1. USE enlaza clean_orders.orders mediante FLOW."
     ],
     "runtime": "Los contratos clean_orders comprueban columnas, orden, tipos y nulos. Los pipelines superiores generan summary.parquet y orders_clean.csv. clean_orders recibe sus datos por USE o por la API Python.",
-    "expectation": { "ok": true, "pipelines": 3 },
+    "expectation": {
+      "ok": true,
+      "pipelines": 3
+    },
     "expectedText": "Compilan los tres pipelines. SAFE_DIVIDE y COALESCE permanecen en el Python generado; un análisis correcto no certifica los datos de SQLite o CSV.",
-    "docs": ["composicion", "null-contratos", "conectores"]
+    "docs": [
+      "composicion",
+      "null-contratos",
+      "conectores"
+    ]
   },
   {
     "slug": "corregir-nulos",
@@ -40,20 +64,28 @@
     "name": "pendientes.etl",
     "source": "web/scripts/programs/pendientes.etl",
     "goal": "Localizar un diagnóstico, seleccionar su intervalo y corregir el programa.",
-    "operations": ["FILTER"],
+    "operations": [
+      "FILTER"
+    ],
     "explanation": "Ejercicio inválido intencionalmente. status == NULL produce E_NULL_COMPARISON en validación. Abre una copia, compila y pulsa el diagnóstico. Sustituye status == NULL por status IS NULL y vuelve a compilar.",
     "requirements": [
-      "Para compilar o corregir no necesitas datos. Para ejecutar la versión corregida: orders.csv con status; puedes generarlo con scripts/create_demo_data.py en input/."
+      "Para compilar o corregir no necesitas datos. Para ejecutar la versión corregida, python -m service.prepare prepara orders@1; enlaza pendientes.pedidos en Resultados."
     ],
-    "runtime": "La corrección selecciona filas cuyo status es NULL y escribe pendientes.csv. En la web solo comprobarás el programa y su Python.",
+    "runtime": "La corrección selecciona filas cuyo status es NULL y escribe pendientes.csv. Con el servicio preparado puedes enlazar pendientes.pedidos → orders@1 y ejecutarla; el programa original permanece inválido.",
     "expectation": {
       "ok": false,
       "pipelines": 1,
       "diagnostic": "E_NULL_COMPARISON"
     },
-    "correction": { "from": "status == NULL", "to": "status IS NULL" },
+    "correction": {
+      "from": "status == NULL",
+      "to": "status IS NULL"
+    },
     "expectedText": "Antes: E_NULL_COMPARISON con intervalo sobre status == NULL. Después: compilación correcta y Python disponible.",
-    "docs": ["null-contratos", "primer-programa"]
+    "docs": [
+      "null-contratos",
+      "primer-programa"
+    ]
   },
   {
     "slug": "rangos",
@@ -61,20 +93,30 @@
     "name": "rangos.etl",
     "source": "demo/rangos.etl",
     "goal": "Entender por qué un filtro previo permite retirar una condición redundante.",
-    "operations": ["FILTER", "SELECT", "OUTPUT"],
+    "operations": [
+      "FILTER",
+      "SELECT",
+      "OUTPUT"
+    ],
     "explanation": "monto >= 100 implica monto >= 0 y ausencia de NULL. rangos elimina no_negativas y simplifica validas a monto < 1000. La IR registra los hechos y la procedencia de cada reescritura; compárala con Sin pases (O0).",
     "requirements": [
-      "ventas.csv con columnas id: INT y monto: DECIMAL nullable, en ese orden. Ese CSV no está incluido ni lo crea scripts/create_demo_data.py.",
-      "El pipeline devuelve OUTPUT resultado; para ejecutarlo se requiere preparar ese archivo y recoger el puerto con la API Python del proyecto."
+      "El fuente canónico solicita ventas.csv (id INT, monto DECIMAL nullable). No lo incluye el repositorio ni lo crea scripts/create_demo_data.py.",
+      "python -m service.prepare prepara ranges-sales@1 reproduciblemente para este contrato: enlaza rangos.ventas → ranges-sales@1. El servicio materializa OUTPUT resultado en Parquet. Sin preparación, la API lo declara no disponible."
     ],
-    "runtime": "SOURCE y OUTPUT conservan sus contratos. El runtime comprueba los datos reales; la compilación no prueba que ventas.csv exista.",
+    "runtime": "SOURCE y OUTPUT conservan sus contratos. El runtime comprueba datos y materializa explícitamente el LazyFrame de OUTPUT; las filas actuales son (2,100.0) y (3,250.5).",
     "expectation": {
       "ok": true,
       "pipelines": 1,
-      "rangeActions": ["remove_filter", "simplify_predicate"]
+      "rangeActions": [
+        "remove_filter",
+        "simplify_predicate"
+      ]
     },
     "expectedText": "Con pases predeterminados hay eliminación y simplificación de filtros registradas en range_rewrites. O0 conserva los filtros originales.",
-    "docs": ["estructura", "null-contratos"]
+    "docs": [
+      "estructura",
+      "null-contratos"
+    ]
   },
   {
     "slug": "join-verificado",
@@ -82,15 +124,26 @@
     "name": "joins.etl",
     "source": "demo/joins.etl",
     "goal": "Distinguir una reescritura estática de las obligaciones que aún deben ejecutarse.",
-    "operations": ["JOIN", "VERIFY MANY_TO_ONE", "SELECT"],
+    "operations": [
+      "JOIN",
+      "VERIFY MANY_TO_ONE",
+      "SELECT"
+    ],
     "explanation": "El INNER JOIN declara VERIFY MANY_TO_ONE y su consumidor SELECT usa solo columnas izquierdas. joins lo sustituye por CHECK_JOIN, conservando ambas entradas y sus comprobaciones. No elimina la lectura derecha ni demuestra la integridad de los archivos.",
     "requirements": [
-      "demo/joins_pedidos.csv y demo/joins_clientes.csv están incluidos en el repositorio. No se leen desde el navegador.",
-      "Ejecución local: .venv/bin/python main.py demo/joins.etl --run --base-dir demo. Requiere el entorno del proyecto con Polars."
+      "demo/joins_pedidos.csv y demo/joins_clientes.csv están incluidos y disponibles como join-orders@1 y join-customers@1 sin preparación adicional.",
+      "En Resultados enlaza join_verificado.pedidos → join-orders@1 y clientes → join-customers@1. python -m service.prepare añade join-duplicates@1 para observar un fallo dinámico intencional sin cambiar archivos canónicos."
     ],
     "runtime": "También con O0: dtype físico igual, claves no nulas, unicidad derecha y referencia total izquierda. Puede fallar con E_JOIN_KEY_TYPE, E_JOIN_NULL, E_JOIN_UNIQUE o E_JOIN_REFERENCE. Materializa ambas entradas; no hay promesa de aceleración.",
-    "expectation": { "ok": true, "pipelines": 1, "joinRewrites": 1 },
+    "expectation": {
+      "ok": true,
+      "pipelines": 1,
+      "joinRewrites": 1
+    },
     "expectedText": "Con predeterminados la IR registra una reescritura y CHECK_JOIN; el Python conserva verify_many_to_one. O0 mantiene el JOIN y la misma obligación. Con los CSV incluidos, la salida local es (2,30), (1,10), (2,40).",
-    "docs": ["estructura", "conectores"]
+    "docs": [
+      "estructura",
+      "conectores"
+    ]
   }
 ]
