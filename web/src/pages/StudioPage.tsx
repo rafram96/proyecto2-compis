@@ -1,15 +1,15 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { restartCompiler } from "../compiler/client";
-import { editorDiagnostics } from "../compiler/diagnostics";
 import { examples } from "../content";
-import { Output } from "../components/CompilerOutput";
+import PassSelector from "../components/inspectors/PassSelector";
 import {
   createDocument,
   fileName,
-  FORMATS,
+  INSPECTORS,
   importText,
   MAX_SOURCE,
   pythonDownload,
+  sourceSelection,
 } from "../workspace/model";
 import {
   getWorkspace,
@@ -20,8 +20,9 @@ import {
 } from "../workspace/store";
 import { downloadText } from "../workspace/files";
 import { useCompilation } from "../workspace/useCompilation";
-import type { Diagnostic } from "../compiler/types";
+import type { Diagnostic, Span } from "../compiler/types";
 const Editor = lazy(() => import("../editor/Editor"));
+const Inspector = lazy(() => import("../components/inspectors/Inspector"));
 
 export default function StudioPage() {
   const { workspace, notice, saved } = useWorkspace();
@@ -44,21 +45,25 @@ export default function StudioPage() {
   const diagnostics = current ? (analysis?.diagnostics ?? []) : [];
   const python = pythonDownload(doc, result);
   const fmt = doc.inspector;
-  const text = result?.result.views?.[fmt] ?? "";
-  const artifact =
-    fmt === "check"
-      ? null
-      : analysis?.artifacts[fmt === "ir" ? "ir_before" : fmt];
   const origin = result
     ? current
       ? "en vivo"
       : "desactualizado"
     : "sin compilar";
-  function showDiagnostic(diagnostic: Diagnostic) {
-    const [range] = editorDiagnostics(doc.source, [diagnostic]);
+  function selectSource(span: Span) {
+    const latest = getWorkspace().workspace.active;
+    if (!current || latest.id !== doc.id || latest.revision !== doc.revision)
+      return;
+    const range = sourceSelection(latest, result, span);
     if (!range) return;
     setPane("code");
-    setFocusRange({ from: range.from, to: range.to, token: Date.now() });
+    setFocusRange((previous) => ({
+      ...range,
+      token: (previous?.token ?? 0) + 1,
+    }));
+  }
+  function showDiagnostic(diagnostic: Diagnostic) {
+    selectSource(diagnostic.span);
   }
   function openExample(name: string) {
     try {
@@ -208,21 +213,10 @@ export default function StudioPage() {
               ))}
             </select>
           </label>
-          <label>
-            Pases
-            <select
-              aria-label="Pases de optimización"
-              value={doc.passes === null ? "default" : "O0"}
-              onChange={(e) =>
-                updateDocument({
-                  passes: e.target.value === "default" ? null : [],
-                })
-              }
-            >
-              <option value="default">Predeterminados</option>
-              <option value="O0">Sin pases (O0)</option>
-            </select>
-          </label>
+          <PassSelector
+            passes={doc.passes}
+            onChange={(passes) => updateDocument({ passes })}
+          />
           <span className="save-status" role="status" data-saved={saved}>
             {notice}
           </span>
@@ -269,8 +263,8 @@ export default function StudioPage() {
             aria-label="Inspector de compilación"
           >
             <div className="studio-out-bar">
-              <div className="studio-formats" aria-label="Fase del compilador">
-                {FORMATS.map(([f, label]) => (
+              <div className="studio-formats" aria-label="Vistas del estudio">
+                {INSPECTORS.map(([f, label]) => (
                   <button
                     key={f}
                     aria-pressed={f === fmt}
@@ -300,21 +294,22 @@ export default function StudioPage() {
                   no está disponible para descarga.
                 </p>
               )}
-              {text ? (
-                <Output
-                  fmt={fmt}
-                  result={{ ok: true, out: text, err: "", analysis: null }}
-                />
+              {result ? (
+                <Suspense
+                  fallback={<p className="empty-output">Cargando inspector…</p>}
+                >
+                  <Inspector
+                    inspector={fmt}
+                    analysis={analysis}
+                    views={result.result.views}
+                    current={current}
+                    onSelect={selectSource}
+                  />
+                </Suspense>
               ) : (
                 <p className="empty-output">
-                  {!result
-                    ? "Pulsa Compilar para cargar Python y obtener las fases de este documento."
-                    : artifact?.status === "blocked"
-                      ? "Esta fase está bloqueada por un error. Los artefactos de fases anteriores siguen disponibles."
-                      : artifact?.status === "not_requested"
-                        ? "Este artefacto no se solicitó."
-                        : result.result.err ||
-                          "No hay salida disponible para esta fase."}
+                  Pulsa Compilar para cargar Python y obtener las fases de este
+                  documento.
                 </p>
               )}
             </div>

@@ -3,7 +3,7 @@ import {
   MAX_DRAFTS,
   MAX_SOURCE,
   PASSES,
-  FORMATS,
+  INSPECTORS,
 } from "./model.ts";
 import type { Document, Workspace } from "./model.ts";
 export const STORAGE_KEY = "cauce-workspace-v1";
@@ -30,7 +30,7 @@ function document(v: unknown): v is Document {
         v.passes.length <= PASSES.length &&
         v.passes.every((p) => typeof p === "string" && PASSES.includes(p)) &&
         new Set(v.passes).size === v.passes.length)) &&
-    FORMATS.some(([f]) => f === v.inspector)
+    INSPECTORS.some(([f]) => f === v.inspector)
   );
 }
 /** Reconstruye solo los campos admitidos: no persiste resultados, datasets ni claves desconocidas. */

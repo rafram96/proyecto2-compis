@@ -1,11 +1,16 @@
-import type { CompileResult, Format } from "../compiler/types.ts";
+import type { CompileResult, Format, Span } from "../compiler/types.ts";
+import { editorDiagnostics } from "../compiler/diagnostics.ts";
 
-export const FORMATS: [Format, string][] = [
+/** Inspectores de UI; FLOW y esquemas no son formatos del compilador. */
+export type Inspector = Format | "flow" | "schemas";
+export const INSPECTORS: [Inspector, string][] = [
   ["check", "Resultado"],
   ["tokens", "Tokens"],
   ["tree", "Árbol"],
   ["ast", "AST"],
+  ["flow", "FLOW"],
   ["ir", "IR"],
+  ["schemas", "Esquemas"],
   ["python", "Python"],
 ];
 export const PASSES = ["constantes", "rangos", "filtros", "joins", "muertos"];
@@ -17,7 +22,7 @@ export type Document = {
   source: string;
   revision: number;
   passes: string[] | null;
-  inspector: Format;
+  inspector: Inspector;
 };
 export type Workspace = { version: 1; active: Document; drafts: Document[] };
 export type DocumentResult = {
@@ -112,4 +117,23 @@ export function pythonDownload(doc: Document, result: DocumentResult | null) {
         text: artifact.data,
       }
     : null;
+}
+/** La selección comparte exactamente el mismo límite de revisión que las descargas. */
+export function sourceSelection(
+  doc: Document,
+  result: DocumentResult | null,
+  span: Span,
+) {
+  if (!isCurrent(doc, result)) return null;
+  const [range] = editorDiagnostics(doc.source, [
+    {
+      span,
+      code: "",
+      message: "",
+      filename: doc.name,
+      severity: "info",
+      phase: "semantic",
+    },
+  ]);
+  return range ? { from: range.from, to: range.to } : null;
 }

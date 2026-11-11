@@ -13,6 +13,7 @@ from uuid import uuid4
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--inspectors-only", action="store_true", help="Inspectores reales, también en vite preview; no importa /src/")
     parser.add_argument("--content-only", action="store_true", help="Recorrido de contenido, también en vite preview")
     parser.add_argument("--url", default="http://127.0.0.1:5173/")
     args = parser.parse_args()
@@ -26,8 +27,11 @@ def main():
         subprocess.run([*command, "open", args.url], cwd=web, check=True, timeout=45)
         suites = [("analysis.js", ('"compared":32', '"eliminated":true')),
                   ("workspace.js", ('"workspace":true', '"loadFailureRecovery":true')),
-                  ("content.js", ('"content":true', '"storageFailure":true'))]
+                  ("content.js", ('"content":true', '"storageFailure":true')),
+                  ("inspectors.js", ('"inspectors":true', '"noRecompileOnExplore":true'))]
         if args.content_only:
+            suites = suites[2:3]
+        if args.inspectors_only:
             suites = suites[-1:]
         for script, required in suites:
             code = (web / "tests/browser" / script).read_text(encoding="utf-8").strip().removesuffix(";")
@@ -41,10 +45,16 @@ def main():
                 subprocess.run([*command, "screenshot", f"--filename=.playwright-cli/{script}-failure.png"], cwd=web, timeout=15)
                 subprocess.run([*command, "snapshot"], cwd=web, timeout=15)
                 raise SystemExit(f"Falló {script}; revisar la salida de playwright-cli.")
-        if args.content_only:
-            return
         sys.path[:0] = [str(web.parent), str(web / "src/compiler")]
         from studio import compile_etl
+        if not args.content_only:
+            custom = (web / ".playwright-cli/custom-passes.py").read_text(encoding="utf-8")
+            range_source = (web.parent / "demo/rangos.etl").read_text(encoding="utf-8")
+            if custom != compile_etl(range_source, "rangos.etl", "python", ["rangos", "constantes"])["out"]:
+                raise SystemExit("La descarga con pases personalizados difiere de CPython.")
+            print("Descarga Python con pases personalizados verificada byte a byte.")
+        if args.content_only or args.inspectors_only:
+            return
         source = ('PIPELINE p { INPUT data: TABLE[x: INT?]; STEP f = FILTER { WHERE "😀" == "é" AND x\n'
                   ' IS NULL; } OUTPUT o: TABLE; FLOW { data -> f -> o; } }')
         exported = (web / ".playwright-cli/workspace-export.etl").read_bytes().decode("utf-8")

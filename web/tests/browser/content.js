@@ -46,10 +46,10 @@ async (page) => {
   );
   if (
     resources.some((url) =>
-      /pyodide|Editor-[^/]+\.js|\/src\/editor\/Editor/.test(url),
+      /pyodide|(?:Editor|AstInspector|FlowInspector|IRInspector|SchemaInspector|Inspector)-[^/]+\.js|\/src\/(?:editor\/Editor|components\/inspectors\/)/.test(url),
     )
   )
-    throw new Error("Editor o Python cargado en catálogo");
+    throw new Error("Editor, inspectores o Python cargados en catálogo");
   await page.goto(origin + "/ejemplos/ventas");
   await page
     .getByRole("heading", { name: "Ventas por cliente", exact: true })
