@@ -62,8 +62,9 @@ export default function ExamplesPage({ slug }: { slug?: string }) {
               <h2>Al ejecutar localmente</h2>
               <p>{example.runtime}</p>
               <p className="content-note">
-                Compilar no lee datasets ni certifica sus valores. No hay
-                ejecución de pipelines en la web.
+                Compilar no lee datasets ni certifica sus valores. Para
+                ejecutar, usa Resultados en el estudio con el servicio privado
+                conectado.
               </p>
               <OpenExample example={example} />
               <h2>Para entenderlo</h2>

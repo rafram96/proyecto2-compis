@@ -256,7 +256,7 @@
       "slug": "conectores",
       "title": "Conectores y compilación local",
       "summary": "Archivos, opciones y frontera entre compilar y ejecutar.",
-      "intro": "La web compila sin leer datasets y no ejecuta pipelines. No certifica sus valores ni la existencia de un archivo. Para ejecutar el Python descargado necesitas el entorno del proyecto, etl_dsl, Polars y los archivos declarados. Estas opciones corresponden al runtime local, no a un servicio HTTP del navegador.",
+      "intro": "Compilar en la web no lee datasets ni certifica sus valores o la existencia de un archivo. Ejecutar desde Resultados envía el programa al servicio privado, que sustituye cada SOURCE por un dataset autorizado. Para ejecutar el Python descargado necesitas el entorno del proyecto, etl_dsl, Polars y los archivos declarados. Estas opciones son las del runtime de Python.",
       "sources": [
         {
           "path": "docs/backend_polars.md",

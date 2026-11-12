@@ -92,3 +92,25 @@ class WebContentTests(unittest.TestCase):
             return entries
         with patch.object(gen_content, 'manifest', side_effect=changed), self.assertRaises(KeyError):
             build_content()
+
+    def test_studio_view_links_match_the_published_views(self):
+        from web.scripts.gen_content import STUDIO_LINK
+        import re
+        slugs = {'resultado', 'tokens', 'arbol', 'ast', 'flow', 'ir', 'esquemas', 'python', 'ejecucion'}
+        allowed = set(re.search(r'vista=\(\?:([a-z|]+)\)', STUDIO_LINK.pattern)[1].split('|'))
+        self.assertEqual(allowed, slugs)
+        for slug in slugs:
+            self.assertTrue(STUDIO_LINK.fullmatch(f'/estudio?vista={slug}'))
+        for url in ['/estudio?vista=otra', '/estudio?vista=ir&x=1', '/estudiox']:
+            self.assertIsNone(STUDIO_LINK.fullmatch(url))
+        for article in build_content()['articles']:
+            for url in re.findall(r'\]\((/estudio[^)]*)\)', article['body']):
+                self.assertTrue(STUDIO_LINK.fullmatch(url), url)
+        # Las fuentes TypeScript no se copian a la imagen Docker; donde existen, deben coincidir.
+        view, body = ROOT / 'web/src/workspace/view.ts', ROOT / 'web/src/components/ArticleBody.tsx'
+        if view.exists() and body.exists():
+            table = re.search(r'VIEW_SLUGS[^{]*\{(.*?)\};', view.read_text(encoding='utf-8'), re.S)[1]
+            self.assertEqual(set(re.findall(r'\w+: "(\w+)"', table)) | {'ejecucion'}, slugs)
+            self.assertIn('EXECUTION_SLUG = "ejecucion"', view.read_text(encoding='utf-8'))
+            rendered = re.search(r'vista=\(([a-z|]+)\)', body.read_text(encoding='utf-8'))[1]
+            self.assertEqual(set(rendered.split('|')), slugs)

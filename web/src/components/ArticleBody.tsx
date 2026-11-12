@@ -1,6 +1,18 @@
 import type { ReactNode } from "react";
 import type { Block } from "../content/markdown";
 import { Code } from "./Code";
+/**
+ * Enlaces que el lector convierte en navegación interna. `/estudio?vista=…` solo admite vistas
+ * publicadas; gen_content.py rechaza cualquier otra antes del build.
+ */
+const INTERNAL =
+  /^(https:\/\/|\/docs\/|\/ejemplos\/|\/estudio(\?vista=(resultado|tokens|arbol|ast|flow|ir|esquemas|python|ejecucion))?$)/;
+/** El lenguaje del bloque dice qué es: solo los fragmentos del DSL llevan resaltado. */
+const CAPTIONS: Record<string, string> = {
+  sh: "Comando de terminal",
+  output: "Salida obtenida al ejecutarlo",
+  csv: "Contenido del archivo CSV",
+};
 function inline(text: string): ReactNode[] {
   return text
     .split(/(`[^`]+`|\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*)/g)
@@ -10,7 +22,7 @@ function inline(text: string): ReactNode[] {
         return <strong key={i}>{part.slice(2, -2)}</strong>;
       const link = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(part);
       if (link)
-        return /^(https:\/\/|\/docs\/|\/ejemplos\/)/.test(link[2]) ? (
+        return INTERNAL.test(link[2]) ? (
           <a key={i} href={link[2]}>
             {link[1]}
           </a>
@@ -34,8 +46,20 @@ export function ArticleBody({ blocks }: { blocks: Block[] }) {
       case "code":
         return (
           <figure key={i}>
-            <figcaption>Fragmento de referencia · incompleto</figcaption>
-            <Code code={block.text} />
+            <figcaption>
+              {CAPTIONS[block.language] ?? "Fragmento de referencia · incompleto"}
+            </figcaption>
+            {block.language in CAPTIONS ? (
+              // Literal y sin cortar líneas: un comando partido se copiaría mal.
+              <Code
+                code={block.text}
+                verbatim
+                plain
+                label={`${CAPTIONS[block.language]}, desplazable`}
+              />
+            ) : (
+              <Code code={block.text} />
+            )}
           </figure>
         );
       case "list": {

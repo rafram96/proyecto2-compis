@@ -12,6 +12,7 @@ import re
 ROOT = Path(__file__).resolve().parents[2]
 WEB = ROOT / "web"
 DEST = WEB / "src/content/generated.json"
+STUDIO_LINK = re.compile(r"/estudio(?:\?vista=(?:resultado|tokens|arbol|ast|flow|ir|esquemas|python|ejecucion))?")
 
 
 def manifest(name):
@@ -49,9 +50,15 @@ def build_content():
             source["hash"] = hashlib.sha256(text.encode()).hexdigest()
         # Enlaces técnicos relativos no publicados se leen como texto; nunca apuntan a rutas SPA inexistentes.
         links = {"lenguaje.md": "/docs/estructura", "semantica_estatica.md": "/docs/null-contratos",
-                 "backend_polars.md": "/docs/conectores", "../demo/joins.etl": "/ejemplos/join-verificado"}
+                 "backend_polars.md": "/docs/conectores", "tutorial.md": "/docs/tutorial",
+                 "../demo/joins.etl": "/ejemplos/join-verificado", "../demo/tutorial.etl": "/ejemplos/gasto-por-cliente"}
         def link(match):
             label, url = match.groups()
+            if url.startswith("/estudio"):
+                # Solo vistas publicadas (web/src/workspace/view.ts); un enlace roto falla aquí.
+                if not STUDIO_LINK.fullmatch(url):
+                    raise ValueError(f"Enlace al estudio no publicado: {url}")
+                return match[0]
             if url.startswith(("https://", "/docs/", "/ejemplos/")):
                 return match[0]
             return f"[{label}]({links[url]})" if url in links else label

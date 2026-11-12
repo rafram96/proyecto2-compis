@@ -9,8 +9,14 @@ export function Code({
   className = "",
   mark,
   verbatim = false,
+  plain = false,
+  label = "Código del programa, desplazable",
 }: {
+  /** Nombre accesible del bloque desplazable (solo con `verbatim`). */
+  label?: string;
   verbatim?: boolean;
+  /** Comandos, salidas y archivos: texto literal, sin resaltado del DSL (con `verbatim`). */
+  plain?: boolean;
   code: string;
   className?: string;
   mark?: (line: string, i: number) => string | undefined;
@@ -20,9 +26,9 @@ export function Code({
       <pre
         className={`code-wrap ${className}`}
         tabIndex={0}
-        aria-label="Código del programa, desplazable"
+        aria-label={label}
       >
-        <code>{highlight(code)}</code>
+        <code>{plain ? code : highlight(code)}</code>
       </pre>
     );
   return (
