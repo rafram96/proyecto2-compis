@@ -233,7 +233,10 @@ El segundo escenario controla solo los collect finales de Polars.
 Comandos, workloads, resultados y límites: [evaluación C5](docs/evaluacion.md).
 
 La campaña representativa medida el 11 de noviembre de 2026 sobre `efe1399` se publica en
-`/evaluacion` como evidencia histórica, no como medición del HEAD. Una instantánea versionada
+`/evaluacion` como evidencia histórica. La página indica, con una comparación calculada por
+`gen_evaluation.py`, si las fuentes medidas (compilador, arnés y programas) coinciden con las del código
+que la publica (hoy coinciden las 37; `benchmarks/evidence.py` se añadió después); máquina, entorno y
+fecha siguen siendo los de la campaña, y `--check` falla si esa conclusión deja de ser cierta. Una instantánea versionada
 (`web/public/evidencia/c5-representativa/`, siete archivos y `manifest.json` con hashes del original
 y del publicado) permite generar la página y sus descargas desde un checkout limpio; solo
 `metadata.public.json` está depurado (ruta local del intérprete).
@@ -243,13 +246,15 @@ y del publicado) permite generar la página y sus descargas desde un checkout li
 .venv/bin/python web/scripts/gen_evaluation.py --check  # falla si algo diverge
 ```
 
-### Web Cauce (W1 pasos A/B, C/W2, D/W3, E y W4 esencial)
+### Web Cauce (W1 completo, C/W2, D/W3, E y W4 esencial)
 
 La web Vite/React conserva el landing en `/`, ofrece `/ejemplos`, `/ejemplos/:slug`, `/docs`, `/docs/:slug`,
 la evidencia experimental C5 en `/evaluacion` y el espacio de trabajo en `/estudio`:
 editor CodeMirror, compilación local real con Pyodide, inspectores estructurados y diagnósticos seleccionables.
 Permite importar/exportar `.etl`, descargar Python vigente y recuperar borradores versionados
-tras recargar. La ejecución real se realiza en el servicio Python privado descrito más abajo; el navegador no ejecuta Polars.
+tras recargar. En escritorio, un divisor accesible ajusta el ancho de editor e inspector (recordado solo en
+este navegador, `cauce-studio-layout-v1`); `/estudio?vista=resultado|tokens|arbol|ast|flow|ir|esquemas|python|ejecucion`
+abre esa vista del documento activo sin llevar documento ni datos en la URL. La ejecución real se realiza en el servicio Python privado descrito más abajo; el navegador no ejecuta Polars.
 
 ```sh
 cd web
@@ -282,7 +287,7 @@ inventan trazas para constantes, filtros o muertos ni correspondencia entre Pyth
 
 Verificación de esta entrega: **157 pruebas Python**, **38 web**, demos regeneradas, build y recorridos
 reales con `playwright-cli` en Vite y preview. Se conservan las 32 comparaciones CPython/Pyodide,
-O1/O3 y recuperación del worker. W1 sigue parcial por `/evaluacion` y los requisitos pendientes;
+O1/O3 y recuperación del worker. (Estado de aquella entrega; W1 se completó después.)
 Paso C/W2 queda implementado; el servicio del paso D/W3 se describe en la sección siguiente. Las cifras experimentales de C5 no cambian.
 
 El paso E añade `/evaluacion`: metodología, campaña y entorno históricos, tabla y diagrama de puntos
@@ -312,4 +317,4 @@ La API `/api/v1` acepta fuente ETL, recompila en un proceso hijo y mantiene queu
 
 Límites privados: un activo/cuatro posiciones adicionales, 30 s, RSS muestreado de 512 MiB, archivos acotados y caducidad de una hora. Cancelar termina el hijo; reiniciar limpia huérfanos sin reanudación. Los contratos dinámicos y las obligaciones JOIN permanecen con O0 y optimización. No hay transacción global ni sandbox público. Docker: `docker compose --profile web up --build cauce`, accesible solo en loopback.
 
-Contrato HTTP 1 (distinto del análisis JSON 4), comandos, límites completos, persistencia, serialización y verificación: [guía del servicio](docs/servicio_ejecucion.md). W1 global sigue parcial: `/evaluacion` ya está publicada (paso E); siguen pendientes el ajuste de tamaño de paneles, los enlaces internos a vistas del estudio, las sugerencias semánticas, el tutorial y la evaluación con usuarios. El constructor visual sigue fuera de alcance. No se modificaron las cifras C5.
+Contrato HTTP 1 (distinto del análisis JSON 4), comandos, límites completos, persistencia, serialización y verificación: [guía del servicio](docs/servicio_ejecucion.md). W1 está completo (cierre con divisor de paneles, enlaces a vistas y auditoría de estados del estudio; ver [web/README.md](web/README.md#cierre-de-w1-divisor-de-paneles-y-enlaces-a-vistas)). Siguen pendientes las sugerencias semánticas (W4), el tutorial, la actualización de `lenguaje.md`/`backend_polars.md` y la evaluación con usuarios; el constructor visual sigue fuera de alcance. No se modificaron las cifras C5.

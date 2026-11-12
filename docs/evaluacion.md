@@ -305,8 +305,33 @@ cubre los snapshots regenerados. C5 no implementa el servicio ni páginas web.
 La campaña `representativa` descrita arriba se publica como **evidencia histórica**:
 fue medida el 11 de noviembre de 2026 (20:38:57–20:41:02 UTC) sobre la revisión
 `efe13996d9201788c9fc8cd7c6f458ca68035a04`. La web no vuelve a medir, no ejecuta el
-arnés y no presenta esas cifras como una medición del HEAD actual ni del programa
-abierto en el estudio. Para medir el mismo código hay que situarse en esa revisión.
+arnés y no presenta esas cifras como una medición del programa abierto en el estudio.
+Sí indica, con una comparación calculada (ver más abajo), si las fuentes medidas
+coinciden con las del código que publica la página; la máquina, el entorno y la fecha
+siguen siendo los de la campaña.
+
+### Correspondencia entre las fuentes medidas y las publicadas
+
+El arnés registra en `environment.source_sha256` el SHA-256 de `etl_dsl/*.py`,
+`etl_dsl/grammar.lark`, `benchmarks/*.py` y `benchmarks/programs/*.etl` en el momento de
+medir. `benchmarks.evidence.compare_sources` aplica la misma regla (una prueba la contrasta
+con `benchmarks.harness.environment()`) sobre el checkout que genera la página y clasifica
+cada archivo como coincidente, distinto, ausente o añadido después. `gen_evaluation.py`
+guarda el resultado en `web/src/evaluation/generated.json` (`sources`: estado, recuentos
+por compilador/arnés/programas y listas de archivos); nunca se escribe a mano.
+
+Estado al cerrar W1 (11 de noviembre de 2026): **las 37 fuentes registradas coinciden byte a
+byte** (22 del compilador, 7 del arnés y 8 programas). Se añadió después
+`benchmarks/evidence.py`, el validador de esta publicación, que no existía al medir. La página
+dice por tanto que el compilador, el arnés y los programas son los medidos, y que la máquina,
+el entorno (Python 3.13.13, Polars 2.1.0, cuatro hilos) y la fecha son los de la campaña.
+
+Si un archivo registrado cambia o desaparece, `gen_evaluation.py --check` falla con un mensaje
+que lista las fuentes afectadas; al regenerar, la página pasa a decir que las fuentes difieren,
+las enumera y remite a la revisión medida para reproducir el mismo código. Ninguna cifra cambia
+por ello: la comparación describe la publicación, no vuelve a medir. `tests/test_evaluation_evidence.py`
+prueba la regla, la coincidencia sobre una copia exacta, un archivo añadido y una discrepancia
+simulada (un byte en `etl_dsl/passes.py` y un programa eliminado) sobre una copia temporal.
 
 ### Selección, procedencia y depuración
 

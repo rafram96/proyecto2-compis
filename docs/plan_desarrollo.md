@@ -2,9 +2,9 @@
 
 Fecha de revisión: **11 de noviembre de 2026**.
 
-Este plan parte del código actual de `etl_dsl/`, `tests/` y `web/`, y lo contrasta con [el enunciado](Enunciado_DSL.md). Cubre el compilador y la continuación de la web. C1, C2, C3, C4 y C5 están implementados. La continuación web entrega W1 pasos A/B, paso C/W2, la robustez esencial de W4, D/W3 con ejecución privada real y el paso E (`/evaluacion`); W1 global sigue parcial.
+Este plan parte del código actual de `etl_dsl/`, `tests/` y `web/`, y lo contrasta con [el enunciado](Enunciado_DSL.md). Cubre el compilador y la continuación de la web. C1, C2, C3, C4 y C5 están implementados. La continuación web entrega W1 (pasos A/B, paso E y su cierre con divisor de paneles y enlaces `/estudio?vista=…`), paso C/W2, la robustez esencial de W4 y D/W3 con ejecución privada real. W1 está completo según sus criterios; la continuación web no lo está (sugerencias semánticas de W4, tutorial, evaluación con usuarios y constructor por bloques siguen pendientes o fuera de alcance).
 
-Ampliación del plan: arquitectura de conexión, páginas adicionales y evaluación de edición visual, tomando como referencia el proyecto local `csharp-x86-compi/`. Se mantiene la libertad de adaptar sus ideas al dominio ETL. La ruta `/estudio` ya implementa el paso A. `/ejemplos` y `/docs` ya implementan el paso B y `/evaluacion` el paso E; el editor por bloques sigue pendiente.
+Ampliación del plan: arquitectura de conexión, páginas adicionales y evaluación de edición visual, tomando como referencia el proyecto local `csharp-x86-compi/`. Se mantiene la libertad de adaptar sus ideas al dominio ETL. La ruta `/estudio` implementa los pasos A, C y D y el cierre de W1. `/ejemplos` y `/docs` implementan el paso B y `/evaluacion` el paso E; el editor por bloques sigue pendiente.
 
 La [definición de arquitectura de la aplicación](arquitectura_aplicacion.md) concreta API, procesos, contratos, persistencia y decisiones pendientes. Sus rutas `/api/v1` y su ciclo de trabajos sustituyen los nombres tentativos iniciales.
 
@@ -29,7 +29,7 @@ La [definición de arquitectura de la aplicación](arquitectura_aplicacion.md) c
 | Conectores | ✅ | Lectura CSV, Parquet, SQLite y DuckDB; escritura CSV, Parquet y DuckDB: `runtime.py`. DuckDB es un conector; las transformaciones usan Polars. |
 | Ejecución | ✅ | `LazyFrame`, selección de pipelines, entradas externas mediante API Python y comprobaciones en ejecución. |
 | CLI | ✅ | Compilación individual y por carpetas, seis formatos, ejecución, selección de pases, rutas base y continuación del lote tras errores: `main.py`. |
-| Pruebas y entorno | ✅ | Suite `unittest`, dependencias, Docker y datos de demostración. Tras el paso E pasan **170 pruebas Python** y **45 pruebas web**; la evidencia histórica C5 conserva sus 131 pruebas. |
+| Pruebas y entorno | ✅ | Suite `unittest`, dependencias, Docker y datos de demostración. Tras el cierre de W1 pasan **174 pruebas Python** y **51 pruebas web**; la evidencia histórica C5 conserva sus 131 pruebas. |
 | Evaluación experimental | ✅ | `benchmarks/`: ocho workloads, baselines contractuales, equivalencia obligatoria, compilación/ejecución separadas y CSV/JSON/reporte. Campaña real hasta un millón de filas; [metodología y límites](evaluacion.md). |
 
 **Distinción importante:** el compilador ya funciona de punta a punta por terminal. La brecha principal está en verificar propiedades de los datos antes de ejecutarlos y usarlas para optimizar.
@@ -45,16 +45,16 @@ La web conserva la demo breve del landing y amplía el estudio en `/estudio`. Se
 | Editor | ✅ | CodeMirror 6, resaltado, sugerencias de vocabulario, diagnósticos y atajo para compilar: `src/editor/`. |
 | Compilación real en navegador | ✅ | El mismo paquete Python corre con Pyodide y Lark dentro de un Web Worker: `src/compiler/worker.ts`. |
 | Resultados iniciales | ✅ | Salidas precalculadas por el compilador real; puente compartido con el navegador: `studio.py`, `scripts/gen_compiled.py`. |
-| Inspección de fases | ✅ | Resultado de validación, tokens, árbol concreto, AST, IR y Python como texto. La IR incluye antes/después cuando hay pases activos. |
+| Inspección de fases | ✅ | Resultado, tokens, árbol, AST, FLOW, IR (antes/después), esquemas y Python; vistas estructuradas del paso C con alternativa textual. |
 | Compilación al editar | ✅ | Tras cargar Python, espera de 320 ms; ejemplos editables, restauración y switch de optimización: `Studio.tsx`. |
 | Demostración de pases | ✅ | Comparación progresiva de constantes, filtros y pasos muertos: `Optimizer.tsx`. |
 | AST y FLOW explorables | ✅ | Paso C: árbol expandible, grafo de lectura desde AST/FLOW original, pipelines, puertos, lista accesible y selección del fuente. |
 | Catálogo y documentación | ✅ | Paso B: cinco ejemplos, seis artículos, slugs explícitos, código de fuente canónica, anclas y copias independientes mediante el workspace. |
-| Estudio ampliado | ✅ | `/estudio` con editor/inspector paralelos en escritorio y alternancia móvil; el landing conserva su demo. |
-| Ejecución y resultados | ⬜ | La web compila, pero no ejecuta Polars ni lee datasets; no hay tabla de resultados de ejecución. |
+| Estudio ampliado | ✅ | `/estudio` con editor/inspector paralelos y divisor ajustable en escritorio (disposición en `cauce-studio-layout-v1`), alternancia móvil y enlaces `/estudio?vista=…`; el landing conserva su demo. |
+| Ejecución y resultados | ✅ | Paso D: Ejecutar envía fuente y bindings al servicio Python privado, que recompila y ejecuta con Polars; tabla paginada, esquema observado, gráfico de la página y descargas. Compilar sigue siendo local; no hay despliegue público. |
 | Archivos y persistencia del trabajo | ✅ | Importación/exportación `.etl`, Python vigente, revisión/pases y borradores locales versionados/validados. 128 KiB por documento, 8 anteriores, 512 KiB total; aviso si falla el guardado. |
 | Robustez esencial W4 | ✅ | Cola acotada, respuestas antiguas ignoradas, validación de mensajes, errores del canal, carga 60 s/compilación 12 s y reinicio sin perder documento. |
-| Evaluación C5 | ✅ | Paso E: `/evaluacion` con la campaña histórica publicada, tabla/gráfico por celda comparable, evidencia estructural, errores, descargas con hashes. |
+| Evaluación C5 | ✅ | Paso E: `/evaluacion` con la campaña histórica publicada, tabla/gráfico por celda comparable, evidencia estructural, errores, descargas con hashes y comparación calculada de las fuentes medidas con las del código que la publica. |
 | Build de producción | ✅ | `npm run build` pasó durante esta revisión. Esto no verifica la descarga de Pyodide ni su funcionamiento en una sesión real. |
 
 ### Decisiones que se mantienen
@@ -161,13 +161,13 @@ Verificación: 131 pruebas Python (11 C5), modo pequeño, campaña, demos regene
 
 ## 5. Plan de continuación de la web
 
-### W1. Estudio ampliado — P1 — 🟡 parcial (pasos A, B y E implementados)
+### W1. Estudio ampliado — P1 — ✅ completo (pasos A, B, E y cierre)
 
 - [x] Reutilizar CodeMirror y el inspector textual (`CompilerOutput.tsx`); ampliar a `pages/StudioPage.tsx`.
 - [x] Implementar `/estudio`, acceso directo, atrás/adelante, recuperación de rutas desconocidas y transferencia de una copia desde la demo.
 - [x] Implementar `/ejemplos`, `/ejemplos/:slug`, `/docs` y `/docs/:slug` (paso B).
 - [x] Implementar `/evaluacion` con la evidencia C5 publicada (paso E).
-- [ ] Requisitos restantes de la sección 9: ajuste de tamaño de paneles, enlaces `/estudio?vista=…`, estados pendientes del estudio y, si se decide, mapa Python → DSL.
+- [x] Requisitos restantes de la sección 9: ajuste de tamaño de paneles, enlaces `/estudio?vista=…` y auditoría de los estados del estudio (9.2). El mapa Python → DSL era condicional («si se decide»), no se decidió y no forma parte del cierre.
 - [x] Mantener un documento activo en `src/workspace/`: texto, nombre, revisión, pases e inspector; ninguna selección de fase desmonta el editor.
 - [x] Paneles paralelos en escritorio, alternancia Código/Inspector en móvil y estados de foco/teclado.
 - [x] Diagnósticos accesibles desde cualquier fase; selección del intervalo Unicode convertido a UTF-16, multilínea y EOF.
@@ -176,9 +176,14 @@ Verificación: 131 pruebas Python (11 C5), modo pequeño, campaña, demos regene
 
 **Paso A cerrado:** editar → compilar → localizar/corregir → inspeccionar → descargar → recargar/restaurar, comprobado en navegador.
 El estudio pide todos los artefactos una vez por revisión/pases; cambiar inspector no recompila. Conserva fases parciales, marca resultados
-anteriores y no ofrece Python de otra revisión. No hay ejecución Polars en la web. Hosting: fallback SPA en Vite/preview,
+anteriores y no ofrece Python de otra revisión. En el paso A no había ejecución; la añadió D/W3. Hosting: fallback SPA en Vite/preview,
 `web/public/_redirects` y ejemplo `web/nginx.conf`; el alojamiento final debe aplicar el fallback de `/estudio`.
 Persistencia y recuperación detalladas en [web/README.md](../web/README.md).
+
+**Cierre de W1:** divisor editor/inspector y enlaces internos a vistas (sección 9.2), estados del estudio auditados sin
+faltantes y criterio de 9.2 cubierto con D/W3. Fuera de W1 quedan las sugerencias semánticas (W4), el tutorial y la
+documentación de lenguaje (sección 7), la evaluación con usuarios, la comprobación del fallback en el alojamiento que se
+elija y el constructor por bloques (F). Evidencia al final del documento.
 
 ### W2. Fases y optimizaciones explorables — P1/P2 — ✅ paso C
 
@@ -233,8 +238,8 @@ El contrato del servicio y un primer recorrido con un dataset incluido pueden de
 
 ## 7. Pruebas y documentación para cerrar el proyecto
 
-- [x] Suite actual: `.venv/bin/python -m unittest discover` — **170 pruebas, OK** (13 de evidencia C5 publicada).
-- [x] Diagnósticos, revisiones, persistencia, worker y evaluación: `cd web && npm test` — **45 pruebas, OK**.
+- [x] Suite actual: `.venv/bin/python -m unittest discover` — **174 pruebas, OK** (17 de evidencia C5 publicada, 4 de correspondencia de fuentes).
+- [x] Diagnósticos, revisiones, persistencia, worker, evaluación, vistas y disposición: `cd web && npm test` — **51 pruebas, OK**.
 - [x] Evidencia C5 publicada: `gen_evaluation.py --check` y recorrido `/evaluacion` con `playwright-cli` en Vite, FastAPI y Docker.
 - [x] C1/C2/C3/C4 en navegador: `.venv/bin/python web/scripts/verify_browser.py` — **32 comparaciones CPython/Pyodide, dos casos C2, prueba O1, eliminación O3 con obligaciones, abstenciones y recorrido de corrección, OK**.
 - [x] Build actual: `cd web && npm run build` — **OK**.
@@ -330,11 +335,11 @@ El contrato debe distinguir `no solicitado`, `disponible`, `bloqueado por error`
 | Ruta | Estado | Propósito y prioridad |
 |---|---|---|
 | `/` | ✅ Composición y navegación a estudio/ejemplos/docs | Presentación de Cauce y demostración breve. |
-| `/estudio` | ✅ Recorrido esencial A/C/D | Editar, compilar, inspeccionar, enlazar datos autorizados, ejecutar, ver filas y descargar/restaurar documentos. Ajuste de tamaño y extensiones pendientes. |
+| `/estudio` | ✅ Recorrido A/C/D y cierre de W1 | Editar, compilar, inspeccionar, enlazar datos autorizados, ejecutar, ver filas y descargar/restaurar documentos; divisor ajustable y `?vista=…`. |
 | `/ejemplos` y `/ejemplos/:slug` | ✅ Paso B implementado | Elegir un problema ETL y abrir una copia editable. |
 | `/docs` y `/docs/:slug` | ✅ Paso B implementado | Aprender a usar el lenguaje y consultar sus reglas. |
 | `/evaluacion` | ✅ Paso E implementado | Consultar evidencia de expresividad, errores y rendimiento de la campaña C5 publicada. |
-| `/estudio?vista=bloques` | ⬜ Candidata experimental, P2 | Evaluar edición visual más adelante; no forma parte de la implementación aprobada. |
+| `/estudio?vista=bloques` | ⬜ Candidata experimental, P2 | Evaluar edición visual más adelante; no forma parte de la implementación aprobada. Hoy `bloques` no es una vista válida: el estudio lo ignora con un aviso. |
 
 **Decisión de navegación:** fases, datos, optimizaciones y resultados son vistas del mismo estudio, no páginas independientes que obliguen a recargar el programa. Ejemplos, documentación y evaluación sí tienen páginas porque responden a tareas distintas. No se necesita un dashboard de cuentas o proyectos para el compilador actual.
 
@@ -342,7 +347,7 @@ El contrato debe distinguir `no solicitado`, `disponible`, `bloqueado por error`
 
 **Usuario y resultado esperado:** una persona que quiere transformar datos o inspeccionar la compilación. Debe poder abrir un ejemplo, editarlo, localizar un error y obtener un resultado real.
 
-**Composición objetivo (Ejecución y ajuste de tamaño pendientes):** barra de documento con ejemplo/importación, estado de guardado, Compilar y Ejecutar; editor como área estable; inspector con vistas seleccionables; diagnósticos accesibles desde cualquier vista. En escritorio, editor e inspector en paralelo con ajuste de tamaño. En móvil, alternancia entre código e inspector sin comprimir ambos en columnas estrechas.
+**Composición (implementada):** barra de documento con ejemplo/importación, estado de guardado, Compilar y Ejecutar; editor como área estable; inspector con vistas seleccionables; diagnósticos accesibles desde cualquier vista. En escritorio, editor e inspector en paralelo con ajuste de tamaño. En móvil, alternancia entre código e inspector sin comprimir ambos en columnas estrechas.
 
 | Vista del estudio | Qué muestra | Implementación sobre el proyecto actual |
 |---|---|---|
@@ -353,11 +358,30 @@ El contrato debe distinguir `no solicitado`, `disponible`, `bloqueado por error`
 | Datos | Fuentes del programa, contratos declarados y bindings disponibles. | Extraer declaraciones del AST; unirlas al catálogo autorizado del servicio. Diferenciar contrato declarado, esquema observado e inferido estáticamente. |
 | Resultados | Estado de ejecución, tabla, esquema y archivos de salida. | Consumir W3; seleccionar salida si hay varios `SINK`/`OUTPUT`, limitar vista previa y conservar tipos/nulos en la serialización. |
 
-**Enlaces internos propuestos (pendientes):** `/estudio?vista=optimizacion` abrirá ese inspector; un identificador local de documento puede acompañarlo. Un enlace con identificador local solo se puede restaurar en ese navegador: compartir un trabajo requiere exportar `.etl`; no se promete colaboración o almacenamiento remoto.
+**Ajuste de tamaño (implementado):** divisor `role="separator"` de 44 px entre editor e inspector en escritorio (>860 px): arrastre con puntero, flechas (Mayús = 10 %), Inicio/Fin, Intro o doble clic para el 50 %; límites 30–70 % y anchos mínimos por CSS. La proporción se guarda solo en este navegador, en `cauce-studio-layout-v1` (`{version:1, editor}` validado, lectura/escritura con try/catch; si falla, dura la visita). No modifica `cauce-workspace-v1`, no recrea CodeMirror ni recompila. En móvil se mantiene la alternancia Código/Inspector sin divisor.
+
+**Enlaces internos (implementados):** `/estudio?vista=resultado|tokens|arbol|ast|flow|ir|esquemas|python|ejecucion`. Los ocho primeros seleccionan el inspector del documento activo (solo cambia su campo `inspector`, sin revisión nueva, como al pulsar la pestaña); `ejecucion` lleva a Resultados sin cambiar nada. Un valor desconocido, repetido o con parámetros extra se ignora con un aviso visible y se conserva la vista del documento. Elegir una vista usa `replaceState`; atrás/adelante entre páginas y entre consultas de la misma ruta la recupera. La URL nunca contiene id de documento, fuente, datos, trabajos ni bindings (se descartó el identificador local propuesto antes: no se puede compartir y abre la puerta a confundir documentos); compartir un trabajo requiere exportar `.etl`. Enlazan a vistas: docs NULL/contratos → `resultado`, docs estructura → `flow` y la evidencia O1/O3 de `/evaluacion` → `ir`, siempre sobre el documento propio.
 
 **Conexión entre vistas:** seleccionar un nodo enfoca su rango en CodeMirror y su entrada/salida en el inspector. Mantener identificadores de nodos dentro de cada revisión, posiciones completas y `origin` para fusiones; no asumir que esos identificadores sobreviven sin cambios a cualquier edición.
 
-**Estados:** documento nuevo, borrador restaurado, Python cargando, análisis parcial, error por fase, compilación lista, salida desactualizada, servicio desconectado, ejecutando, cancelado, fallido y resultado vacío válido.
+**Estados (auditados en el cierre de W1; todos existían, no se añadió ninguno):**
+
+| Estado | Dónde se muestra | Verificado en |
+|---|---|---|
+| Documento nuevo | Estado de guardado: «Borrador nuevo. Se guardará al editar.» | `workspace.test.mjs`, `workspace.js` |
+| Borrador restaurado | Estado de guardado: «Borrador restaurado en este navegador.» | `workspace.js`, `content.js` |
+| Python cargando | Botón «Cargando…» y estado del compilador con progreso; fallo de descarga con reinicio | `workspace.js` (fallo real y recuperación) |
+| Análisis parcial | Inspectores con artefactos `blocked`/`not_requested` y su explicación; las fases disponibles siguen navegables | `inspectors.js` (tres clases de error) |
+| Error por fase | Diagnósticos con código, mensaje, línea:columna y fase; subrayado en CodeMirror | `analysis.js`, `inspectors.js` |
+| Compilación lista | Etiqueta «en vivo · revisión N», «Sin errores en las fases solicitadas…», Python descargable | `workspace.js` |
+| Salida desactualizada | Etiqueta «desactualizado», nota y descarga Python deshabilitada; trabajos «resultado anterior» | `inspectors.js`, `execution.js` |
+| Servicio desconectado | «Servicio desconectado o sin respuesta…» con Reconectar; compilación local operativa | `execution.js` |
+| Ejecutando | «En cola» / «Ejecutando» y Cancelar ejecución | `execution.js` |
+| Cancelado | «Cancelado» | `execution.js` |
+| Fallido | «Fallido» / «Tiempo agotado» con diagnósticos `role="alert"` | `execution.js` (JOIN fallido, timeout real) |
+| Resultado vacío válido | «Salida vacía válida · 0 filas. El archivo conserva el esquema.» | `execution.js` |
+
+El cierre solo añade el aviso de enlace con vista inválida, que no estaba en la lista.
 
 **Criterio de cierre:** completar el recorrido con `ventas.etl`, crear un error sintáctico y corregirlo, comparar IR con/sin pases, ejecutar y descargar una salida. Cambiar de vista conserva el documento y ningún resultado antiguo se presenta como actual.
 
@@ -382,7 +406,7 @@ El contrato debe distinguir `no solicitado`, `disponible`, `bloqueado por error`
 
 **Usuario y resultado esperado:** quien necesita aprender una operación o resolver un error. Debe llegar de la explicación a un ejemplo ejecutable sin perder su borrador.
 
-**Secciones iniciales:** primeros pasos, estructura `PIPELINE`/`FLOW`, operaciones, funciones y `NULL`, conectores, composición con `USE`, diagnósticos y límites de la compilación local. El servicio de ejecución sigue pendiente.
+**Secciones iniciales:** primeros pasos, estructura `PIPELINE`/`FLOW`, operaciones, funciones y `NULL`, conectores, composición con `USE`, diagnósticos y límites de la compilación local. La ejecución desde el estudio la aporta el servicio privado del paso D.
 
 **Implementación:**
 
@@ -390,7 +414,7 @@ El contrato debe distinguir `no solicitado`, `disponible`, `bloqueado por error`
 - Selección generada antes del build mediante `gen_content.py`; páginas cargadas en diferido con índice, anclas y código con el resaltado existente. Los seis artículos iniciales comparten un paquete pequeño de contenido.
 - Enlazar fragmentos completos a ejemplos del catálogo. Un fragmento incompleto se etiqueta como tal y no ofrece ejecución directa.
 - `E_NULL_COMPARISON` enlaza desde el estudio a la guía NULL/contratos y su corrección. La selección se verifica con el núcleo; un catálogo exhaustivo de diagnósticos queda fuera de este paso.
-- Mostrar compatibilidad y límites: compilación sin datos, ausencia de ejecución web, entorno Python del proyecto necesario y conectores de lectura/escritura del runtime.
+- Mostrar compatibilidad y límites: compilación sin datos, ejecución solo mediante el servicio privado (paso D), entorno Python del proyecto necesario y conectores de lectura/escritura del runtime.
 
 **Criterio de cierre:** desde un diagnóstico del estudio se abre su explicación; desde primeros pasos se abre un ejemplo válido; Volver restaura el trabajo anterior.
 
@@ -411,7 +435,8 @@ El contrato debe distinguir `no solicitado`, `disponible`, `bloqueado por error`
 ### 9.6. Ajustes de la página existente y navegación
 
 - Mantener el landing y su demostración breve. «Abrir el estudio» pasa de `#estudio` a `/estudio`; al abrir desde la demo se transfiere una copia del texto editado y los pases elegidos.
-- Añadir accesos a Ejemplos y Documentación; incorporar Evaluación cuando tenga resultados. Mantener los enlaces internos del landing donde todavía aportan contexto.
+- Accesos a Ejemplos, Documentación y Evaluación (esta última desde el paso E). Se mantienen los enlaces internos del landing donde todavía aportan contexto.
+- Enlaces a vistas del estudio (`/estudio?vista=…`) desde docs y evaluación; abren el documento propio en esa vista, nunca un programa ajeno. Un enlace con la misma ruta y otra consulta se resuelve con History API, sin recarga completa.
 - Conservar marca, temas y tokens existentes. El estudio usa una composición orientada a operar; los artículos priorizan lectura. No trasladar animaciones de aparición del landing a cambios frecuentes del editor o tablas.
 - Resolver rutas desconocidas con una página breve de «No encontrado», y ejemplos/artículos inexistentes con enlaces de recuperación.
 
@@ -474,6 +499,7 @@ Antes de desarrollarlo completo, probar un prototipo con tareas de filtrar venta
 | C ✅ | API C1, estados por fase, AST expandible, FLOW de lectura y comparación de IR. | C1; C2–C4 se incorporan progresivamente. | Recorrido código ↔ fases con datos reales y posiciones. |
 | D ✅ | Servicio de ejecución, bindings de ejemplos y vista Resultados. | W3 y runtime actual. | Recorrido código → ejecución → tabla → archivo. |
 | E ✅ | `/evaluacion`, revisión de documentación y pruebas de navegador. | C5 para publicar métricas. | Evidencia reproducible y recorrido final comprobado. |
+| Cierre W1 ✅ | Divisor de paneles, `/estudio?vista=…`, auditoría de estados y precisión de fuentes en `/evaluacion`. | A–E. | W1 completo; recorridos docs/evaluación → vista del estudio. |
 | F | Prototipo de constructor visual, solo si se decide avanzar tras evaluarlo. | Documento compartido, FLOW y pruebas de ida/vuelta. | Experimento separado que no retrasa el entorno funcional. |
 
 Este orden permite construir las páginas del compilador actual desde el paso A. El trabajo semántico P0 continúa siendo prioritario para la entrega académica, pero no es condición para ofrecer una interfaz útil sobre las funciones que ya existen.
@@ -613,3 +639,51 @@ sugerencias semánticas de W4, tutorial CSV → resultado y actualización de `l
 evaluación con usuarios, reporte LaTeX y verificación del fallback en el alojamiento final. El constructor por bloques (F),
 cuentas, datasets propios, colaboración y despliegue público siguen fuera de alcance. **No se declara completa toda la
 continuación web.** Siguiente entrega sugerida: cierre de W1 (ajuste de paneles y enlaces a vistas) y documentación final.
+
+
+## Entrega cierre de W1 — divisor de paneles, enlaces a vistas y precisión de `/evaluacion`
+
+**Estudio.** Divisor `role="separator"` de 44 px entre editor e inspector en escritorio: puntero, flechas (Mayús = 10 %),
+Inicio/Fin (30/70 %), Intro o doble clic (50 %), foco visible y anchos mínimos por CSS. Arrastrar solo cambia variables CSS:
+CodeMirror conserva instancia, selección, scroll e historial y no se envía nada al worker. **Decisión de persistencia:** la
+proporción es una preferencia de este navegador en `cauce-studio-layout-v1` (`{version:1, editor}` entero 30–70, validado,
+lectura y escritura con try/catch; si falla, dura la visita). Es independiente del documento: `cauce-workspace-v1` conserva
+clave y formato, sin migración. En móvil (≤ 860 px) se mantiene la alternancia Código/Inspector, sin divisor.
+
+**`/estudio?vista=…`.** `resultado|tokens|arbol|ast|flow|ir|esquemas|python|ejecucion`; solo la vista viaja en la URL.
+Las ocho primeras cambian únicamente el campo `inspector` del documento activo (sin revisión nueva, como la pestaña);
+`ejecucion` lleva a Resultados. Inválido, repetido o con parámetros extra → aviso visible y vista del documento.
+Elegir vista usa `replaceState`; atrás/adelante entre páginas y entre consultas de la misma ruta la recupera. `App.tsx`
+ya no recarga ante un enlace interno con la misma ruta y otra consulta (antes lo dejaba al navegador). Enlaces desde el
+artículo NULL/contratos (`resultado`), el de estructura (`flow`) y la evidencia O1/O3 de `/evaluacion` (`ir`), que aclaran que
+abren el documento propio. Fallback SPA con consulta comprobado en Vite, `vite preview`, FastAPI (prueba unitaria y build
+servido) y el ejemplo Nginx (`nginx:1.27-alpine` con `web/nginx.conf`: SPA para rutas, 404 para assets y evidencia ausentes).
+
+**Estados de 9.2.** Auditados los doce; todos existían (tabla en 9.2). No se añadieron controles; solo el aviso de vista inválida.
+
+**`/evaluacion`.** `compare_sources` (misma regla que el arnés, contrastada en prueba) compara `environment.source_sha256`
+con el checkout; `gen_evaluation.py` guarda `sources` en el JSON y `--check` falla con la lista de fuentes si la conclusión
+cambia. Resultado: **37/37 fuentes coinciden** (22 compilador, 7 arnés, 8 programas); `benchmarks/evidence.py` se añadió
+después. La página lo dice así, añade que máquina, entorno y fecha son los de la campaña, y adapta «Reproducción».
+Ninguna cifra ni archivo de la instantánea cambió.
+
+**Documentación.** Se corrigieron filas y frases desactualizadas sobre D/E en este plan (ejecución ⬜, «servicio pendiente»,
+«sin ejecución web», composición pendiente) y se actualizaron `README.md`, `web/README.md` y `evaluacion.md`.
+
+**Verificación.** **174 pruebas Python** (también en Docker, 2 omitidas allí por falta de `.git` y de originales), **51 web**,
+`gen_content`/`gen_http`/`gen_evaluation --check`, demos regeneradas (contador 174), build web e imágenes Docker
+`compiler`/`service`. `playwright-cli`, sin detener procesos ajenos: suite histórica completa (A/B/C, 32 comparaciones
+CPython/Pyodide, contenido, inspectores, evaluación) más `studio.js` en Vite 5211 (API 8031); D con la API normal y la
+instancia de timeout real (8032) en Vite, en el build servido por FastAPI 8031 y en el contenedor Docker 8033; contenido,
+inspectores, evaluación y estudio también en 8031 y 8033, sin imports de `/src/`. `studio.js` cubre divisor con ratón y teclado,
+foco visible, límites, recarga, valor dañado y almacenamiento fallido, editor sin recrear ni recompilar (selección, scroll y
+deshacer), las nueve vistas por URL, aviso de vista inválida, `replaceState`, enlace de misma ruta sin recarga, atrás/adelante,
+docs → FLOW y evaluación → IR conservando documento, pases personalizados y trabajo en memoria, tabla y gráfico de Resultados a
+861/1100/1440 px con 30 % y 70 %, y capturas de escritorio/móvil en ambos temas con movimiento reducido, revisadas visualmente.
+Una ejecución completa en Vite falló una vez al esperar la primera carga de Pyodide (más de 65 s en «Compilando…», antes de
+cualquier paso del divisor); la repetición íntegra pasó. No es una evaluación de usabilidad ni un despliegue.
+
+**Pendiente después de W1:** sugerencias semánticas de W4, tutorial CSV → resultado y actualización de
+`lenguaje.md`/`backend_polars.md`, reporte, evaluación con usuarios, verificación del fallback en el alojamiento que se elija
+y, si se decide, mapa Python → DSL. Constructor por bloques (F), cuentas, datasets propios, colaboración, persistencia remota y
+despliegue público siguen fuera de alcance. **No se declara completa toda la continuación web.**

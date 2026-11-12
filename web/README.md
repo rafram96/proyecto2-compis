@@ -7,7 +7,7 @@ Cumbemayo y Nazca.
 ```bash
 cd web && npm install && npm run dev            # http://localhost:5173
 npm run build                                    # tsc + vite build
-npm test                                         # 45 pruebas de contenido, inspectores, evaluación, documentos, ejecución y worker; Node >= 22.18
+npm test                                         # 51 pruebas de contenido, inspectores, evaluación, documentos, vistas, disposición, ejecución y worker; Node >= 22.18
 .venv/bin/python web/scripts/gen_content.py      # (raíz del repo) genera src/content/generated.json
 .venv/bin/python web/scripts/gen_content.py --check # detecta contenido desactualizado
 .venv/bin/python web/scripts/gen_evaluation.py   # (raíz) valida la evidencia C5 publicada y genera src/evaluation/generated.json; --check
@@ -72,18 +72,23 @@ Polars y DuckDB no hacen falta para compilar: el análisis local no ejecuta pipe
 
 - `/`: landing y demo breve. **Continuar en el estudio** copia el texto editado y los pases al documento activo, conservando el anterior.
 - `/estudio`: editor estable, inspectores Resultado/Tokens/Árbol/AST/FLOW/IR/Esquemas/Python y diagnósticos accesibles desde cualquier fase.
+  `/estudio?vista=…` abre una vista concreta del documento activo (ver «Cierre de W1»).
 - `/ejemplos`: catálogo de cinco intenciones. `/ejemplos/:slug`: explicación, programa completo, expectativas y requisitos.
 - `/docs`: índice de seis guías. `/docs/:slug`: lectura con navegación entre artículos, anclas, tablas y resaltado existente.
 - Slugs inexistentes muestran recuperación al catálogo correspondiente y al estudio. Las demás rutas recuperan hacia Inicio/Estudio.
   `/evaluacion` publica la campaña C5 histórica (paso E). No hay URLs con programas ni datos personales.
 - La navegación interna usa History API; atrás/adelante conserva el documento. La URL no contiene programas ni datos.
-- Editor e inspector quedan en paralelo en escritorio. En móvil, Código/Inspector alterna su visibilidad sin desmontar CodeMirror.
+  Un enlace interno con la misma ruta y otra consulta (`/estudio?vista=ir` desde `/estudio`) tampoco recarga la página.
+- Editor e inspector quedan en paralelo en escritorio, con un divisor ajustable. En móvil (≤ 860 px), Código/Inspector
+  alterna su visibilidad sin desmontar CodeMirror y no hay divisor.
   Un diagnóstico selecciona su intervalo y devuelve al código. Ctrl/⌘ + Enter compila; Esc y después Tab permite salir del editor.
 
 Vite dev y preview ya aplican fallback SPA. En hosting, servir `dist/index.html` para rutas de la aplicación que no sean archivos.
 `public/_redirects` se copia al build para hosts compatibles; en Nginx puede usarse [nginx.conf](nginx.conf), montando `dist` en
 `/usr/share/nginx/html`. Los assets y la rueda Python deben servirse como archivos reales, con sus errores 404. El ejemplo Nginx
-no constituye un despliegue realizado. Verificar siempre el acceso directo a `/estudio`, `/ejemplos/:slug` y `/docs/:slug` en el alojamiento elegido.
+no constituye un despliegue realizado. Verificar siempre el acceso directo a `/estudio`, `/estudio?vista=ir`, `/ejemplos/:slug` y `/docs/:slug`
+en el alojamiento elegido. La consulta no interviene en el fallback: Vite/preview, FastAPI (decide por la ruta, sin la consulta)
+y Nginx (`try_files $uri`) resuelven por la ruta; `_redirects` también se evalúa por ruta (`/* /index.html 200`).
 
 ## Catálogo y documentación: fuente de verdad
 
@@ -135,6 +140,9 @@ La selección y el scroll de CodeMirror permanecen al cambiar inspector o tema. 
   No se sustituye un almacenamiento inválido al abrir la página; la siguiente edición/apertura intenta guardar el estado validado.
   Si hay cambios sin guardar, el navegador avisa antes de salir. Un fallo de almacenamiento **no** garantiza recuperación tras cerrar/recargar.
 - Los borradores pertenecen a este navegador y origen. No hay sincronización entre dispositivos ni resolución de ediciones simultáneas entre pestañas.
+- La proporción editor/inspector es una preferencia aparte, **`cauce-studio-layout-v1`** (`{version:1, editor}` con `editor` entero 30–70).
+  Se valida al leer (dañada o fuera de rango → 50 %) y se escribe con try/catch al terminar un ajuste; si falla, dura solo la visita.
+  No forma parte del sobre v1, que conserva exactamente su formato y clave, sin migraciones.
 
 ## Revisiones y recuperación del compilador
 
@@ -151,8 +159,8 @@ el documento y requiere pulsar Compilar para descargar/cargar Python otra vez. N
 
 ## Verificación reproducible
 
-Desde la raíz: `.venv/bin/python -m unittest discover` (**157 pruebas**) y `.venv/bin/python web/scripts/gen_compiled.py`.
-Desde `web`: `npm test` (**38 pruebas**) y `npm run build`. El worker se prueba con canales/temporizadores simulados para fallos y plazos.
+Desde la raíz: `.venv/bin/python -m unittest discover` (**174 pruebas**) y `.venv/bin/python web/scripts/gen_compiled.py`.
+Desde `web`: `npm test` (**51 pruebas**) y `npm run build`. El worker se prueba con canales/temporizadores simulados para fallos y plazos.
 
 Con Vite iniciado en un puerto libre (no detener procesos ajenos):
 
@@ -186,7 +194,9 @@ Esta opción no sustituye la suite completa de desarrollo; añade verificación 
 
 ## Pendiente
 
-W1 queda **parcial**: pasos A, B y E implementados; otros requisitos de su definición siguen pendientes (ver el paso E). W4 esencial implementado; las sugerencias semánticas siguen pendientes.
+W1 queda **completo según sus criterios** (pasos A, B, E y cierre con divisor y `?vista`). W4 esencial implementado; las sugerencias semánticas siguen pendientes.
+Pendientes fuera de W1: tutorial CSV → resultado y actualización de `lenguaje.md`/`backend_polars.md`, evaluación con usuarios,
+verificación del fallback en el alojamiento que se elija y mapa Python → DSL (no decidido).
 Paso C/W2 implementa AST/FLOW y comparación de IR. W3 (servicio HTTP, bindings y ejecución Polars con datos) se implementa en el paso D descrito al final.
 No hay cuentas, colaboración, persistencia remota ni editor por bloques.
 
@@ -280,7 +290,8 @@ Verificación final D: **157 Python** (también en Docker), **38 web**, contenid
 ## Paso E: `/evaluacion` con evidencia C5 publicada
 
 Página de lectura de la campaña **histórica** `representativa` (11 de noviembre de 2026, revisión medida
-`efe13996d920`). La página lo indica al principio: no mide el programa del estudio ni el HEAD que la sirve.
+`efe13996d920`). La página lo indica al principio: no mide el programa del estudio, y dice si las fuentes medidas
+(compilador, arnés y programas) coinciden con las del código que la publica; máquina, entorno y fecha son los de la campaña.
 
 - **Fuente de verdad:** instantánea versionada `public/evidencia/c5-representativa/` (siete archivos autorizados
   por `content/evaluation.json` y `manifest.json`). Se sirve tal cual en `/evidencia/c5-representativa/` para las
@@ -321,3 +332,43 @@ CPython/Pyodide en Vite. **170 pruebas Python** (también en Docker, 2 omitidas 
 **W1 sigue parcial.** Pendientes: ajuste de tamaño editor/inspector, enlaces internos `/estudio?vista=…`, sugerencias
 semánticas (W4), tutorial CSV → resultado y actualización de `lenguaje.md`/`backend_polars.md`, evaluación con usuarios
 y verificación del fallback en el alojamiento que se elija. No hay despliegue público ni constructor por bloques.
+
+## Cierre de W1: divisor de paneles y enlaces a vistas
+
+**Divisor (escritorio, > 860 px).** `components/PanelSplitter.tsx` es un `role="separator"` vertical de 44 px entre editor e
+inspector, con `aria-valuenow/min/max/valuetext`, `aria-controls="studio-code studio-inspector"`, foco visible y ayuda accesible.
+Arrastre con puntero (captura, sin seleccionar texto), flechas en pasos de 2 % (Mayús: 10 %), Inicio/Fin a los límites 30/70 %,
+Intro o doble clic al 50 %. Las columnas son `minmax(17rem, Nfr) 44px minmax(19rem, Mfr)`, así que ningún panel queda ilegible.
+Durante el arrastre solo cambian variables CSS del contenedor: no se vuelve a renderizar el estudio, CodeMirror conserva
+instancia, selección, scroll e historial, y no se envía nada al worker. Sin animaciones de disposición (movimiento reducido).
+El asa del divisor es pegajosa para seguir visible al desplazarse. La lógica pura está en `workspace/layout.ts`.
+
+**`/estudio?vista=…`** (`workspace/view.ts`): `resultado`, `tokens`, `arbol`, `ast`, `flow`, `ir`, `esquemas`, `python` y `ejecucion`.
+Las ocho primeras seleccionan el inspector del documento activo (solo cambia su campo `inspector`; no crea revisión ni recompila;
+en móvil muestra el panel Inspector). `ejecucion` lleva a Resultados y enfoca su título sin tocar el documento. Un valor desconocido,
+repetido o acompañado de otros parámetros se ignora con un aviso visible; se conserva la vista válida o la del documento y la URL
+queda limpia. Elegir una vista usa `replaceState`; un enlace interno a otra consulta de la misma ruta usa `pushState`, y
+atrás/adelante (entre páginas o dentro del estudio) vuelve a aplicar la vista. Si la URL nombra un inspector y se abre otro documento,
+la URL pasa a describir la vista real. La URL nunca lleva id de documento, fuente, datos, trabajos ni bindings.
+Enlazan a vistas: artículo NULL/contratos → `resultado`, artículo de estructura → `flow` y evidencia O1/O3 de `/evaluacion` → `ir`,
+indicando que abren el documento propio y no el programa del ejemplo o de la campaña.
+
+**Estados del estudio (9.2).** Se auditaron los doce estados del plan; todos ya se mostraban (tabla en
+`docs/plan_desarrollo.md`, sección 9.2). Solo se añadió el aviso de vista inválida.
+
+**`/evaluacion` y fuentes.** `gen_evaluation.py` compara `environment.source_sha256` de la campaña con el checkout mediante
+`benchmarks.evidence.compare_sources` y guarda el resultado en `generated.json` (`sources`). La página lo muestra en el aviso
+inicial, en «Campaña y entorno» y en «Reproducción»; si una fuente deja de coincidir, `--check` falla y, al regenerar, la página
+lista las diferencias. Ver [evaluacion.md](../docs/evaluacion.md#correspondencia-entre-las-fuentes-medidas-y-las-publicadas).
+
+**Verificación.** `npm test` añade `tests/studio.test.mjs` (parseo/serialización/fallback de `?vista`, límites, puntero, teclado,
+persistencia y fallo de almacenamiento, sobre v1 intacto). `tests/browser/studio.js` (incluida en la suite completa y en
+`verify_browser.py --studio-only`, también en producción; requiere la API) cubre divisor con ratón y teclado, foco visible,
+límites, doble clic, recarga, valor dañado, almacenamiento que falla, editor sin recrear/recompilar con selección/scroll/deshacer,
+las nueve vistas por URL, aviso de vista inválida, `replaceState`, enlace de la misma ruta sin recarga, atrás/adelante,
+docs → FLOW y evaluación → IR conservando documento, pases personalizados y trabajo en memoria, tabla y gráfico de Resultados
+a 861/1100/1440 px con proporción mínima y máxima, y capturas de escritorio/móvil en ambos temas con movimiento reducido.
+Ejecutado en Vite (5211, API 8031, timeout real 8032: suite histórica completa con las 32 comparaciones, `studio.js` y D),
+en el build servido por FastAPI (8031) y en el contenedor Docker (8033): contenido, inspectores, evaluación, estudio y D, sin
+`/src/`. **174 pruebas Python** (también en Docker, 2 omitidas), **51 web**, generadores con `--check` y builds web/Docker.
+El fallback con consulta se comprobó además en `vite preview` y con `nginx:1.27-alpine` usando `nginx.conf`.
