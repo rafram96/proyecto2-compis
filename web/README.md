@@ -30,11 +30,7 @@ bash web/scripts/gen_icons.sh                    # regenera iconos PNG/ICO y og.
 - **Cambio de tema:** revelado circular desde el botón con la View Transitions API (`src/lib/theme.ts`); sin soporte o con
   «reducir movimiento», fundido corto o cambio directo. El icono luna/sol es una sola figura que se transforma.
 - **Tipografía:** Montserrat (títulos) + Rubik (texto); Geist Mono solo dentro de código. Cinco tamaños: `--fs-xl|l|m|body|s`.
-- **Dirección visual:** skill `design-taste-frontend`, dirección «The product performs» (semilla 1021409496, héroe redibujado a
-  «Sentence split by a frame»): fragmentos reales del producto en vez de capturas. Sin gradientes, sin sombras en reposo, sin
-  líneas finas fuera de fragmentos `data-ui`, titulares ≤ 2 líneas. Verificar con
-  `node .claude/skills/design-taste-frontend/scripts/lint.mjs web/src` e `inspect.mjs <url> --allow mono`
-  (`--allow mono` solo porque CodeMirror es código real editable fuera de `<pre>`).
+- **Dirección visual:** fragmentos reales del producto, sin gradientes ni sombras en reposo; titulares de hasta dos líneas.
 - **Datos = salida real del compilador.** Nada de IR ni Python escritos a mano: las demos salen de `src/data/compiled.json` y las ediciones se compilan con el mismo núcleo en Pyodide.
 
 ## El compilador en el navegador
@@ -362,8 +358,7 @@ la URL pasa a describir la vista real. La URL nunca lleva id de documento, fuent
 Enlazan a vistas: artículo NULL/contratos → `resultado`, artículo de estructura → `flow` y evidencia O1/O3 de `/evaluacion` → `ir`,
 indicando que abren el documento propio y no el programa del ejemplo o de la campaña.
 
-**Estados del estudio (9.2).** Se auditaron los doce estados del plan; todos ya se mostraban (tabla en
-`docs/plan_desarrollo.md`, sección 9.2). Solo se añadió el aviso de vista inválida.
+**Estados del estudio.** Se revisaron los estados de la interfaz y se añadió el aviso de vista inválida.
 
 **`/evaluacion` y fuentes.** `gen_evaluation.py` compara `environment.source_sha256` de la campaña con el checkout mediante
 `benchmarks.evidence.compare_sources` y guarda el resultado en `generated.json` (`sources`). La página lo muestra en el aviso
@@ -397,7 +392,7 @@ tabla y descarga el CSV, que el script compara byte a byte con el runtime local.
 `t-*.png` en las cuatro combinaciones, foco visible y sin desbordamiento. Verificado en Vite (5221 con datos preparados, 5222 con
 API sin preparar), en el build servido por FastAPI (8041, 8044) y en el contenedor Docker (8043), junto con contenido, estudio y
 D; la suite histórica completa, con las 32 comparaciones, pasó en Vite. **180 pruebas Python** (Docker: 180, 2 omitidas) y
-**52 web**. Detalle y correcciones en [docs/plan_desarrollo.md](../docs/plan_desarrollo.md).
+**52 web**.
 
 ## Sugerencias del editor (W4)
 
@@ -466,7 +461,7 @@ y D; **180 pruebas Python** (Docker: 180, 2 omitidas) y **64 web**. Las capturas
 
 ## Auditoría de Studio (12-11-2026)
 
-El informe de hallazgos, decisiones, validación y límites está en [docs/auditoria_web.md](../docs/auditoria_web.md). La guía de uso está en [docs/guia_estudio.md](../docs/guia_estudio.md).
+La guía de uso está en [docs/guia_estudio.md](../docs/guia_estudio.md).
 
 - Parse tree y AST: gráficos con D3 hierarchy, expansión progresiva, zoom y texto original disponible. El AST selecciona pipeline y muestra detalle del nodo.
 - AST, Tokens, Flow e IR comparten preview de fuente mediante decoraciones de CodeMirror. No modifica el documento, cursor ni compilación y se desactiva para resultados obsoletos.

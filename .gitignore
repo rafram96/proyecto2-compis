@@ -65,3 +65,12 @@ Thumbs.db
 /ejemplos_diseno/
 /.taste-skill/
 /ultimate-parser-app/
+
+# Apuntes y herramientas internas de desarrollo
+/.agents/
+/.claude/
+/docs/auditoria_web.md
+/docs/auditoria_web/
+/docs/plan_desarrollo.md
+/docs/planificacion.md
+/docs/arquitectura_aplicacion.md

@@ -289,7 +289,7 @@ resultado», estructura, operaciones/expresiones, NULL/contratos/diagnósticos, 
 `.venv/bin/python web/scripts/gen_content.py` genera el contenido web sin copiar programas a mano.
 Los artículos reutilizan secciones de documentación vigente; no publican propuestas ni planificación.
 
-La [auditoría de Studio](docs/auditoria_web.md) añade Parse tree/AST gráficos, hover de procedencia, tokens filtrables, diff de IR y un constructor de pipelines CSV por bloques.
+Studio incluye Parse tree y AST gráficos, resaltado de procedencia, tokens filtrables, comparación de IR y un constructor de pipelines CSV por bloques.
 
 El paso C añade AST expandible, FLOW de lectura por pipeline y comparación de IR por procedencia,
 con texto/JSON alternativos y selección del fuente Unicode. Los cinco pases se pueden seleccionar y ordenar;
