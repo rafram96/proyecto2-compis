@@ -134,7 +134,7 @@ export function Studio() {
   return (
     <section className="cta" id="estudio" aria-labelledby="cta-t">
       <div className="cta-copy" data-reveal>
-        <h2 id="cta-t">Tu primer cauce.</h2>
+        <h2 id="cta-t">Tu primer pipeline.</h2>
         <p>
           Edita el ejemplo y pulsa Compile. Corre el mismo etl_dsl de la
           terminal, dentro de tu navegador; tus datos no salen de tu equipo.

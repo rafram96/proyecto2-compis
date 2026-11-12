@@ -200,7 +200,7 @@ async (page) => {
     ["tokens", "Tokens"],
     ["arbol", "Parse tree"],
     ["ast", "AST"],
-    ["flow", "FLOW"],
+    ["flow", "Flow"],
     ["ir", "IR"],
     ["esquemas", "Schemas"],
     ["python", "Python"],
@@ -238,7 +238,7 @@ async (page) => {
   const length0 = await page.evaluate(() => history.length);
   await pressed("AST").click();
   if (search() !== "?vista=ast") fail("La URL no siguió a la vista");
-  await pressed("FLOW").click();
+  await pressed("Flow").click();
   if (search() !== "?vista=flow" || (await page.evaluate(() => history.length)) !== length0)
     fail("Cambiar de vista debe usar replaceState");
   if (await notice.count()) fail("El aviso sigue tras elegir una vista");
@@ -256,10 +256,10 @@ async (page) => {
     fail("Enlace con la misma ruta recargó o no aplicó la vista");
   await page.goBack();
   await page.waitForURL((u) => u.search === "?vista=flow");
-  if (!(await isPressed("FLOW"))) fail("Atrás dentro del estudio no recuperó la vista");
+  if (!(await isPressed("Flow"))) fail("Atrás dentro de Studio no recuperó la vista");
   await page.goForward();
   await page.waitForURL((u) => u.search === "?vista=esquemas");
-  if (!(await isPressed("Schemas"))) fail("Adelante dentro del estudio no recuperó la vista");
+  if (!(await isPressed("Schemas"))) fail("Adelante dentro de Studio no recuperó la vista");
 
   // 9. Preparar trabajo real: pases personalizados y ejecución en memoria.
   await page.getByRole("button", { name: "Compile", exact: true }).click();
@@ -298,20 +298,20 @@ async (page) => {
   await page.getByRole("link", { name: "Docs", exact: true }).click();
   await page.locator(".docs-nav").getByRole("link", { name: "PIPELINE, STEP y FLOW", exact: true }).click();
   await page.waitForURL("**/docs/estructura");
-  await page.getByRole("link", { name: "Ver el FLOW de tu documento en el estudio" }).click();
+  await page.getByRole("link", { name: "Ver el FLOW de tu documento en Studio" }).click();
   await page.waitForURL((u) => u.pathname === "/studio" && u.search === "?vista=flow");
   await page.locator(".cm-content").waitFor();
-  if (!(await isPressed("FLOW"))) fail("El enlace de docs no abrió FLOW");
+  if (!(await isPressed("Flow"))) fail("El enlace de docs no abrió FLOW");
   await kept("docs → estudio");
   await page.goBack();
   await page.waitForURL("**/docs/estructura");
   await page.goForward();
   await page.waitForURL((u) => u.search === "?vista=flow");
-  await page.getByRole("link", { name: "Evaluación", exact: true }).click();
+  await page.getByRole("link", { name: "Benchmarks", exact: true }).click();
   await page.waitForURL("**/evaluacion");
   await page.getByRole("button", { name: /Mejora observada/ }).click();
   await page.waitForURL(/workload=join/);
-  const evalLink = page.getByRole("link", { name: "Abrir la vista IR del estudio" });
+  const evalLink = page.getByRole("link", { name: "Abrir la vista IR de Studio" });
   await evalLink.scrollIntoViewIfNeeded();
   await evalLink.click();
   await page.waitForURL((u) => u.pathname === "/studio" && u.search === "?vista=ir");

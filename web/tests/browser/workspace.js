@@ -14,8 +14,9 @@ async (page) => {
     await page.keyboard.press("ControlOrMeta+a");
     await page.keyboard.insertText(source);
   };
-  const editorState = () =>
-    page.evaluate(async () => {
+  const editorState = async () => {
+    await page.locator(".cm-editor").waitFor({ state: "attached" });
+    return page.evaluate(async () => {
       const module = (
         await (await fetch("/src/editor/Editor.tsx")).text()
       ).match(/from "([^"]*codemirror_view[^"]*)"/);
@@ -33,11 +34,12 @@ async (page) => {
         scroll: view.scrollDOM.scrollTop,
       };
     });
+  };
 
   // La paridad anterior dejó el ejemplo con emoji y error multilínea en la demo.
   await page.getByRole("switch", { name: "Optimizar" }).click();
   await page
-    .getByRole("link", { name: "Continuar en el estudio", exact: true })
+    .getByRole("link", { name: "Continuar en Studio", exact: true })
     .click();
   await page.waitForURL((u) => u.pathname === "/studio");
   await waitLive();

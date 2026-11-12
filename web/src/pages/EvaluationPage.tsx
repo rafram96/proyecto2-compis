@@ -527,7 +527,7 @@ export default function EvaluationPage() {
               <li>Una diferencia pequeña frente a la dispersión no demuestra una mejora ni una regresión; no se calcula significancia.</li>
               <li>Una variación de tiempo en una configuración que no transforma la IR no se atribuye al pase.</li>
               <li>Las optimizaciones del motor pueden absorber las de los pases; caches del sistema, GC y ruido térmico siguen activos.</li>
-              <li>Compile con pases cuesta más análisis; ese coste no se amortiza dentro del tiempo de ejecución.</li>
+              <li>La compilación con pases cuesta más análisis; ese coste no se amortiza dentro del tiempo de ejecución.</li>
             </ul>
           </section>
 
@@ -548,14 +548,14 @@ export default function EvaluationPage() {
                 </>
               )}
             </p>
-            <pre className="eval-code">
+            <pre className="eval-code" tabIndex={0} aria-label="Comando de verificación, desplazable">
               <code>{`.venv/bin/python -m benchmarks --mode ${campaign.mode} --sizes ${campaign.sizes.join(",")} \\
   --seed ${campaign.seed} --threads ${campaign.environment.polars_threads} --warmups ${campaign.warmups} \\
   --repetitions ${campaign.repetitions} --scenarios ${campaign.scenarios.join(",")} \\
   --output benchmarks/results/reproduccion`}</code>
             </pre>
             <p>Para comprobar esta publicación sin volver a medir:</p>
-            <pre className="eval-code">
+            <pre className="eval-code" tabIndex={0} aria-label="Comando de reproducción, desplazable">
               <code>{`.venv/bin/python web/scripts/gen_evaluation.py --check
 .venv/bin/python -m unittest tests.test_evaluation_evidence`}</code>
             </pre>
@@ -666,7 +666,7 @@ function StructuralProofs({ entry, selection }: { entry: Structure; selection: S
         </article>
       )}
       <p className="eval-studio-link">
-        <a href="/studio?vista=ir">Abrir la vista IR dStudio</a> para consultar la evidencia O1/O3 que el
+        <a href="/studio?vista=ir">Abrir la vista IR de Studio</a> para consultar la evidencia O1/O3 que el
         compilador emite para el documento que tengas abierto. No carga este programa de la campaña: tu documento se
         conserva y solo cambia la vista elegida.
       </p>

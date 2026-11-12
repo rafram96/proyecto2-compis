@@ -5,7 +5,7 @@ import { ArticleBody } from "../components/ArticleBody";
 import { Code } from "../components/Code";
 import { OpenExample } from "../components/OpenExample";
 import { ContentMissing, useContentFocus } from "./contentNavigation";
-/** Artículos donde una vista dStudio continúa la lectura con el documento propio. */
+/** Artículos donde una vista de Studio continúa la lectura con el documento propio. */
 const STUDIO_VIEWS: Record<string, { href: string; text: string }> = {
   "null-contratos": {
     href: "/studio?vista=resultado",

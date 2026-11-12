@@ -95,7 +95,7 @@ async (page) => {
     .getByRole("navigation", { name: "Principal" })
     .getByRole("link", { name: "Docs" })
     .click();
-  await page.getByRole("heading", { name: "Aprende Cauce" }).waitFor();
+  await page.getByRole("heading", { name: "Aprende Stream" }).waitFor();
   await page
     .getByRole("heading", { name: "Operaciones y expresiones" })
     .getByRole("link")
@@ -255,7 +255,7 @@ async (page) => {
   if (!page.url().endsWith("/ejemplos/ventas"))
     throw new Error("Navegó pese a bloquear copia");
   await page
-    .getByRole("link", { name: "Gestionar borradores en el estudio" })
+    .getByRole("link", { name: "Gestionar borradores en Studio" })
     .click();
   await page.locator(".drafts summary").click();
   await page.evaluate(() => {

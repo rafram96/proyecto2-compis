@@ -30,7 +30,7 @@ export default function ExecutionPanel({ doc, analysis, current, reveal = 0 }: {
       .catch((e: unknown) => { if (live) { setCaps(null); setConnection(e instanceof Error ? e.message : String(e)); } });
     return () => { live = false; };
   }, [attempt]);
-  // Al salir dStudio el trabajo continúa. Al volver se consulta de nuevo desde su ID en memoria.
+  // Al salir de Studio el trabajo continúa. Al volver se consulta de nuevo desde su ID en memoria.
   const run = state.run;
   useEffect(() => {
     if (!run || !activeRun(run)) return;

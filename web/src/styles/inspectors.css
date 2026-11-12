@@ -3,6 +3,7 @@
 .workspace .studio-out-bar { height: auto; min-height: 50px; }
 .workspace .studio-formats button { min-height: 44px; }
 .workspace .tool-button, .workspace .source-button, .workspace .btn { min-height: 44px; }
+.workspace .source-button:not(:disabled) { color: var(--surface-accent); }
 .workspace .source-button:hover:not(:disabled), .workspace .source-button:focus-visible { color: var(--surface-accent); }
 .workspace .document-name input { min-height: 40px; }
 .structured-inspector h2, .structured-inspector h3, .structured-inspector h4 { font-family: var(--font-sans); }

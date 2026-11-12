@@ -80,10 +80,10 @@ async (page) => {
   await page.evaluate(() => localStorage.removeItem("cauce-workspace-v1"));
   await page.goto(origin + "/evaluacion");
   await page.getByRole("heading", { name: "Evaluación del compilador" }).waitFor();
-  if ((await page.title()) !== "Evaluación · Cauce") fail("Título incorrecto");
+  if ((await page.title()) !== "Evaluación · Stream") fail("Título incorrecto");
   if ((await loaded()).some((url) => heavy.test(url))) fail("La evaluación cargó editor, Python o ejecución");
   if ((await workspace()) !== null) fail("Leer la evaluación creó un documento");
-  if ((await page.getByRole("link", { name: "Evaluación", exact: true }).getAttribute("aria-current")) !== "page")
+  if ((await page.getByRole("link", { name: "Benchmarks", exact: true }).getAttribute("aria-current")) !== "page")
     fail("Navegación sin página actual");
   await page.getByText("Campaña histórica, no una medición en vivo.").waitFor();
   await page.getByText("efe13996d9201788c9fc8cd7c6f458ca68035a04").waitFor();
@@ -205,7 +205,7 @@ async (page) => {
     }
   }
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole("link", { name: "Evaluación", exact: true }).waitFor();
+  await page.getByRole("link", { name: "Benchmarks", exact: true }).waitFor();
   await page.screenshot({ path: ".playwright-cli/e-mobile-full.png", fullPage: true, animations: "disabled" });
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.evaluate(() => document.documentElement.setAttribute("data-theme", "light"));
@@ -222,7 +222,7 @@ async (page) => {
   await page.getByRole("button", { name: "Subir rangos", exact: true }).click();
   const saved = await workspace();
   if (JSON.stringify(JSON.parse(saved).active.passes) !== '["rangos","constantes"]') fail("Preparación de pases fallida");
-  await page.getByRole("link", { name: "Evaluación", exact: true }).click();
+  await page.getByRole("link", { name: "Benchmarks", exact: true }).click();
   await page.waitForURL("**/evaluacion");
   await page.getByRole("button", { name: /Sin mejora clara/ }).click();
   await page.getByRole("radio", { name: "final_flags_none" }).check();
@@ -242,7 +242,7 @@ async (page) => {
   await page.waitForURL((url) => url.href === filtered);
   if ((await page.getByLabel("Programa").inputValue()) !== "rangos" || !(await page.getByRole("radio", { name: "final_flags_none" }).isChecked()))
     fail("Atrás no recuperó los filtros de evaluación");
-  await page.getByRole("link", { name: "Evaluación", exact: true }).click();
+  await page.getByRole("link", { name: "Benchmarks", exact: true }).click();
   if ((await workspace()) !== saved) fail("La evaluación modificó el documento o los pases");
 
   // 9. Disponible con la API desconectada.

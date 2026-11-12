@@ -19,7 +19,8 @@ const EvaluationPage = lazy(() =>
       <main className="content-page not-found" id="contenido">
         <h1>No se pudo cargar la evaluación</h1>
         <p role="alert">
-          Falló la descarga de la página. Tu documento dStudio no se ha modificado.
+          Falló la descarga de la página. Tu documento de Studio no se ha
+          modificado.
         </p>
         <button type="button" className="btn" onClick={() => location.reload()}>
           Reintentar
@@ -31,10 +32,15 @@ const EvaluationPage = lazy(() =>
 
 export default function App() {
   const rawPath = usePath();
-  const path = rawPath === "/estudio" || rawPath === "/studio/" ? "/studio" : rawPath;
+  const path =
+    rawPath === "/estudio" || rawPath === "/studio/" ? "/studio" : rawPath;
   useEffect(() => {
     if (rawPath === "/estudio" || rawPath === "/studio/")
-      history.replaceState(history.state, "", "/studio" + location.search + location.hash);
+      history.replaceState(
+        history.state,
+        "",
+        "/studio" + location.search + location.hash,
+      );
   }, [rawPath]);
   useEffect(() => {
     if (path === "/") {

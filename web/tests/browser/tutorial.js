@@ -138,7 +138,7 @@ async (page) => {
     if (await page.locator(".diagnostic-link").count()) fail("El diagnóstico persiste tras corregir");
     // Paso 5: enlace a vista desde el tutorial, sin cambiar el documento.
     await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Docs" }).click();
-    await page.getByRole("heading", { name: "Aprende Cauce" }).waitFor();
+    await page.getByRole("heading", { name: "Aprende Stream" }).waitFor();
     await page.getByRole("link", { name: "De un CSV a un resultado" }).first().click();
     await page.getByRole("heading", { name: "De un CSV a un resultado", level: 1 }).waitFor();
     await page.locator('.reading a[href="/studio?vista=flow"]').click();

@@ -197,7 +197,7 @@ async (page) => {
   const beforeNav = await active();
   const stateBeforeNav = await page.locator('.execution-job').getAttribute('data-run-id');
   await page.getByRole('link', { name: 'Docs', exact: true }).first().click();
-  await page.getByRole('heading', { name: 'Aprende Cauce', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'Aprende Stream', exact: true }).waitFor();
   await page.getByRole('link', { name: 'Ejemplos', exact: true }).first().click();
   await page.getByRole('heading', { name: 'Elige un problema', exact: true }).waitFor();
   await page.getByRole('link', { name: 'Abrir Studio', exact: true }).first().click();

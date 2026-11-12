@@ -1,13 +1,11 @@
-# Cauce, web del compilador ETL-DSL
+# Stream, web del compilador ETL-DSL
 
-Landing (`/`), catálogo (`/ejemplos`), documentación (`/docs`), evaluación C5 (`/evaluacion`) y estudio ampliado (`/estudio`) del compilador de `etl_dsl/`. Se llama **Cauce**: el lecho por donde corre el agua, como el `->` de `FLOW`
-lleva los datos. La marca es `~>` (agua que se vuelve flecha) y la historia del nombre son los canales prehispánicos de
-Cumbemayo y Nazca.
+Landing (`/`), catálogo (`/ejemplos`), documentación (`/docs`), evaluación C5 (`/evaluacion`) y estudio ampliado (`/studio`) del compilador de `etl_dsl/`. Se llama **Stream**: una corriente de datos que recorre fuentes, transformaciones y destinos. La marca `~>` conserva la metáfora del agua. `/estudio` continúa abriendo Studio para no romper enlaces anteriores.
 
 ```bash
 cd web && npm install && npm run dev            # http://localhost:5173
 npm run build                                    # tsc + vite build
-npm test                                         # 64 pruebas de contenido, inspectores, evaluación, documentos, vistas, disposición, ejecución, worker y sugerencias; Node >= 22.18
+npm test                                         # 69 pruebas de contenido, inspectores, evaluación, documentos, vistas, disposición, ejecución, worker y sugerencias; Node >= 22.18
 .venv/bin/python web/scripts/gen_content.py      # (raíz del repo) genera src/content/generated.json
 .venv/bin/python web/scripts/gen_content.py --check # detecta contenido desactualizado
 .venv/bin/python web/scripts/gen_evaluation.py   # (raíz) valida la evidencia C5 publicada y genera src/evaluation/generated.json; --check
@@ -39,7 +37,7 @@ bash web/scripts/gen_icons.sh                    # regenera iconos PNG/ICO y og.
 
 ## El compilador en el navegador
 
-La demostración del landing y el estudio `/estudio` corren **el mismo `etl_dsl`** que la terminal, sin backend:
+La demostración del landing y el estudio `/studio` corren **el mismo `etl_dsl`** que la terminal, sin backend:
 
 1. `src/compiler/worker.ts` (Web Worker) descarga Pyodide 314.0.7 (Python 3.14) de jsDelivr la primera vez que alguien pulsa
    «Compilar», instala `public/py/lark-1.3.1-py3-none-any.whl` y copia `../etl_dsl/*.py|lark` (empaquetados por Vite con
@@ -50,7 +48,7 @@ La demostración del landing y el estudio `/estudio` corren **el mismo `etl_dsl`
    Lo usa **también** `scripts/gen_compiled.py`. El estudio solicita todos los artefactos y recibe seis presentaciones textuales
    en una sola compilación; cambiar de inspector reutiliza ese resultado, incluso si solo hay artefactos parciales.
    El worker serializa con JSON de Python para conservar `None` como `null` (la conversión directa de Pyodide usa `undefined`).
-   `verify_browser.py` compara 32 presentaciones entre CPython/Pyodide y comprueba diagnósticos, O1, O3 y el recorrido de `/estudio`.
+   `verify_browser.py` compara 32 presentaciones entre CPython/Pyodide y comprueba diagnósticos, O1, O3 y el recorrido de `/studio`.
 3. La demo muestra salidas precalculadas identificadas como tales solo para sus fuentes originales. El estudio comienza sin resultados;
    restaura únicamente el documento. Python se carga al pulsar Compilar; después recompila al editar con una pausa de 320 ms.
 
@@ -71,15 +69,15 @@ Polars y DuckDB no hacen falta para compilar: el análisis local no ejecuta pipe
 
 ## Rutas y navegación
 
-- `/`: landing y demo breve. **Continuar en el estudio** copia el texto editado y los pases al documento activo, conservando el anterior.
-- `/estudio`: editor estable, inspectores Resultado/Tokens/Árbol/AST/FLOW/IR/Esquemas/Python y diagnósticos accesibles desde cualquier fase.
-  `/estudio?vista=…` abre una vista concreta del documento activo (ver «Cierre de W1»).
+- `/`: landing y demo breve. **Continuar en Studio** copia el texto editado y los pases al documento activo, conservando el anterior.
+- `/studio`: editor estable, inspectores Resultado/Tokens/Parse tree/AST/Flow/IR/Schemas/Python y diagnósticos accesibles desde cualquier fase.
+  `/studio?vista=…` abre una vista concreta del documento activo (ver «Cierre de W1»).
 - `/ejemplos`: catálogo de seis intenciones. `/ejemplos/:slug`: explicación, programa completo, expectativas y requisitos.
 - `/docs`: índice de siete guías, entre ellas el tutorial `/docs/tutorial`. `/docs/:slug`: lectura con navegación entre artículos, anclas, tablas y resaltado existente.
 - Slugs inexistentes muestran recuperación al catálogo correspondiente y al estudio. Las demás rutas recuperan hacia Inicio/Estudio.
   `/evaluacion` publica la campaña C5 histórica (paso E). No hay URLs con programas ni datos personales.
 - La navegación interna usa History API; atrás/adelante conserva el documento. La URL no contiene programas ni datos.
-  Un enlace interno con la misma ruta y otra consulta (`/estudio?vista=ir` desde `/estudio`) tampoco recarga la página.
+  Un enlace interno con la misma ruta y otra consulta (`/studio?vista=ir` desde `/studio`) tampoco recarga la página.
 - Editor e inspector quedan en paralelo en escritorio, con un divisor ajustable. En móvil (≤ 860 px), Código/Inspector
   alterna su visibilidad sin desmontar CodeMirror y no hay divisor.
   Un diagnóstico selecciona su intervalo y devuelve al código. Ctrl/⌘ + Enter compila; Esc y después Tab permite salir del editor.
@@ -87,7 +85,7 @@ Polars y DuckDB no hacen falta para compilar: el análisis local no ejecuta pipe
 Vite dev y preview ya aplican fallback SPA. En hosting, servir `dist/index.html` para rutas de la aplicación que no sean archivos.
 `public/_redirects` se copia al build para hosts compatibles; en Nginx puede usarse [nginx.conf](nginx.conf), montando `dist` en
 `/usr/share/nginx/html`. Los assets y la rueda Python deben servirse como archivos reales, con sus errores 404. El ejemplo Nginx
-no constituye un despliegue realizado. Verificar siempre el acceso directo a `/estudio`, `/estudio?vista=ir`, `/ejemplos/:slug` y `/docs/:slug`
+no constituye un despliegue realizado. Verificar siempre el acceso directo a `/studio`, `/studio?vista=ir`, `/ejemplos/:slug` y `/docs/:slug`
 en el alojamiento elegido. La consulta no interviene en el fallback: Vite/preview, FastAPI (decide por la ruta, sin la consulta)
 y Nginx (`try_files $uri`) resuelven por la ruta; `_redirects` también se evalúa por ruta (`/* /index.html 200`).
 
@@ -111,14 +109,14 @@ para las tres demos históricas y deriva la corrección de NULL de la misma regl
 el catálogo y los artículos no presentan IR/Python precalculados nuevos. No se publica automáticamente el árbol del repositorio.
 
 El lector procesa un subconjunto de Markdown sin HTML crudo ni ejecución, conserva tablas/listas/código y adapta enlaces técnicos
-publicados a rutas reales; los enlaces `/estudio?vista=…` solo se admiten con vistas publicadas (`gen_content.py` falla con otra).
+publicados a rutas reales; los enlaces `/studio?vista=…` solo se admiten con vistas publicadas (`gen_content.py` falla con otra).
 Cada bloque se rotula por su lenguaje: sin lenguaje o `text`, fragmento del DSL incompleto con resaltado; `sh`, comando de terminal;
 `output`, salida obtenida al ejecutarlo; `csv`, contenido de archivo. Los tres últimos son literales, sin resaltado ni cortes de línea
 (se desplazan y son enfocables). Los fragmentos incompletos están etiquetados; el programa completo se lee de la fuente canónica y usa
 el resaltado existente. Catálogo y documentación se cargan en diferido por página; no cargan CodeMirror ni Pyodide al consultar.
-No se añadieron dependencias.
+Los inspectores gráficos añaden `d3-hierarchy`; la comparación de líneas usa `diff`. Ambos se cargan con los inspectores, fuera del bundle inicial.
 
-**Abrir una copia en el estudio** usa `createDocument` + `openDocument` de `src/workspace/`: id nuevo, nombre canónico,
+**Abrir una copia en Studio** usa `createDocument` + `openDocument` de `src/workspace/`: id nuevo, nombre canónico,
 revisión 1, inspector Resultado y `passes=null`. El documento anterior conserva exactamente nombre/texto/revisión/pases/inspector.
 Consultar páginas, artículos, ejemplos o enlaces de diagnóstico no lo modifica. Dos aperturas del mismo ejemplo tienen ids distintos.
 Si hay ocho anteriores, se muestra un error y enlace para gestionar borradores, sin cambiar de ruta ni documento.
@@ -169,7 +167,7 @@ base, y solo si trae `ast`, `ir_before` y `schemas`. Un resultado con errores no
 ## Verificación reproducible
 
 Desde la raíz: `.venv/bin/python -m unittest discover` (**180 pruebas**) y `.venv/bin/python web/scripts/gen_compiled.py`.
-Desde `web`: `npm test` (**64 pruebas**) y `npm run build`. El worker se prueba con canales/temporizadores simulados para fallos y plazos.
+Desde `web`: `npm test` (**69 pruebas**) y `npm run build`. El worker se prueba con canales/temporizadores simulados para fallos y plazos.
 
 Con Vite iniciado en un puerto libre (no detener procesos ajenos):
 
@@ -187,7 +185,7 @@ artículo → ejemplo → estudio, copias independientes, atrás/adelante, slugs
 Captura índices y detalles de ejemplos/docs en 1440×1000 y 390×844, en ambos temas; verifica teclado, foco y ausencia de desbordamiento.
 También comprueba que entrar al catálogo no descarga el editor ni Python.
 Las capturas se revisan visualmente; las pruebas no sustituyen una evaluación de usabilidad. También se comprobó el acceso directo a
-`/estudio` con `vite preview` (puerto 5184), compilación real y Python descargable; consola sin errores ni advertencias.
+`/studio` con `vite preview` (puerto 5184), compilación real y Python descargable; consola sin errores ni advertencias.
 
 Para repetir el recorrido de contenido sobre el **build servido**, sin las importaciones de módulos dev que necesitan
 las suites históricas:
@@ -269,8 +267,8 @@ npm run preview -- --host 127.0.0.1 --port 5194 --strictPort
 .venv/bin/python web/scripts/verify_browser.py --url http://127.0.0.1:5194/ --content-only
 ```
 
-Paso C/W2 entregado. W1 sigue parcial por `/evaluacion` y otros requisitos; W3/servicio, datasets, ejecución,
-resultados y constructor visual siguen fuera de esta entrega. La siguiente entrega es D, integración de ejecución.
+Registro histórico del paso C/W2: entonces W1 seguía parcial por `/evaluacion` y otros requisitos; W3/servicio, datasets, ejecución,
+resultados y constructor visual estaban fuera del alcance del paso C (véanse las entregas posteriores y la auditoría de Studio). El paso D posterior integra la ejecución.
 
 Para enteros fuera del rango seguro de JavaScript, el inspector advierte el posible redondeo del JSON y
 remite a AST/IR textuales producidos en Python; no certifica igualdad estructurada para esos nodos ni
@@ -338,7 +336,7 @@ evaluación, contenido, inspectores y D completos en los tres; la suite históri
 CPython/Pyodide en Vite. **170 pruebas Python** (también en Docker, 2 omitidas allí por falta de `.git` y de originales),
 **45 web**, `gen_content/gen_http/gen_evaluation --check`, demos regeneradas y builds web/Docker.
 
-**W1 sigue parcial.** Pendientes: ajuste de tamaño editor/inspector, enlaces internos `/estudio?vista=…`, sugerencias
+**W1 sigue parcial.** Pendientes: ajuste de tamaño editor/inspector, enlaces internos `/studio?vista=…`, sugerencias
 semánticas (W4), tutorial CSV → resultado y actualización de `lenguaje.md`/`backend_polars.md`, evaluación con usuarios
 y verificación del fallback en el alojamiento que se elija. No hay despliegue público ni constructor por bloques.
 
@@ -352,7 +350,7 @@ Durante el arrastre solo cambian variables CSS del contenedor: no se vuelve a re
 instancia, selección, scroll e historial, y no se envía nada al worker. Sin animaciones de disposición (movimiento reducido).
 El asa del divisor es pegajosa para seguir visible al desplazarse. La lógica pura está en `workspace/layout.ts`.
 
-**`/estudio?vista=…`** (`workspace/view.ts`): `resultado`, `tokens`, `arbol`, `ast`, `flow`, `ir`, `esquemas`, `python` y `ejecucion`.
+**`/studio?vista=…`** (`workspace/view.ts`): `resultado`, `tokens`, `arbol`, `ast`, `flow`, `ir`, `esquemas`, `python` y `ejecucion`.
 Las ocho primeras seleccionan el inspector del documento activo (solo cambia su campo `inspector`; no crea revisión ni recompila;
 en móvil muestra el panel Inspector). `ejecucion` lleva a Resultados y enfoca su título sin tocar el documento. Un valor desconocido,
 repetido o acompañado de otros parámetros se ignora con un aviso visible; se conserva la vista válida o la del documento y la URL
@@ -390,7 +388,7 @@ incluido `demo/joins_pedidos.csv` (`join-orders@1`), así que funciona sin `pyth
 `backend_polars.md` se actualizaron contra la gramática, el backend, el runtime y la CLI; las secciones que seleccionan los
 artículos conservan sus encabezados.
 
-`ArticleBody.tsx` rotula cada bloque por su lenguaje (ver «Catálogo y documentación») y acepta enlaces `/estudio?vista=…`.
+`ArticleBody.tsx` rotula cada bloque por su lenguaje (ver «Catálogo y documentación») y acepta enlaces `/studio?vista=…`.
 `tests/browser/tutorial.js` (`verify_browser.py --tutorial-only`, también dentro de la suite completa; requiere la API, no
 necesita datos preparados) recorre el artículo y sus enlaces, abre la copia, provoca y corrige `E_COLUMN`, ejecuta hasta la
 tabla y descarga el CSV, que el script compara byte a byte con el runtime local. Escritorio/claro y móvil/oscuro, capturas
@@ -462,3 +460,32 @@ diagnóstico con el puntero y botón «¿Quisiste decir?» con foco visible; esc
 de la lista en las cuatro combinaciones. Ejecutada en Vite (5231, dentro de la suite histórica completa con las 32
 comparaciones), en el build servido por FastAPI (8051) y en el contenedor Docker (8053), junto con contenido, estudio, tutorial
 y D; **180 pruebas Python** (Docker: 180, 2 omitidas) y **64 web**. Las capturas se revisaron; no es una evaluación de usabilidad.
+
+
+## Auditoría de Studio (12-11-2026)
+
+El informe de hallazgos, decisiones, validación y límites está en [docs/auditoria_web.md](../docs/auditoria_web.md). La guía de uso está en [docs/guia_estudio.md](../docs/guia_estudio.md).
+
+- Parse tree y AST: gráficos con D3 hierarchy, expansión progresiva, zoom y texto original disponible. El AST selecciona pipeline y muestra detalle del nodo.
+- AST, Tokens, Flow e IR comparten preview de fuente mediante decoraciones de CodeMirror. No modifica el documento, cursor ni compilación y se desactiva para resultados obsoletos.
+- Tokens: filtros por texto/tipo y páginas de 80 filas.
+- IR: diff alineado, colores semánticos, símbolos −/+, recuentos y filtro de nodos conservados. `origin` y la evidencia O1/O3 conservan su significado.
+- Blocks: constructor lineal CSV de siete operaciones; abre una copia nueva sin sustituir el documento anterior. No hay importación bidireccional de DSL ni ejecución automática. El borrador visual dura esta visita; descargar o abrir copia antes de recargar.
+- `/studio` es la ruta canónica. Las claves `cauce-workspace-v1`, `cauce-theme` y `cauce-studio-layout-v1`, las variables `CAUCE_*` y los slugs `?vista=` permanecen compatibles.
+
+Prueba del recorrido nuevo (API local en el puerto 8000 y Vite dev o preview iniciado):
+
+```sh
+.venv/bin/python web/scripts/verify_browser.py --ux-only --url http://127.0.0.1:4173/
+```
+
+Comprueba alias `/estudio`, grafos, hover sin recompilar, tokens, diff y O0, reordenación de bloques, copia sin pérdida, ejecución y descarga de CSV reales.
+
+Auditoría automática opcional (herramienta aislada; no entra en el producto):
+
+```sh
+npm install --prefix web/.playwright-cli/audit-tools --no-save axe-core@4.14.0
+.venv/bin/python web/scripts/verify_browser.py --a11y-only --url http://127.0.0.1:4173/
+```
+
+Se ejecuta desde la raíz y cubre 24 combinaciones de superficie, tamaño y tema. Los resultados automáticos no son una certificación de accesibilidad.

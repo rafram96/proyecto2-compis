@@ -22,6 +22,7 @@ export function Hero() {
   // La tira avanza con el desplazamiento: se queda quieta en cada marco y pasa al siguiente con suavidad.
   useEffect(() => {
     let raf = 0;
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => {
       raf = 0;
       const el = hero.current!;
@@ -30,7 +31,7 @@ export function Hero() {
       const raw = p * (FRAMES.length - 1);
       const i = Math.min(FRAMES.length - 2, Math.floor(raw));
       const frac = Math.min(1, Math.max(0, (raw - i - 0.25) / 0.5));
-      const pos = raw >= FRAMES.length - 1 ? FRAMES.length - 1 : i + ease(frac);
+      const pos = reduced.matches ? Math.round(raw) : raw >= FRAMES.length - 1 ? FRAMES.length - 1 : i + ease(frac);
       track.current!.style.setProperty("--pos", pos.toFixed(4));
       track.current!.dataset.active = String(Math.round(pos));
     };
@@ -40,9 +41,11 @@ export function Hero() {
     update();
     addEventListener("scroll", onScroll, { passive: true });
     addEventListener("resize", onScroll);
+    reduced.addEventListener("change", onScroll);
     return () => {
       removeEventListener("scroll", onScroll);
       removeEventListener("resize", onScroll);
+      reduced.removeEventListener("change", onScroll);
       cancelAnimationFrame(raf);
     };
   }, []);
@@ -83,7 +86,7 @@ export function Hero() {
         <div className="hero-foot">
           <p>Un lenguaje para mover y limpiar datos que se escribe como una receta. Compila a Python con Polars.</p>
           <a className="btn" href="#estudio">
-            Compile en el navegador
+            Probar en el navegador
           </a>
         </div>
       </div>

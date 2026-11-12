@@ -252,15 +252,15 @@ y del publicado) permite generar la página y sus descargas desde un checkout li
 .venv/bin/python web/scripts/gen_evaluation.py --check  # falla si algo diverge
 ```
 
-### Web Cauce (W1 completo, C/W2, D/W3, E y W4)
+### Web Stream (W1 completo, C/W2, D/W3, E y W4)
 
 La web Vite/React conserva el landing en `/`, ofrece `/ejemplos`, `/ejemplos/:slug`, `/docs`, `/docs/:slug`,
-la evidencia experimental C5 en `/evaluacion` y el espacio de trabajo en `/estudio`:
+la evidencia experimental C5 en `/evaluacion` y el espacio de trabajo en `/studio` (compatible con `/estudio`):
 editor CodeMirror con sugerencias según el contexto (columnas, declaraciones y puertos, pipelines, conectores y aridad,
 tomadas del último análisis válido), compilación local real con Pyodide, inspectores estructurados y diagnósticos seleccionables.
 Permite importar/exportar `.etl`, descargar Python vigente y recuperar borradores versionados
 tras recargar. En escritorio, un divisor accesible ajusta el ancho de editor e inspector (recordado solo en
-este navegador, `cauce-studio-layout-v1`); `/estudio?vista=resultado|tokens|arbol|ast|flow|ir|esquemas|python|ejecucion`
+este navegador, `cauce-studio-layout-v1`); `/studio?vista=resultado|tokens|arbol|ast|flow|ir|esquemas|python|ejecucion`
 abre esa vista del documento activo sin llevar documento ni datos en la URL. La ejecución real se realiza en el servicio Python privado descrito más abajo; el navegador no ejecuta Polars.
 
 ```sh
@@ -284,6 +284,8 @@ El catálogo publica ventas, gasto por cliente (programa del tutorial), riesgo c
 resultado», estructura, operaciones/expresiones, NULL/contratos/diagnósticos, conectores y composición. `web/content/examples.json` y `articles.json` seleccionan las fuentes canónicas;
 `.venv/bin/python web/scripts/gen_content.py` genera el contenido web sin copiar programas a mano.
 Los artículos reutilizan secciones de documentación vigente; no publican propuestas ni planificación.
+
+La [auditoría de Studio](docs/auditoria_web.md) añade Parse tree/AST gráficos, hover de procedencia, tokens filtrables, diff de IR y un constructor de pipelines CSV por bloques.
 
 El paso C añade AST expandible, FLOW de lectura por pipeline y comparación de IR por procedencia,
 con texto/JSON alternativos y selección del fuente Unicode. Los cinco pases se pueden seleccionar y ordenar;

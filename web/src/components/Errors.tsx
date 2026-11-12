@@ -17,14 +17,14 @@ const end = badLine.indexOf(";", start);
 function Line({ fixed }: { fixed: boolean }) {
   if (fixed) {
     return (
-      <pre className="diag-src">
+      <pre className="diag-src" tabIndex={0} aria-label="Código corregido, desplazable">
         <span className="gutter">{line}</span>
         {highlight(goodLine)}
       </pre>
     );
   }
   return (
-    <pre className="diag-src">
+    <pre className="diag-src" tabIndex={0} aria-label="Código con error, desplazable">
       <span className="gutter">{line}</span>
       {highlight(badLine.slice(0, start))}
       <span className="squiggle">{highlight(badLine.slice(start, end))}</span>

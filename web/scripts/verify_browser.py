@@ -35,6 +35,8 @@ def main():
     parser.add_argument("--execution-only", action="store_true", help="Recorrido HTTP/runner/archivos; funciona en producción sin /src/")
     parser.add_argument("--timeout-api", default="", help="API de prueba con CAUCE_TIMEOUT=0.02, necesaria para --execution-only")
     parser.add_argument("--inspectors-only", action="store_true", help="Inspectores reales, también en vite preview; no importa /src/")
+    parser.add_argument("--ux-only", action="store_true", help="Grafos, preview de fuente, tokens, diff y Blocks → CSV; requiere la API")
+    parser.add_argument("--a11y-only", action="store_true", help="24 superficies con axe-core; instalar la herramienta opcional indicada en web/README.md")
     parser.add_argument("--content-only", action="store_true", help="Recorrido de contenido, también en vite preview")
     parser.add_argument("--evaluation-only", action="store_true", help="Recorrido /evaluacion y descargas C5; también en producción")
     parser.add_argument("--studio-only", action="store_true",
@@ -69,6 +71,10 @@ def main():
             suites = suites[2:3]
         if args.inspectors_only:
             suites = suites[3:4]
+        if args.ux_only:
+            suites = [("ux.js", ('"ux":true', '"blocks":true', '"execution":true', '"download":true'))]
+        if args.a11y_only:
+            suites = [("accessibility.js", ('"accessibility":true', '"surfaces":24', '"violations":0'))]
         if args.evaluation_only:
             suites = suites[4:5]
         if args.studio_only:
@@ -91,7 +97,7 @@ def main():
                 subprocess.run([*command, "snapshot"], cwd=web, timeout=15)
                 raise SystemExit(f"Falló {script}; revisar la salida de playwright-cli.")
         sys.path[:0] = [str(web.parent), str(web / "src/compiler")]
-        if args.studio_only or args.suggestions_only:
+        if args.studio_only or args.suggestions_only or args.ux_only or args.a11y_only:
             return
         if args.tutorial_only or not (args.content_only or args.inspectors_only or args.execution_only
                                       or args.evaluation_only or args.suggestions_only):

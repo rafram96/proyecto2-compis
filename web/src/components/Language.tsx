@@ -14,7 +14,7 @@ const lazy = pyBody(programs["ventas.etl"].default.python.out)
   .map((l) => l.trim())
   .join("\n");
 
-/** El menú de autocompletado dStudio, tal como aparece al escribir «F» después de «=». */
+/** El menú de autocompletado de Studio, tal como aparece al escribir «F» después de «=». */
 function Completion() {
   const items: [string, string][] = [
     ["FILTER", "operación"],
@@ -31,7 +31,7 @@ function Completion() {
       <div className="complete-menu">
         <ul>
           {items.map(([label, detail], i) => (
-            <li key={label} aria-selected={i === 0}>
+            <li key={label} data-selected={i === 0}>
               <code>{label}</code>
               <em>{detail}</em>
             </li>
@@ -67,7 +67,7 @@ const MODULES: { title: string; body: [string, string]; panel: ReactNode }[] = [
     title: "Diez operaciones, una por paso.",
     body: [
       "FILTER, SELECT, DERIVE, AGGREGATE, JOIN, SORT, DISTINCT, RENAME, FILL_NULL y DROP_NULLS. Cada STEP hace una sola cosa y lleva nombre.",
-      "El estudio te las sugiere mientras escribes.",
+      "Studio te las sugiere mientras escribes.",
     ],
     panel: <Completion />,
   },
