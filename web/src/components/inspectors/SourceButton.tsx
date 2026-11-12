@@ -1,16 +1,29 @@
 import type { Span } from "../../compiler/types";
 import type { ReactNode } from "react";
-export type SourceProps = { current: boolean; onSelect(span: Span): void };
+export type SourceProps = {
+  current: boolean;
+  onSelect(span: Span): void;
+  onPreview?(span?: Span): void;
+};
 export function SourceButton({
   span,
   current,
   onSelect,
+  onPreview,
   children,
 }: SourceProps & { span?: Span; children?: ReactNode }) {
   return (
     <button
       className="source-button"
       disabled={!current || !span}
+      onMouseEnter={() => {
+        if (current) onPreview?.(span);
+      }}
+      onMouseLeave={() => onPreview?.()}
+      onFocus={() => {
+        if (current) onPreview?.(span);
+      }}
+      onBlur={() => onPreview?.()}
       onClick={() => {
         if (current && span) onSelect(span);
       }}

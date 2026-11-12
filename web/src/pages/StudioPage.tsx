@@ -48,6 +48,7 @@ import type { EditorEdit } from "../editor/Editor";
 const ExecutionPanel = lazy(() => import("../execution/ExecutionPanel"));
 const Editor = lazy(() => import("../editor/Editor"));
 const Inspector = lazy(() => import("../components/inspectors/Inspector"));
+const BlockBuilder = lazy(() => import("../blocks/BlockBuilder"));
 
 export default function StudioPage() {
   const { workspace, notice, saved } = useWorkspace();
@@ -65,6 +66,12 @@ export default function StudioPage() {
   const [split, commitSplit] = usePanelSplit();
   const panels = useRef<HTMLDivElement>(null);
   const [edit, setEdit] = useState<EditorEdit>();
+  const [previewRange, setPreviewRange] = useState<{
+    from: number;
+    to: number;
+  } | null>(null);
+  const [editorMode, setEditorMode] = useState<"code" | "blocks">("code");
+  const [blocksVisited, setBlocksVisited] = useState(false);
   const [focusRange, setFocusRange] = useState<{
     from: number;
     to: number;
@@ -105,7 +112,8 @@ export default function StudioPage() {
     applyView(initialView);
     // Atrás/adelante y enlaces internos con la misma ruta y otra vista.
     const restore = () => {
-      if (location.pathname === "/studio") applyView(parseView(location.search));
+      if (location.pathname === "/studio")
+        applyView(parseView(location.search));
     };
     window.addEventListener("popstate", restore);
     return () => window.removeEventListener("popstate", restore);
@@ -124,6 +132,24 @@ export default function StudioPage() {
     setViewNotice("");
   }
   const analysis = result?.result.analysis;
+  useEffect(
+    () => setPreviewRange(null),
+    [doc.id, doc.revision, doc.inspector, current],
+  );
+  const previewSource = useCallback(
+    (span?: Span) => {
+      const latest = getWorkspace().workspace.active;
+      setPreviewRange(
+        span &&
+          current &&
+          latest.id === doc.id &&
+          latest.revision === doc.revision
+          ? sourceSelection(latest, result, span)
+          : null,
+      );
+    },
+    [current, doc.id, doc.revision, result],
+  );
   const diagnostics = useMemo(
     () => (current ? (analysis?.diagnostics ?? []) : []),
     [current, analysis],
@@ -210,325 +236,375 @@ export default function StudioPage() {
         </p>
       </div>
       <div className="workbench" data-ui>
-        <div className="document-bar">
-          <label className="document-name">
-            Documento
-            <input
-              aria-label="Nombre del documento"
-              maxLength={100}
-              value={doc.name}
-              onChange={(e) =>
-                updateDocument({
-                  name:
-                    e.target.value.replace(/[\\/\u0000-\u001f]/g, "_") ||
-                    "programa.etl",
-                })
-              }
-            />
-          </label>
-          <span className="revision">Revisión {doc.revision}</span>
-          <div className="document-actions">
-            <a
-              className="tool-button"
-              href={`/studio?vista=${EXECUTION_SLUG}`}
-              onClick={(event) => {
-                event.preventDefault();
-                replaceView({ kind: "execution" });
-                setViewNotice("");
-                setReveal((n) => n + 1);
-              }}
-            >
-              Run · resultados
-            </a>
+        <div className="editor-mode-bar" aria-label="Modo de edición">
+          <div>
             <button
               className="tool-button"
-              onClick={() => input.current?.click()}
+              aria-pressed={editorMode === "code"}
+              onClick={() => setEditorMode("code")}
             >
-              Importar .etl
-            </button>
-            <input
-              hidden
-              ref={input}
-              type="file"
-              accept=".etl,text/plain"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                e.target.value = "";
-                if (file) void importFile(file);
-              }}
-            />
-            <button
-              className="tool-button"
-              onClick={() => downloadText(fileName(doc.name), doc.source)}
-            >
-              Descargar .etl
+              Code
             </button>
             <button
               className="tool-button"
-              disabled={!python}
+              aria-pressed={editorMode === "blocks"}
               onClick={() => {
-                if (python)
-                  downloadText(
-                    python.name,
-                    python.text,
-                    "text/x-python;charset=utf-8",
-                  );
+                setBlocksVisited(true);
+                setEditorMode("blocks");
               }}
-              title={
-                python
-                  ? `Python de la revisión ${doc.revision}`
-                  : "Compila esta revisión para descargar Python"
-              }
             >
-              Descargar Python
-            </button>
-            <button
-              className="btn sm"
-              onClick={run}
-              disabled={busy}
-              aria-keyshortcuts="Control+Enter Meta+Enter"
-            >
-              {busy
-                ? runtime.status === "loading"
-                  ? "Cargando…"
-                  : "Compilando…"
-                : "Compile"}
+              Blocks
             </button>
           </div>
-        </div>
-        <div className="workspace-options">
-          <label>
-            Abrir ejemplo
-            <select
-              aria-label="Abrir ejemplo"
-              value=""
-              onChange={(e) => openExample(e.target.value)}
-            >
-              <option value="" disabled>
-                Elegir una copia…
-              </option>
-              {examples.map((example) => (
-                <option key={example.slug} value={example.name}>
-                  {example.name}
-                  {example.expectation.ok ? "" : " · ejercicio inválido"}
-                </option>
-              ))}
-            </select>
-          </label>
-          <PassSelector
-            passes={doc.passes}
-            onChange={(passes) => updateDocument({ passes })}
-          />
-          <span className="save-status" role="status" data-saved={saved}>
-            {notice}
+          <span>
+            {editorMode === "code"
+              ? "Tu documento · editor e inspectores"
+              : "Nuevo pipeline · constructor visual"}
           </span>
+          <a href="/docs/primer-programa">Guía de Studio</a>
         </div>
-        <div className="mobile-panes" aria-label="Panel visible">
-          <button
-            aria-pressed={pane === "code"}
-            onClick={() => setPane("code")}
-          >
-            Código
-          </button>
-          <button
-            aria-pressed={pane === "inspector"}
-            onClick={() => setPane("inspector")}
-          >
-            Inspector
-          </button>
+        <div hidden={editorMode !== "blocks"}>
+          {blocksVisited && (
+            <Suspense
+              fallback={<p className="empty-output">Abriendo Blocks…</p>}
+            >
+              <BlockBuilder
+                onOpen={() => {
+                  setEditorMode("code");
+                  setPane("code");
+                  setMessage(
+                    "Pipeline creado como copia. Pulsa Compile para analizarlo.",
+                  );
+                }}
+              />
+            </Suspense>
+          )}
         </div>
-        {viewNotice && (
-          <p className="view-notice" role="status">
-            {viewNotice}
-          </p>
-        )}
-        <div
-          className="workspace-panels"
-          data-pane={pane}
-          ref={panels}
-          style={splitStyle(split)}
-        >
-          <section
-            className="code-panel"
-            id="studio-code"
-            aria-label="Código fuente"
-          >
-            <div className="panel-caption">
-              <span>{doc.name}</span>
-              <span>Ctrl / ⌘ + Enter</span>
-            </div>
-            <div className="studio-editor">
-              <Suspense
-                fallback={
-                  <pre className="studio-pre fallback">{doc.source}</pre>
+        <div hidden={editorMode !== "code"}>
+          <div className="document-bar">
+            <label className="document-name">
+              Documento
+              <input
+                aria-label="Nombre del documento"
+                maxLength={100}
+                value={doc.name}
+                onChange={(e) =>
+                  updateDocument({
+                    name:
+                      e.target.value.replace(/[\\/\u0000-\u001f]/g, "_") ||
+                      "programa.etl",
+                  })
+                }
+              />
+            </label>
+            <span className="revision">Revisión {doc.revision}</span>
+            <div className="document-actions">
+              <a
+                className="tool-button"
+                href={`/studio?vista=${EXECUTION_SLUG}`}
+                onClick={(event) => {
+                  event.preventDefault();
+                  replaceView({ kind: "execution" });
+                  setViewNotice("");
+                  setReveal((n) => n + 1);
+                }}
+              >
+                Run · resultados
+              </a>
+              <button
+                className="tool-button"
+                onClick={() => input.current?.click()}
+              >
+                Importar .etl
+              </button>
+              <input
+                hidden
+                ref={input}
+                type="file"
+                accept=".etl,text/plain"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (file) void importFile(file);
+                }}
+              />
+              <button
+                className="tool-button"
+                onClick={() => downloadText(fileName(doc.name), doc.source)}
+              >
+                Descargar .etl
+              </button>
+              <button
+                className="tool-button"
+                disabled={!python}
+                onClick={() => {
+                  if (python)
+                    downloadText(
+                      python.name,
+                      python.text,
+                      "text/x-python;charset=utf-8",
+                    );
+                }}
+                title={
+                  python
+                    ? `Python de la revisión ${doc.revision}`
+                    : "Compila esta revisión para descargar Python"
                 }
               >
-                <Editor
-                  value={doc.source}
-                  onChange={(source) => updateDocument({ source })}
-                  onRun={run}
-                  diagnostics={diagnostics}
-                  fixes={fixes}
-                  basis={basis}
-                  edit={edit}
-                  focusRange={focusRange}
-                  label="Código ETL del documento"
-                />
-              </Suspense>
+                Descargar Python
+              </button>
+              <button
+                className="btn sm"
+                onClick={run}
+                disabled={busy}
+                aria-keyshortcuts="Control+Enter Meta+Enter"
+              >
+                {busy
+                  ? runtime.status === "loading"
+                    ? "Cargando…"
+                    : "Compilando…"
+                  : "Compile"}
+              </button>
             </div>
-          </section>
-          <PanelSplitter
-            panels={panels}
-            value={split}
-            onCommit={commitSplit}
-            controls="studio-code studio-inspector"
-          />
-          <section
-            className="inspector-panel"
-            id="studio-inspector"
-            aria-label="Inspector de compilación"
-          >
-            <div className="studio-out-bar">
-              <div className="studio-formats" aria-label="Vistas dStudio">
-                {INSPECTORS.map(([f, label]) => (
-                  <button
-                    key={f}
-                    aria-pressed={f === fmt}
-                    onClick={() => selectInspector(f)}
-                  >
-                    {label}
-                  </button>
+          </div>
+          <div className="workspace-options">
+            <label>
+              Abrir ejemplo
+              <select
+                aria-label="Abrir ejemplo"
+                value=""
+                onChange={(e) => openExample(e.target.value)}
+              >
+                <option value="" disabled>
+                  Elegir una copia…
+                </option>
+                {examples.map((example) => (
+                  <option key={example.slug} value={example.name}>
+                    {example.name}
+                    {example.expectation.ok ? "" : " · ejercicio inválido"}
+                  </option>
                 ))}
-              </div>
-            </div>
-            <div
-              className="studio-out"
-              tabIndex={0}
-              aria-label="Salida"
-              data-origin={origin}
+              </select>
+            </label>
+            <PassSelector
+              passes={doc.passes}
+              onChange={(passes) => updateDocument({ passes })}
+            />
+            <span className="save-status" role="status" data-saved={saved}>
+              {notice}
+            </span>
+          </div>
+          <div className="mobile-panes" aria-label="Panel visible">
+            <button
+              aria-pressed={pane === "code"}
+              onClick={() => setPane("code")}
             >
-              <div className="result-caption">
-                <span className="origin-tag">
-                  {origin}
-                  {result ? ` · revisión ${result.revision}` : ""}
-                </span>
+              Código
+            </button>
+            <button
+              aria-pressed={pane === "inspector"}
+              onClick={() => setPane("inspector")}
+            >
+              Inspector
+            </button>
+          </div>
+          {viewNotice && (
+            <p className="view-notice" role="status">
+              {viewNotice}
+            </p>
+          )}
+          <div
+            className="workspace-panels"
+            data-pane={pane}
+            ref={panels}
+            style={splitStyle(split)}
+          >
+            <section
+              className="code-panel"
+              id="studio-code"
+              aria-label="Código fuente"
+            >
+              <div className="panel-caption">
+                <span>{doc.name}</span>
+                <span>Ctrl / ⌘ + Enter</span>
               </div>
-              {!current && result && (
-                <p className="stale-note">
-                  El documento o los pases cambiaron. Esta salida pertenece a la
-                  revisión {result.revision}; compila para actualizarla. Python
-                  no está disponible para descarga.
-                </p>
-              )}
-              {result ? (
+              <div className="studio-editor">
                 <Suspense
-                  fallback={<p className="empty-output">Cargando inspector…</p>}
+                  fallback={
+                    <pre className="studio-pre fallback">{doc.source}</pre>
+                  }
                 >
-                  <Inspector
-                    inspector={fmt}
-                    analysis={analysis}
-                    views={result.result.views}
-                    current={current}
-                    onSelect={selectSource}
+                  <Editor
+                    value={doc.source}
+                    onChange={(source) => updateDocument({ source })}
+                    onRun={run}
+                    diagnostics={diagnostics}
+                    fixes={fixes}
+                    basis={basis}
+                    edit={edit}
+                    focusRange={focusRange}
+                    previewRange={previewRange}
+                    label="Código ETL del documento"
                   />
                 </Suspense>
-              ) : (
-                <p className="empty-output">
-                  Pulsa Compile para cargar Python y obtener las fases de este
-                  documento.
-                </p>
-              )}
-            </div>
-          </section>
-        </div>
-        <section className="diagnostic-panel" aria-label="Diagnósticos">
-          <h2>Diagnósticos {current ? `(${diagnostics.length})` : ""}</h2>
-          {diagnostics.length ? (
-            <ul>
-              {diagnostics.map((d, i) => (
-                <li key={i}>
-                  <button
-                    className="diagnostic-link"
-                    onClick={() => showDiagnostic(d)}
+              </div>
+            </section>
+            <PanelSplitter
+              panels={panels}
+              value={split}
+              onCommit={commitSplit}
+              controls="studio-code studio-inspector"
+            />
+            <section
+              className="inspector-panel"
+              id="studio-inspector"
+              aria-label="Inspector de compilación"
+            >
+              <div className="studio-out-bar">
+                <div className="studio-formats" aria-label="Vistas de Studio">
+                  {INSPECTORS.map(([f, label]) => (
+                    <button
+                      key={f}
+                      aria-pressed={f === fmt}
+                      onClick={() => selectInspector(f)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div
+                className="studio-out"
+                tabIndex={0}
+                aria-label="Salida"
+                data-origin={origin}
+              >
+                <div className="result-caption">
+                  <span className="origin-tag">
+                    {origin}
+                    {result ? ` · revisión ${result.revision}` : ""}
+                  </span>
+                </div>
+                {!current && result && (
+                  <p className="stale-note">
+                    El documento o los pases cambiaron. Esta salida pertenece a
+                    la revisión {result.revision}; compila para actualizarla.
+                    Python no está disponible para descarga.
+                  </p>
+                )}
+                {result ? (
+                  <Suspense
+                    fallback={
+                      <p className="empty-output">Cargando inspector…</p>
+                    }
                   >
-                    <strong>{d.code}</strong>
-                    <span>{d.message}</span>
-                    <span className="diagnostic-location">
-                      {d.span.line}:{d.span.column} · {d.phase}
-                    </span>
-                  </button>
-                  {fixes[i] && (
-                    <p className="diagnostic-fix">
-                      <span>¿Quisiste decir?</span>
-                      {fixes[i]!.replacements.map((insert) => (
-                        <button
-                          key={insert}
-                          className="tool-button"
-                          aria-label={`Cambiar ${fixes[i]!.expected} por ${insert} (${d.span.line}:${d.span.column})`}
-                          onClick={() => {
-                            const fix = fixes[i]!;
-                            setPane("code");
-                            setEdit((previous) => ({
-                              from: fix.from,
-                              to: fix.to,
-                              expected: fix.expected,
-                              insert,
-                              token: (previous?.token ?? 0) + 1,
-                            }));
-                          }}
-                        >
-                          <code>{insert}</code>
-                        </button>
-                      ))}
-                    </p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>
-              {!current
-                ? "Compila esta revisión para localizar sus errores."
-                : result?.result.ok
-                  ? "Sin errores en las fases solicitadas. Los datasets se validan al ejecutar fuera del navegador."
-                  : "Consulta la salida de la fase y el estado del compilador."}
+                    <Inspector
+                      inspector={fmt}
+                      analysis={analysis}
+                      views={result.result.views}
+                      current={current}
+                      onSelect={selectSource}
+                      onPreview={previewSource}
+                    />
+                  </Suspense>
+                ) : (
+                  <p className="empty-output">
+                    Pulsa Compile para cargar Python y obtener las fases de este
+                    documento.
+                  </p>
+                )}
+              </div>
+            </section>
+          </div>
+          <section className="diagnostic-panel" aria-label="Diagnósticos">
+            <h2>Diagnósticos {current ? `(${diagnostics.length})` : ""}</h2>
+            {diagnostics.length ? (
+              <ul>
+                {diagnostics.map((d, i) => (
+                  <li key={i}>
+                    <button
+                      className="diagnostic-link"
+                      onClick={() => showDiagnostic(d)}
+                    >
+                      <strong>{d.code}</strong>
+                      <span>{d.message}</span>
+                      <span className="diagnostic-location">
+                        {d.span.line}:{d.span.column} · {d.phase}
+                      </span>
+                    </button>
+                    {fixes[i] && (
+                      <p className="diagnostic-fix">
+                        <span>¿Quisiste decir?</span>
+                        {fixes[i]!.replacements.map((insert) => (
+                          <button
+                            key={insert}
+                            className="tool-button"
+                            aria-label={`Cambiar ${fixes[i]!.expected} por ${insert} (${d.span.line}:${d.span.column})`}
+                            onClick={() => {
+                              const fix = fixes[i]!;
+                              setPane("code");
+                              setEdit((previous) => ({
+                                from: fix.from,
+                                to: fix.to,
+                                expected: fix.expected,
+                                insert,
+                                token: (previous?.token ?? 0) + 1,
+                              }));
+                            }}
+                          >
+                            <code>{insert}</code>
+                          </button>
+                        ))}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>
+                {!current
+                  ? "Compila esta revisión para localizar sus errores."
+                  : result?.result.ok
+                    ? "Sin errores en las fases solicitadas. Los datasets se validan al ejecutar fuera del navegador."
+                    : "Consulta la salida de la fase y el estado del compilador."}
+              </p>
+            )}
+            {diagnostics.some((d) => d.code === "E_NULL_COMPARISON") && (
+              <p>
+                <a href="/docs/null-contratos">
+                  Cómo corregir comparaciones con NULL
+                </a>
+              </p>
+            )}
+          </section>
+          <Suspense fallback={<p>Cargando resultados…</p>}>
+            <ExecutionPanel
+              doc={doc}
+              analysis={analysis}
+              current={current}
+              reveal={reveal}
+            />
+          </Suspense>
+          <div className="workspace-runtime">
+            <p
+              className="studio-status"
+              data-status={runtime.status}
+              role="status"
+            >
+              {runtime.status === "idle"
+                ? runtime.detail ||
+                  "Python se descarga al compilar por primera vez."
+                : runtime.detail}
+              {runtime.status === "ready"
+                ? " · compila tras una pausa al editar"
+                : ""}
             </p>
-          )}
-          {diagnostics.some((d) => d.code === "E_NULL_COMPARISON") && (
-            <p>
-              <a href="/docs/null-contratos">
-                Cómo corregir comparaciones con NULL
-              </a>
-            </p>
-          )}
-        </section>
-        <Suspense fallback={<p>Cargando resultados…</p>}>
-          <ExecutionPanel
-            doc={doc}
-            analysis={analysis}
-            current={current}
-            reveal={reveal}
-          />
-        </Suspense>
-        <div className="workspace-runtime">
-          <p
-            className="studio-status"
-            data-status={runtime.status}
-            role="status"
-          >
-            {runtime.status === "idle"
-              ? runtime.detail ||
-                "Python se descarga al compilar por primera vez."
-              : runtime.detail}
-            {runtime.status === "ready"
-              ? " · compila tras una pausa al editar"
-              : ""}
-          </p>
-          {runtime.status !== "idle" && (
-            <button className="tool-button" onClick={restartCompiler}>
-              Reiniciar compilador
-            </button>
-          )}
+            {runtime.status !== "idle" && (
+              <button className="tool-button" onClick={restartCompiler}>
+                Reiniciar compilador
+              </button>
+            )}
+          </div>
         </div>
       </div>
       {(message || error) && (

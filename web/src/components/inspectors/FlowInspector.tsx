@@ -2,6 +2,8 @@ import { useId, useMemo, useState } from "react";
 import type { Artifact } from "../../compiler/types";
 import { available, flowGraph, label, pipelines, unavailable } from "./model";
 import { SourceButton, type SourceProps } from "./SourceButton";
+import GraphViewport from "./GraphViewport";
+import { nodeDescription } from "./tree";
 export default function FlowInspector({
   artifact,
   ...source
@@ -10,6 +12,7 @@ export default function FlowInspector({
   const pipes = pipelines(ast);
   const [selected, setSelected] = useState("");
   const [view, setView] = useState("graph");
+  const [hovered, setHovered] = useState<string | null>(null);
   const name = pipes.some((p) => p.name === selected)
     ? selected
     : label(pipes[0]?.name);
@@ -24,10 +27,11 @@ export default function FlowInspector({
     );
   return (
     <div className="structured-inspector">
-      <h2>FLOW original</h2>
+      <h2>Flow · recorrido de los datos</h2>
       <p>
-        Declaraciones y conexiones del AST, antes de optimizar. Vista de
-        lectura.
+        Sigue las flechas desde una fuente hasta su destino. Hover o foco
+        resalta el código; pulsa un nombre para seleccionarlo. Este es el FLOW
+        original, antes de optimizar.
       </p>
       <div className="inspector-controls">
         <label>
@@ -54,7 +58,7 @@ export default function FlowInspector({
           aria-pressed={view === "list"}
           onClick={() => setView("list")}
         >
-          Lista accesible
+          Lista de pasos
         </button>
       </div>
       {graph.unresolved && (
@@ -64,10 +68,10 @@ export default function FlowInspector({
         </p>
       )}
       {view === "graph" ? (
-        <div
-          className="flow-scroll"
-          tabIndex={0}
-          aria-label="Grafo FLOW, desplazable"
+        <GraphViewport
+          width={graph.width}
+          height={graph.height}
+          label="Grafo FLOW"
         >
           <div
             className="flow-canvas"
@@ -95,7 +99,10 @@ export default function FlowInspector({
                   bx = b.x + 92,
                   by = b.y;
                 return (
-                  <g key={i}>
+                  <g
+                    key={i}
+                    data-active={hovered === e.from || hovered === e.to}
+                  >
                     <path
                       d={`M${ax} ${ay} C${ax} ${ay + 36},${bx} ${by - 36},${bx} ${by}`}
                       fill="none"
@@ -115,6 +122,17 @@ export default function FlowInspector({
               <div
                 className="flow-node"
                 data-kind={n.kind}
+                data-active={hovered === n.name}
+                onMouseEnter={() => {
+                  setHovered(n.name);
+                  if (source.current) source.onPreview?.(n.span);
+                }}
+                onMouseLeave={() => {
+                  setHovered(null);
+                  source.onPreview?.();
+                }}
+                onFocus={() => setHovered(n.name)}
+                onBlur={() => setHovered(null)}
                 key={`${n.name}-${i}`}
                 style={{ left: n.x, top: n.y, width: 184, height: n.height }}
               >
@@ -134,7 +152,7 @@ export default function FlowInspector({
               </div>
             ))}
           </div>
-        </div>
+        </GraphViewport>
       ) : (
         <ul className="flow-list">
           {graph.nodes.map((n, i) => (
@@ -153,6 +171,23 @@ export default function FlowInspector({
             </li>
           ))}
         </ul>
+      )}
+      {view === "list" && (
+        <p className="inspector-note">
+          La misma información del grafo en orden de declaración. Las conexiones
+          de abajo indican el recorrido.
+        </p>
+      )}
+      {hovered && (
+        <p className="flow-explanation">
+          <strong>{hovered}</strong> ·{" "}
+          {nodeDescription(
+            graph.nodes
+              .find((n) => n.name === hovered)
+              ?.kind.toLowerCase()
+              .replace(/^./, (s) => s.toUpperCase()) ?? "",
+          )}
+        </p>
       )}
       <h3>Conexiones · {graph.edges.length}</h3>
       <p className="inspector-note">

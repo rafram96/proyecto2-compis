@@ -37,6 +37,8 @@ async (page) => {
     await live();
   };
   const expandUntil = async (target) => {
+    if ((await page.locator(".ast-properties").getAttribute("open")) === null)
+      await page.locator(".ast-properties > summary").click();
     await page.locator(".ast-tree").waitFor();
     for (let i = 0; i < 90 && !(await target.isVisible()); i++) {
       const closed = page

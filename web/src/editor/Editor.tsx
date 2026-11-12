@@ -21,7 +21,10 @@ import {
   closeBracketsKeymap,
   completionKeymap,
 } from "@codemirror/autocomplete";
-import { setDiagnostics, type Diagnostic as LintDiagnostic } from "@codemirror/lint";
+import {
+  setDiagnostics,
+  type Diagnostic as LintDiagnostic,
+} from "@codemirror/lint";
 import {
   etlCompletion,
   etlHighlight,
@@ -33,13 +36,27 @@ import {
 import type { Diagnostic } from "../compiler/types";
 import { editorDiagnostics } from "../compiler/diagnostics";
 import type { ColumnFix, SuggestionBasis } from "./suggestions";
+import { setSourcePreview, sourcePreview } from "./preview";
 
 /** Reemplazo pedido desde fuera (corrección de un diagnóstico); `token` distingue pedidos iguales. */
-export type EditorEdit = { from: number; to: number; expected: string; insert: string; token: number };
+export type EditorEdit = {
+  from: number;
+  to: number;
+  expected: string;
+  insert: string;
+  token: number;
+};
 
 /** Sustituye el intervalo exacto solo si aún contiene el texto diagnosticado; queda en el historial de deshacer. */
-function replaceExact(view: EditorView, from: number, to: number, expected: string, insert: string) {
-  if (to > view.state.doc.length || view.state.sliceDoc(from, to) !== expected) return false;
+function replaceExact(
+  view: EditorView,
+  from: number,
+  to: number,
+  expected: string,
+  insert: string,
+) {
+  if (to > view.state.doc.length || view.state.sliceDoc(from, to) !== expected)
+    return false;
   view.dispatch({
     changes: { from, to, insert },
     selection: { anchor: from + insert.length },
@@ -58,6 +75,7 @@ type Props = {
   fixes?: (ColumnFix | null)[];
   label: string;
   focusRange?: { from: number; to: number; token: number };
+  previewRange?: { from: number; to: number } | null;
   /** Último análisis válido del documento para las sugerencias; nunca provoca una compilación. */
   basis?: SuggestionBasis | null;
   edit?: EditorEdit;
@@ -72,6 +90,7 @@ export function Editor({
   fixes,
   label,
   focusRange,
+  previewRange,
   basis = null,
   edit,
 }: Props) {
@@ -92,6 +111,7 @@ export function Editor({
           highlightActiveLineGutter(),
           highlightActiveLine(),
           drawSelection(),
+          sourcePreview,
           history(),
           indentOnInput(),
           bracketMatching(),
@@ -129,6 +149,12 @@ export function Editor({
   }, []);
 
   // Reemplazo externo del documento (cambiar de ejemplo, aplicar una corrección).
+  useEffect(() => {
+    const v = view.current;
+    if (!v) return;
+    v.dispatch({ effects: setSourcePreview.of(previewRange ?? null) });
+  }, [previewRange]);
+
   useEffect(() => {
     const v = view.current;
     if (v && v.state.doc.toString() !== value.replace(/\r\n?/g, "\n")) {
@@ -173,7 +199,8 @@ export function Editor({
   useEffect(() => {
     const v = view.current;
     if (!v || !edit) return;
-    if (replaceExact(v, edit.from, edit.to, edit.expected, edit.insert)) v.focus();
+    if (replaceExact(v, edit.from, edit.to, edit.expected, edit.insert))
+      v.focus();
   }, [edit]);
 
   useEffect(() => {

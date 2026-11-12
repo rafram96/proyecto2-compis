@@ -1,7 +1,18 @@
+import { useMemo, useState } from "react";
 import type { Artifact } from "../../compiler/types";
 import type { SourceProps } from "./SourceButton";
 import { SourceButton } from "./SourceButton";
-import { available, record, spanOf, title, unavailable } from "./model";
+import {
+  available,
+  label,
+  pipelines,
+  record,
+  spanOf,
+  title,
+  unavailable,
+} from "./model";
+import TreeGraph from "./TreeGraph";
+import { astTree } from "./tree";
 
 function Branch({
   value,
@@ -57,16 +68,43 @@ export default function AstInspector({
   ...source
 }: SourceProps & { artifact?: Artifact; text: string }) {
   const data = available(artifact);
+  const pipes = pipelines(data);
+  const [selected, setSelected] = useState("");
+  const name = pipes.some((p) => p.name === selected)
+    ? selected
+    : label(pipes[0]?.name);
+  const pipeline = pipes.find((p) => p.name === name) ?? data;
+  const graph = useMemo(() => astTree(pipeline), [pipeline]);
   return (
     <div className="structured-inspector">
-      <h2>Árbol de sintaxis abstracta</h2>
+      <h2>AST · estructura del programa</h2>
       <p>
-        Expande propiedades y selecciona una ubicación del programa original.
+        Explora las declaraciones y expresiones de cada pipeline. Hover o foco
+        resalta su código; un clic selecciona el rango original. Usa + para
+        abrir una rama.
       </p>
       {data ? (
-        <ul className="ast-tree">
-          <Branch value={data} name="AST" depth={0} source={source} />
-        </ul>
+        <>
+          <label>
+            Pipeline{" "}
+            <select
+              aria-label="Pipeline del AST"
+              value={name}
+              onChange={(event) => setSelected(event.target.value)}
+            >
+              {pipes.map((p) => (
+                <option key={label(p.name)}>{label(p.name)}</option>
+              ))}
+            </select>
+          </label>
+          <TreeGraph key={name} data={graph} source={source} label="AST" />
+          <details className="inspector-text ast-properties">
+            <summary>Explorar propiedades del AST</summary>
+            <ul className="ast-tree">
+              <Branch value={data} name="AST" depth={0} source={source} />
+            </ul>
+          </details>
+        </>
       ) : (
         <p>{unavailable(artifact)}</p>
       )}

@@ -2,7 +2,6 @@ import { useState } from "react";
 import type { AnalysisResult } from "../../compiler/types";
 import {
   available,
-  clean,
   compareIR,
   label,
   modulePipelines,
@@ -15,6 +14,7 @@ import {
 } from "./model";
 import { SourceButton, type SourceProps } from "./SourceButton";
 import Evidence from "./Evidence";
+import IRDiff from "./IRDiff";
 function IRNode({
   node,
   original,
@@ -31,13 +31,6 @@ function IRNode({
       <strong>
         {label(node.name)} · {label(node.kind)}
       </strong>
-      <pre>
-        {JSON.stringify(
-          clean({ inputs: node.inputs, payload: node.payload }),
-          null,
-          2,
-        )}
-      </pre>
       <p>Origen: {strings(node.origin).join(" + ") || "sin procedencia"}</p>
       <SourceButton {...source} span={spanOf(node.span)} />
       {strings(node.origin).length > 1 && (
@@ -69,6 +62,7 @@ export default function IRInspector({
     afterPipes = modulePipelines(after?.module);
   const [selected, setSelected] = useState("");
   const [view, setView] = useState("comparison");
+  const [onlyChanges, setOnlyChanges] = useState(false);
   const name = beforePipes.some((p) => p.name === selected)
     ? selected
     : label(beforePipes[0]?.name);
@@ -84,10 +78,11 @@ export default function IRInspector({
   const module = record(after?.module) ? after.module : undefined;
   return (
     <div className="structured-inspector">
-      <h2>Comparar IR</h2>
+      <h2>IR · antes y después</h2>
       <p>
-        Dos IR de la misma compilación, relacionadas por su procedencia. Los
-        nombres no establecen identidad entre revisiones.
+        El plan intermedio que utiliza el compilador. Compara cómo cambia al
+        optimizar: rojo y − indican líneas retiradas; verde y + indican líneas
+        añadidas.
       </p>
       <p>
         Orden solicitado: {analysis?.passes.join(" → ") || "ninguno"}. Pases
@@ -142,6 +137,20 @@ export default function IRInspector({
           </div>
           {view === "comparison" || !after ? (
             <>
+              <div className="inspector-controls">
+                <label className="diff-filter">
+                  <input
+                    type="checkbox"
+                    checked={onlyChanges}
+                    onChange={(event) => setOnlyChanges(event.target.checked)}
+                  />
+                  Solo nodos con cambios
+                </label>
+                <span>
+                  {rows.filter((r) => r.status !== "conservado").length} de{" "}
+                  {rows.length} nodos con diferencias o sin correspondencia
+                </span>
+              </div>
               <details>
                 <summary>Cómo leer la comparación</summary>
                 <p className="inspector-note">
@@ -152,36 +161,50 @@ export default function IRInspector({
                 </p>
               </details>
               <div className="ir-comparison">
-                {rows.map((row, i) => (
-                  <section
-                    className="ir-row"
-                    data-change={after ? row.status : "no disponible"}
-                    key={i}
-                  >
-                    <h3>
-                      {label(row.before?.name ?? row.after?.name)} ·{" "}
-                      {after ? row.status : "comparación no disponible"}
-                    </h3>
-                    <div className="ir-pair">
-                      <section aria-label="IR original">
-                        <h4>Original</h4>
-                        <IRNode
-                          node={row.before}
-                          original={original}
-                          source={source}
-                        />
-                      </section>
-                      <section aria-label="IR optimizada">
-                        <h4>Optimizada</h4>
-                        <IRNode
-                          node={row.after}
-                          original={original}
-                          source={source}
-                        />
-                      </section>
-                    </div>
-                  </section>
-                ))}
+                {rows
+                  .filter((row) => !onlyChanges || row.status !== "conservado")
+                  .map((row, i) => (
+                    <section
+                      className="ir-row"
+                      data-change={after ? row.status : "no disponible"}
+                      key={i}
+                    >
+                      <h3>
+                        {label(row.before?.name ?? row.after?.name)} ·{" "}
+                        {after ? row.status : "comparación no disponible"}
+                      </h3>
+                      <IRDiff
+                        before={row.before}
+                        after={row.after}
+                        comparable={!!after}
+                      />
+                      <div className="ir-pair">
+                        <section aria-label="IR original">
+                          <h4>Original</h4>
+                          <IRNode
+                            node={row.before}
+                            original={original}
+                            source={source}
+                          />
+                        </section>
+                        <section aria-label="IR optimizada">
+                          <h4>Optimizada</h4>
+                          <IRNode
+                            node={row.after}
+                            original={original}
+                            source={source}
+                          />
+                        </section>
+                      </div>
+                    </section>
+                  ))}
+                {onlyChanges &&
+                  rows.every((row) => row.status === "conservado") && (
+                    <p>
+                      Sin cambios estructurales en este pipeline. Prueba otro
+                      conjunto de pases o desactiva el filtro.
+                    </p>
+                  )}
               </div>
             </>
           ) : (

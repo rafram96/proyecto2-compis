@@ -1,10 +1,10 @@
 @import "tailwindcss";
-@import "@fontsource-variable/montserrat";
-@import "@fontsource-variable/rubik";
-@import "@fontsource-variable/rubik/wght-italic.css";
-@import "@fontsource/geist-mono/400.css";
-@import "@fontsource/geist-mono/500.css";
+@import "./styles/fonts.css";
+@import "@fontsource/geist-mono/latin-400.css";
+@import "@fontsource/geist-mono/latin-500.css";
 @import "./styles/brand.css";
+@import "./styles/inspectors.css";
+@import "./styles/blocks.css";
 
 @theme inline {
   --font-display: "Montserrat Variable", system-ui, sans-serif;
@@ -494,9 +494,9 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 .panel-caption { height: 50px; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; font-size: var(--fs-s); background: var(--surface); gap: 12px; }
 .panel-caption span:last-child { color: var(--muted-foreground); white-space: nowrap; }
 .panel-caption span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.workspace .studio-editor, .workspace .studio-out { height: max(400px, 55svh); border-bottom: 0; }
-.workspace .studio-out-bar { height: 50px; border-bottom: 1px solid var(--border); }
-.workspace .studio-formats button { min-height: 36px; }
+.workspace .studio-editor, .workspace .studio-out { height: max(640px, 72svh); border-bottom: 0; }
+.workspace .studio-out-bar { height: auto; min-height: 50px; border-bottom: 1px solid var(--border); }
+.workspace .studio-formats button { min-height: 44px; }
 .studio-formats button[aria-pressed="true"] { background: var(--card); color: var(--foreground); font-weight: 500; }
 .result-caption { display: flow-root; position: sticky; top: 0; background: var(--card); padding-bottom: 8px; }
 .empty-output, .stale-note { margin: 16px; font-size: var(--fs-s); max-width: 65ch; }
@@ -547,7 +547,8 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
   .mobile-panes { display: flex; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--border); }
   .mobile-panes button { background: var(--surface); color: var(--foreground); padding: 10px 18px; border: 1px solid var(--border); border-radius: 6px; min-height: 44px; cursor: pointer; }
   .mobile-panes button[aria-pressed="true"] { background: var(--foreground); color: var(--card); }
-  .workspace .studio-editor, .workspace .studio-out { height: 55svh; min-height: 330px; }
+  .workspace .studio-editor { height: 55svh; min-height: 330px; }
+  .workspace .studio-out { height: auto; min-height: 330px; overflow: visible; }
   .workspace-runtime .tool-button { min-height: 44px; }
   .demo-open { margin-top: 20px; }
   .app-page .nav-cta { display: inline-flex; }

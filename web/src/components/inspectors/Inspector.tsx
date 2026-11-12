@@ -8,6 +8,8 @@ const Ast = lazy(() => import("./AstInspector"));
 const Flow = lazy(() => import("./FlowInspector"));
 const IR = lazy(() => import("./IRInspector"));
 const Schemas = lazy(() => import("./SchemaInspector"));
+const ParseTree = lazy(() => import("./ParseTreeInspector"));
+const Tokens = lazy(() => import("./TokensInspector"));
 export default function Inspector({
   inspector,
   analysis,
@@ -39,6 +41,10 @@ export default function Inspector({
         {...source}
       />
     );
+  else if (inspector === "tree")
+    content = <ParseTree artifact={analysis?.artifacts.tree} {...source} />;
+  else if (inspector === "tokens")
+    content = <Tokens artifact={analysis?.artifacts.tokens} {...source} />;
   else
     content = text ? (
       <Output

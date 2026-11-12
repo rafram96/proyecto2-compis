@@ -26,6 +26,7 @@
   --card-foreground: #0b1f3a;
   --primary: #0077b6;
   --primary-foreground: #ffffff;
+  --surface-accent: #023e8a;
   --motif: #0077b6;
   --action: #ffcc00;
   --action-foreground: #0b1f3a;
@@ -76,6 +77,7 @@
   --card-foreground: #e6f6fb;
   --primary: #48cae4;
   --primary-foreground: #0a1628;
+  --surface-accent: #48cae4;
   --motif: #0f5f93;
   --action: #ffcc00;
   --action-foreground: #0b1f3a;
