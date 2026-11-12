@@ -71,6 +71,30 @@ const utc = new Intl.DateTimeFormat("es-PE", { timeZone: "UTC", dateStyle: "long
 const bytes = (n: number) =>
   n >= 1048576 ? `${(n / 1048576).toFixed(2)} MiB` : n >= 1024 ? `${(n / 1024).toFixed(1)} KiB` : `${n} B`;
 
+const sources = data.sources;
+const list = (paths: string[]) => paths.map((p, i) => (
+  <span key={p}>{i ? ", " : ""}<code>{p}</code></span>
+));
+/** Conclusión calculada por gen_evaluation.py; --check falla si deja de ser cierta. */
+function SourceMatch() {
+  if (sources.status === "mismatch")
+    return (
+      <>
+        <strong>Las fuentes de esta publicación difieren de las medidas</strong>:{" "}
+        {list([...sources.different, ...sources.missing])}
+        {sources.missing.length ? ` (ausentes: ${sources.missing.length})` : ""}. Las cifras corresponden al código de la
+        revisión medida, no al que publica esta página.
+      </>
+    );
+  return (
+    <>
+      Las fuentes del compilador, del arnés y de los programas medidos ({sources.recorded} archivos) coinciden byte a byte
+      con las del código que publica esta página.
+      {sources.added.length > 0 && <> Después se añadió {list(sources.added)}, que no existía al medir.</>}
+    </>
+  );
+}
+
 function readUrl() {
   return parseSelection(location.search, cat);
 }
@@ -138,8 +162,8 @@ export default function EvaluationPage() {
           </header>
           <p className="content-note eval-banner" role="note">
             <strong>Campaña histórica, no una medición en vivo.</strong> Se midió el {lima.format(new Date(campaign.started_utc))}{" "}
-            (hora de Lima) sobre la revisión <code>{campaign.revision.slice(0, 7)}</code>. No corresponde al programa abierto en el
-            estudio ni al código que sirve esta página, y consultarla no ejecuta nada.
+            (hora de Lima) sobre la revisión <code>{campaign.revision.slice(0, 7)}</code>. <SourceMatch /> La máquina, el entorno y
+            la fecha son los de la campaña; no mide el programa abierto en el estudio y consultarla no ejecuta nada.
           </p>
 
           <section aria-labelledby="proposito" className="eval-section">
@@ -185,6 +209,15 @@ export default function EvaluationPage() {
             <dl className="eval-facts">
               <div><dt>Inicio y fin (UTC)</dt><dd>{utc.format(new Date(campaign.started_utc))} – {utc.format(new Date(campaign.finished_utc))}</dd></div>
               <div><dt>Revisión medida</dt><dd><code className="eval-hash">{campaign.revision}</code></dd></div>
+              <div data-sources={sources.status}>
+                <dt>Fuentes frente a esta publicación</dt>
+                <dd>
+                  {sources.groups.map((g, i) => (
+                    <span key={g.id}>{i ? " · " : ""}{g.label}: {g.matching} de {g.recorded} coinciden</span>
+                  ))}
+                  {sources.added.length > 0 && <>. Añadidos después: {list(sources.added)}</>}. Regla del arnés: {sources.rule}.
+                </dd>
+              </div>
               <div><dt>Estado Git al medir</dt><dd>Solo cambios ajenos: <code>{campaign.git_status.replace("\n", " · ")}</code></dd></div>
               <div><dt>Modo</dt><dd><code>{campaign.mode}</code>, estado <code>{campaign.status}</code></dd></div>
               <div><dt>Filas izquierdas</dt><dd>{campaign.sizes.map(rowsLabel).join(" · ")} (no son bytes ni filas finales)</dd></div>
@@ -503,8 +536,17 @@ export default function EvaluationPage() {
             <p>
               Desde la raíz del repositorio, con las versiones de <code>requirements.txt</code>. Una nueva campaña produce otros
               nanosegundos; se reproducen datos, programas, garantías, opciones y protocolo. El destino debe ser nuevo.
-              Para medir el mismo código, sitúa primero un checkout en la revisión medida (
-              <code>git switch --detach {campaign.revision.slice(0, 7)}</code>); en otra revisión se mide otro compilador.
+              {sources.status === "mismatch" ? (
+                <>
+                  Para medir el mismo código, sitúa primero un checkout en la revisión medida (
+                  <code>git switch --detach {campaign.revision.slice(0, 7)}</code>); este código difiere en las fuentes listadas arriba.
+                </>
+              ) : (
+                <>
+                  Las fuentes registradas coinciden con este código, así que medirlo aquí usa el mismo compilador, arnés y
+                  programas que la revisión <code>{campaign.revision.slice(0, 7)}</code>; la máquina y el entorno serán los tuyos.
+                </>
+              )}
             </p>
             <pre className="eval-code">
               <code>{`.venv/bin/python -m benchmarks --mode ${campaign.mode} --sizes ${campaign.sizes.join(",")} \\

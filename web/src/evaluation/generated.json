@@ -14152,6 +14152,42 @@
   "publisher": "web/scripts/gen_evaluation.py --import-campaign",
   "source_directory": "benchmarks/results/representativa"
  },
+ "sources": {
+  "added": [
+   "benchmarks/evidence.py"
+  ],
+  "different": [],
+  "groups": [
+   {
+    "added": [],
+    "id": "compiler",
+    "label": "Compilador",
+    "matching": 22,
+    "recorded": 22
+   },
+   {
+    "added": [
+     "benchmarks/evidence.py"
+    ],
+    "id": "harness",
+    "label": "Arnés de medición",
+    "matching": 7,
+    "recorded": 7
+   },
+   {
+    "added": [],
+    "id": "programs",
+    "label": "Programas medidos",
+    "matching": 8,
+    "recorded": 8
+   }
+  ],
+  "matching": 37,
+  "missing": [],
+  "recorded": 37,
+  "rule": "etl_dsl/*.py, etl_dsl/grammar.lark, benchmarks/*.py y benchmarks/programs/*.etl",
+  "status": "match_with_additions"
+ },
  "structure": [
   {
    "added": [],

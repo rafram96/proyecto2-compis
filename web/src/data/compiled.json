@@ -917,7 +917,7 @@
   }
  },
  "stats": {
-  "tests": 170,
+  "tests": 174,
   "errorCodes": 30,
   "keywords": 35,
   "passes": [

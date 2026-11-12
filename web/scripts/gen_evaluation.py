@@ -17,8 +17,8 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from benchmarks.evidence import (EvidenceError, digest, load_snapshot, page_data,  # noqa: E402
-                                 publish, verify_originals)
+from benchmarks.evidence import (EvidenceError, compare_sources, digest, load_snapshot,  # noqa: E402
+                                 page_data, publish, verify_originals)
 
 CURATION = ROOT / "web/content/evaluation.json"
 DEST = ROOT / "web/src/evaluation/generated.json"
@@ -32,7 +32,8 @@ def snapshot_dir(selection=None):
     return ROOT / (selection or curation())["snapshot"]
 
 
-def build(snapshot=None):
+def build(snapshot=None, root=ROOT):
+    """``root`` es el checkout cuyas fuentes se comparan con las de la campaña."""
     selection = curation()
     directory = Path(snapshot) if snapshot else snapshot_dir(selection)
     manifest, campaign, _ = load_snapshot(directory)
@@ -47,11 +48,21 @@ def build(snapshot=None):
                    if s["workload"] == workload["id"] and s["changed"] and s["configuration"] not in ("O0", "default")}
         if changed != set(workload["expected"]):
             raise EvidenceError(f"{workload['id']}: pases que transforman {sorted(changed)} ≠ curaduría {workload['expected']}")
+    # Se calcula, nunca se escribe a mano: --check falla si la conclusión deja de ser cierta.
+    data["sources"] = compare_sources(campaign["metadata"]["environment"]["source_sha256"], root)
     return data
 
 
-def serialized(snapshot=None):
-    return json.dumps(build(snapshot), ensure_ascii=False, indent=1, sort_keys=True) + "\n"
+def serialized(snapshot=None, root=ROOT):
+    return json.dumps(build(snapshot, root), ensure_ascii=False, indent=1, sort_keys=True) + "\n"
+
+
+def describe_sources(sources):
+    if sources["status"] == "mismatch":
+        changed = sources["different"] + [f"{p} (ausente)" for p in sources["missing"]]
+        return f"fuentes distintas de las medidas: {', '.join(changed)}"
+    extra = f"; añadidas después: {', '.join(sources['added'])}" if sources["added"] else ""
+    return f"las {sources['recorded']} fuentes registradas coinciden con las medidas{extra}"
 
 
 def main():
@@ -81,13 +92,19 @@ def main():
         content = serialized()
     except (EvidenceError, OSError, KeyError) as exc:
         raise SystemExit(f"Evidencia C5 inválida: {exc}")
+    sources = json.loads(content)["sources"]
     if args.check:
         if not DEST.exists() or DEST.read_text(encoding="utf-8") != content:
+            previous = json.loads(DEST.read_text(encoding="utf-8")).get("sources") if DEST.exists() else None
+            if previous != sources:
+                raise SystemExit("Evaluación desactualizada: la correspondencia de fuentes con la campaña cambió ("
+                                 + describe_sources(sources)
+                                 + "). Ejecuta .venv/bin/python web/scripts/gen_evaluation.py y revisa el texto de /evaluacion")
             raise SystemExit("Evaluación desactualizada: ejecuta .venv/bin/python web/scripts/gen_evaluation.py")
     else:
         DEST.parent.mkdir(parents=True, exist_ok=True)
         DEST.write_text(content, encoding="utf-8")
-    print("OK evidencia C5: " + str(DEST.relative_to(ROOT)))
+    print("OK evidencia C5: " + str(DEST.relative_to(ROOT)) + "; " + describe_sources(sources))
 
 
 if __name__ == "__main__":

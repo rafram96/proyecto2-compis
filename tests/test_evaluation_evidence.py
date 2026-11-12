@@ -8,10 +8,10 @@ import subprocess
 import tempfile
 import unittest
 
-from benchmarks.evidence import (EvidenceError, REDACTED, digest, load, load_snapshot, publish,
-                                 redact_metadata, validate, verify_originals)
+from benchmarks.evidence import (EvidenceError, REDACTED, compare_sources, digest, load, load_snapshot, publish,
+                                 redact_metadata, source_paths, validate, verify_originals)
 from benchmarks.report import percentile
-from web.scripts.gen_evaluation import CURATION, DEST, ROOT, build, curation, serialized
+from web.scripts.gen_evaluation import CURATION, DEST, ROOT, build, curation, describe_sources, serialized
 
 SNAPSHOT = ROOT / "web/public/evidencia/c5-representativa"
 ORIGINALS = ROOT / "benchmarks/results/representativa"
@@ -121,6 +121,70 @@ class EvidenceSnapshotTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             again = publish(ORIGINALS, Path(temp) / "s", curation())
             self.assertEqual(again, manifest)
+
+
+class SourceCorrespondenceTests(unittest.TestCase):
+    """La página afirma si el código que la publica es el medido; nunca se escribe a mano."""
+
+    def recorded(self):
+        return json.loads((SNAPSHOT / "metadata.public.json").read_text(encoding="utf-8"))["environment"]["source_sha256"]
+
+    def test_rule_is_the_harness_rule(self):
+        from benchmarks.harness import environment
+        measured_now = environment()["source_sha256"]
+        self.assertEqual(sorted(measured_now), source_paths(ROOT))
+        result = compare_sources(self.recorded(), ROOT)
+        # Lo que el arnés registraría hoy y la comparación deben contar la misma historia.
+        self.assertEqual(result["different"], sorted(p for p, h in self.recorded().items()
+                                                     if p in measured_now and measured_now[p] != h))
+        self.assertEqual(result["added"], sorted(set(measured_now) - set(self.recorded())))
+
+    def test_generated_page_carries_the_computed_comparison(self):
+        data = json.loads(DEST.read_text(encoding="utf-8"))
+        self.assertEqual(data["sources"], compare_sources(self.recorded(), ROOT))
+        self.assertEqual(sum(g["recorded"] for g in data["sources"]["groups"]), data["sources"]["recorded"])
+
+    def copy_sources(self, root):
+        for path in source_paths(ROOT):
+            (root / path).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / path, root / path)
+
+    def test_match_and_simulated_mismatch_on_a_temporary_copy(self):
+        recorded = self.recorded()
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self.copy_sources(root)
+            # Copia exacta solo de los archivos medidos: coincide sin añadidos.
+            for path in set(source_paths(root)) - set(recorded):
+                (root / path).unlink()
+            exact = compare_sources(recorded, root)
+            self.assertEqual((exact["status"], exact["matching"], exact["added"]), ("match", len(recorded), []))
+            self.assertEqual([g["matching"] for g in exact["groups"]], [g["recorded"] for g in exact["groups"]])
+            (root / "benchmarks/evidence_extra.py").write_text("# nuevo\n", encoding="utf-8")
+            added = compare_sources(recorded, root)
+            self.assertEqual((added["status"], added["added"]), ("match_with_additions", ["benchmarks/evidence_extra.py"]))
+            # Un byte cambiado en el compilador y un programa eliminado invalidan la conclusión.
+            passes = root / "etl_dsl/passes.py"
+            passes.write_bytes(passes.read_bytes() + b"\n")
+            (root / "benchmarks/programs/join.etl").unlink()
+            broken = compare_sources(recorded, root)
+            self.assertEqual(broken["status"], "mismatch")
+            self.assertEqual(broken["different"], ["etl_dsl/passes.py"])
+            self.assertEqual(broken["missing"], ["benchmarks/programs/join.etl"])
+            self.assertEqual(broken["matching"], len(recorded) - 2)
+            self.assertIn("etl_dsl/passes.py", describe_sources(broken))
+            # --check compara el JSON completo: esta copia ya no produce la página versionada.
+            text = serialized(root=root)
+            self.assertNotEqual(text, DEST.read_text(encoding="utf-8"))
+            self.assertEqual(json.loads(text)["sources"], broken)
+
+    def test_invalid_recorded_hashes_are_rejected(self):
+        with self.assertRaises(EvidenceError):
+            compare_sources({}, ROOT)
+        with self.assertRaises(EvidenceError):
+            compare_sources({"etl_dsl/ir.py": "nohex"}, ROOT)
+        with self.assertRaises(EvidenceError):
+            compare_sources({"README.md": "0" * 64}, ROOT)
 
 
 class EvidenceCorruptionTests(unittest.TestCase):

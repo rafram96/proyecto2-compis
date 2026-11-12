@@ -30,6 +30,65 @@ class EvidenceError(ValueError):
     """La evidencia es incompleta o incompatible; nunca se completa en silencio."""
 
 
+# Misma regla que benchmarks.harness.environment(): qué fuentes registra una campaña
+# en environment.source_sha256. Se replica aquí porque modificar el arnés cambiaría
+# su propio hash; tests/test_evaluation_evidence.py comprueba que ambas coinciden.
+SOURCE_GROUPS = (
+    ("compiler", "Compilador", ("etl_dsl/*.py", "etl_dsl/grammar.lark")),
+    ("harness", "Arnés de medición", ("benchmarks/*.py",)),
+    ("programs", "Programas medidos", ("benchmarks/programs/*.etl",)),
+)
+SOURCE_RULE = "etl_dsl/*.py, etl_dsl/grammar.lark, benchmarks/*.py y benchmarks/programs/*.etl"
+
+
+def _source_group(path):
+    for group, _, patterns in SOURCE_GROUPS:
+        if any(Path(path).match(pattern) and len(Path(path).parts) == len(Path(pattern).parts)
+               for pattern in patterns):
+            return group
+    return None
+
+
+def source_paths(root):
+    """Rutas relativas (con /) que la regla del arnés registraría en ``root``."""
+    root = Path(root)
+    found = set()
+    for _, _, patterns in SOURCE_GROUPS:
+        for pattern in patterns:
+            found.update(p.relative_to(root).as_posix() for p in root.glob(pattern) if p.is_file())
+    return sorted(found)
+
+
+def compare_sources(recorded, root):
+    """Compara los hashes registrados por la campaña con los archivos de ``root``.
+
+    No interpreta el resultado más allá de los bytes: la máquina, el entorno y la
+    fecha siguen siendo los de la campaña aunque todas las fuentes coincidan.
+    """
+    if not isinstance(recorded, dict) or not recorded:
+        raise EvidenceError("metadata: environment.source_sha256 ausente o vacío")
+    for path, value in recorded.items():
+        if _source_group(path) is None:
+            raise EvidenceError(f"metadata: fuente {path} fuera de la regla del arnés")
+        if not (isinstance(value, str) and len(value) == 64 and all(c in "0123456789abcdef" for c in value)):
+            raise EvidenceError(f"metadata: hash inválido para {path}")
+    root = Path(root)
+    current = source_paths(root)
+    different = sorted(p for p in recorded if p in current and digest((root / p).read_bytes()) != recorded[p])
+    missing = sorted(p for p in recorded if p not in current)
+    added = sorted(p for p in current if p not in recorded)
+    groups = []
+    for group, label, _ in SOURCE_GROUPS:
+        paths = [p for p in recorded if _source_group(p) == group]
+        groups.append({"id": group, "label": label, "recorded": len(paths),
+                       "matching": sum(p not in different and p not in missing for p in paths),
+                       "added": [p for p in added if _source_group(p) == group]})
+    status = "mismatch" if different or missing else "match_with_additions" if added else "match"
+    return {"rule": SOURCE_RULE, "status": status, "recorded": len(recorded),
+            "matching": len(recorded) - len(different) - len(missing),
+            "different": different, "missing": missing, "added": added, "groups": groups}
+
+
 def digest(data):
     return sha256(data).hexdigest()
 
