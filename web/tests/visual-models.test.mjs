@@ -13,6 +13,7 @@ import {
   newBlock,
   OPERATIONS,
 } from "../src/blocks/model.ts";
+import { BLOCK_EXAMPLES } from "../src/blocks/examples.ts";
 
 function analyze(sources) {
   const run = spawnSync(
@@ -35,6 +36,39 @@ print(json.dumps([analyze(source).to_dict() for source in json.load(sys.stdin)])
   assert.equal(run.status, 0, run.stderr);
   return JSON.parse(run.stdout);
 }
+
+test("todos los ejemplos de Blocks generan pipelines válidos con el compilador real", () => {
+  assert.equal(
+    new Set(BLOCK_EXAMPLES.map((example) => example.id)).size,
+    BLOCK_EXAMPLES.length,
+  );
+  const sources = BLOCK_EXAMPLES.map((example) => {
+    const built = buildPipeline(example.create());
+    assert.deepEqual(built.errors, [], example.id);
+    return built.source;
+  });
+  analyze(sources).forEach((result, index) =>
+    assert.equal(
+      result.ok,
+      true,
+      `${BLOCK_EXAMPLES[index].id}: ${JSON.stringify(result.diagnostics)}`,
+    ),
+  );
+});
+
+test("cargar un ejemplo crea bloques y columnas independientes de otras cargas", () => {
+  for (const example of BLOCK_EXAMPLES) {
+    const first = example.create(),
+      second = example.create();
+    assert.notEqual(first.blocks[0].id, second.blocks[0].id);
+    first.columns[0].name = "editado";
+    first.blocks[0].columns.push("editada");
+    first.blocks[0].value = "999";
+    assert.equal(second.columns[0].name, "cliente");
+    assert.ok(!second.blocks[0].columns.includes("editada"));
+    assert.notEqual(second.blocks[0].value, "999");
+  }
+});
 
 test("diff conserva contenido y números exactos al alinear inserciones, retiradas y reemplazos", () => {
   for (const [before, after] of [

@@ -61,6 +61,8 @@ Hover y foco solo previsualizan rangos de resultados vigentes. Una salida desact
 
 ## Crear un pipeline con Blocks
 
+En **Ejemplos de Blocks**, elige uno y pulsa **Cargar ejemplo**. Hay seis recorridos listos para editar: filtrar importes positivos, gasto por cliente, calcular y ordenar importes, clientes únicos, limpiar importes ausentes y contar pedidos. Todos usan el CSV incluido de pedidos con `cliente` e `importe`. Seleccionar una opción solo muestra su descripción; cargarla sustituye los bloques y permite volver al borrador exacto con **Restaurar bloques anteriores**. El documento abierto en Code se conserva.
+
 En Studio, pulsa **Blocks**. Añade transformaciones con la paleta: filtrar, elegir columnas, calcular una columna numérica, agrupar y resumir, ordenar, quitar duplicados o retirar filas con NULL. Los bloques se conectan en orden; Subir/Bajar permite reorganizarlos con teclado o pantalla táctil. Si una columna deja de existir después de un cambio de orden, el constructor lo indica y bloquea la apertura hasta corregirlo.
 
 La entrada inicial usa las columnas `cliente: INT` e `importe: DECIMAL` del CSV incluido `demo/joins_pedidos.csv`. Puedes editar el contrato y las rutas CSV. Los nombres y valores se validan antes de generar la copia; las cadenas se escapan como JSON. La vista previa muestra el DSL en todo momento.

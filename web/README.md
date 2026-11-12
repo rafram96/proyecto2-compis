@@ -5,7 +5,7 @@ Landing (`/`), catálogo (`/ejemplos`), documentación (`/docs`), evaluación C5
 ```bash
 cd web && npm install && npm run dev            # http://localhost:5173
 npm run build                                    # tsc + vite build
-npm test                                         # 69 pruebas de contenido, inspectores, evaluación, documentos, vistas, disposición, ejecución, worker y sugerencias; Node >= 22.18
+npm test                                         # 71 pruebas de contenido, inspectores, evaluación, documentos, vistas, disposición, ejecución, worker y sugerencias; Node >= 22.18
 .venv/bin/python web/scripts/gen_content.py      # (raíz del repo) genera src/content/generated.json
 .venv/bin/python web/scripts/gen_content.py --check # detecta contenido desactualizado
 .venv/bin/python web/scripts/gen_evaluation.py   # (raíz) valida la evidencia C5 publicada y genera src/evaluation/generated.json; --check
@@ -167,7 +167,7 @@ base, y solo si trae `ast`, `ir_before` y `schemas`. Un resultado con errores no
 ## Verificación reproducible
 
 Desde la raíz: `.venv/bin/python -m unittest discover` (**180 pruebas**) y `.venv/bin/python web/scripts/gen_compiled.py`.
-Desde `web`: `npm test` (**69 pruebas**) y `npm run build`. El worker se prueba con canales/temporizadores simulados para fallos y plazos.
+Desde `web`: `npm test` (**71 pruebas**) y `npm run build`. El worker se prueba con canales/temporizadores simulados para fallos y plazos.
 
 Con Vite iniciado en un puerto libre (no detener procesos ajenos):
 
@@ -470,7 +470,7 @@ El informe de hallazgos, decisiones, validación y límites está en [docs/audit
 - AST, Tokens, Flow e IR comparten preview de fuente mediante decoraciones de CodeMirror. No modifica el documento, cursor ni compilación y se desactiva para resultados obsoletos.
 - Tokens: filtros por texto/tipo y páginas de 80 filas.
 - IR: diff alineado, colores semánticos, símbolos −/+, recuentos y filtro de nodos conservados. `origin` y la evidencia O1/O3 conservan su significado.
-- Blocks: constructor lineal CSV de siete operaciones; abre una copia nueva sin sustituir el documento anterior. No hay importación bidireccional de DSL ni ejecución automática. El borrador visual dura esta visita; descargar o abrir copia antes de recargar.
+- Blocks: seis ejemplos con carga explícita y restauración del borrador anterior; constructor lineal CSV de siete operaciones; abre una copia nueva sin sustituir el documento anterior. No hay importación bidireccional de DSL ni ejecución automática. El borrador visual dura esta visita; descargar o abrir copia antes de recargar.
 - `/studio` es la ruta canónica. Las claves `cauce-workspace-v1`, `cauce-theme` y `cauce-studio-layout-v1`, las variables `CAUCE_*` y los slugs `?vista=` permanecen compatibles.
 
 Prueba del recorrido nuevo (API local en el puerto 8000 y Vite dev o preview iniciado):

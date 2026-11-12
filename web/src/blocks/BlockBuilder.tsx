@@ -3,6 +3,7 @@ import { createDocument } from "../workspace/model";
 import { openDocument } from "../workspace/store";
 import { downloadText } from "../workspace/files";
 import { Code } from "../components/Code";
+import { BLOCK_EXAMPLES } from "./examples";
 import {
   buildPipeline,
   initialBuilder,
@@ -224,8 +225,30 @@ function BlockFields({
 
 export default function BlockBuilder({ onOpen }: { onOpen(): void }) {
   const [builder, setBuilder] = useState(initialBuilder);
+  const [selectedExample, setSelectedExample] = useState("");
+  const [previousBuilder, setPreviousBuilder] = useState<typeof builder | null>(
+    null,
+  );
   const [message, setMessage] = useState("");
+  const example = BLOCK_EXAMPLES.find((item) => item.id === selectedExample);
   const result = useMemo(() => buildPipeline(builder), [builder]);
+  function loadExample() {
+    if (!example) return;
+    setPreviousBuilder(builder);
+    setBuilder(example.create());
+    setMessage(
+      `Ejemplo cargado: ${example.title}. Puedes editar sus bloques o restaurar el borrador anterior.`,
+    );
+  }
+  function restoreBuilder() {
+    if (!previousBuilder) return;
+    setPreviousBuilder(builder);
+    setBuilder(previousBuilder);
+    setSelectedExample("");
+    setMessage(
+      "Bloques anteriores restaurados. El documento de Code sigue conservado.",
+    );
+  }
   const updateBlock = (id: string, change: Partial<Block>) =>
     setBuilder((b) => ({
       ...b,
@@ -281,6 +304,45 @@ export default function BlockBuilder({ onOpen }: { onOpen(): void }) {
         JOIN, USE y ramificaciones usa Code. Este borrador de bloques dura esta
         visita; guárdalo como copia o descárgalo antes de salir.
       </p>
+      <section className="blocks-examples" aria-label="Ejemplos de Blocks">
+        <div className="blocks-example-controls">
+          <label>
+            Ejemplos de Blocks
+            <select
+              aria-label="Ejemplos de Blocks"
+              value={selectedExample}
+              onChange={(event) => setSelectedExample(event.target.value)}
+            >
+              <option value="">Elegir un ejemplo…</option>
+              {BLOCK_EXAMPLES.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            className="tool-button"
+            disabled={!example}
+            onClick={loadExample}
+          >
+            Cargar ejemplo
+          </button>
+          {previousBuilder && (
+            <button className="tool-button" onClick={restoreBuilder}>
+              Restaurar bloques anteriores
+            </button>
+          )}
+        </div>
+        <p>
+          {example?.description ??
+            "Todos los ejemplos usan el CSV incluido de pedidos, con las columnas cliente e importe."}
+        </p>
+        <p>
+          Al cargar se sustituyen los bloques actuales y se conserva una copia
+          para restaurarlos. Tu documento en Code no cambia.
+        </p>
+      </section>
       <div className="blocks-layout">
         <div className="block-chain">
           <section

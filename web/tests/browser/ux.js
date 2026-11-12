@@ -68,6 +68,23 @@ async (page) => {
   await live();
   await tab("Blocks");
   await page.getByRole("heading", { name: "Construye un pipeline por bloques" }).waitFor();
+  const beforeExamples = await active();
+  const exampleSelector = page.getByRole("combobox", { name: "Ejemplos de Blocks", exact: true });
+  check((await exampleSelector.locator("option").count()) === 7, "Faltan ejemplos en Blocks");
+  check(await page.getByRole("button", { name: "Cargar ejemplo", exact: true }).isDisabled(), "Se puede cargar sin elegir un ejemplo");
+  const pipelineName = page.getByRole("textbox", { name: "Nombre del pipeline", exact: true });
+  await pipelineName.fill("borrador_personal");
+  const personalDraft = await page.locator(".blocks-code").innerText();
+  await exampleSelector.selectOption("gasto-por-cliente");
+  check((await page.locator(".blocks-code").innerText()) === personalDraft, "Elegir un ejemplo sustituyó los bloques antes de cargarlo");
+  await page.getByRole("button", { name: "Cargar ejemplo", exact: true }).click();
+  check((await pipelineName.inputValue()) === "gasto_por_cliente", "No cargó el pipeline del ejemplo");
+  check((await page.locator(".block-transform").count()) === 3, "No cargó todas las transformaciones del ejemplo");
+  check((await page.locator(".blocks-errors").count()) === 0, "Ejemplo cargado con referencias inválidas");
+  check(JSON.stringify(await active()) === JSON.stringify(beforeExamples), "Cargar el ejemplo modificó el documento de Code");
+  await page.getByRole("button", { name: "Restaurar bloques anteriores", exact: true }).click();
+  check((await pipelineName.inputValue()) === "borrador_personal" && (await page.locator(".blocks-code").innerText()) === personalDraft, "No restauró el borrador exacto de Blocks");
+  await pipelineName.fill("mi_pipeline");
   await page.getByRole("button", { name: "+ Agrupar y resumir", exact: true }).click();
   const aggregate = page.getByRole("region", { name: "Bloque 2: Agrupar y resumir", exact: true });
   await aggregate.getByRole("combobox", { name: "Columna", exact: true }).selectOption("importe");
@@ -112,5 +129,5 @@ async (page) => {
     await shot(`${name.toLowerCase().replaceAll(" ", "-")}-mobile-dark`);
   }
   check(errors.length === 0, errors.join("\n"));
-  return { ux: true, graph: true, sourceHover: true, noRecompileOnExplore: true, tokenFilter: true, diff: true, O0: true, blocks: true, execution: true, download: true, legacyRoute: true, mobile: true, pageErrors: errors };
+  return { ux: true, graph: true, sourceHover: true, noRecompileOnExplore: true, tokenFilter: true, diff: true, O0: true, blocks: true, blockExamples: true, execution: true, download: true, legacyRoute: true, mobile: true, pageErrors: errors };
 };
