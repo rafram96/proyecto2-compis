@@ -1,0 +1,36 @@
+// Tutorial «De un CSV a un resultado»: cuánto gastó cada cliente.
+// Datos: joins_pedidos.csv, incluido junto a este archivo.
+PIPELINE gasto_por_cliente {
+    // Contrato: columnas cliente e importe, en este orden y sin vacíos.
+    SOURCE pedidos: TABLE[cliente: INT, importe: DECIMAL]
+        = CSV(file: "joins_pedidos.csv");
+
+    // Conserva solo los pedidos con importe positivo.
+    STEP validos = FILTER {
+        WHERE importe > 0;
+    }
+
+    // Añade el importe con IGV (18 %).
+    STEP con_igv = DERIVE {
+        importe_con_igv = importe * 1.18;
+    }
+
+    // Una fila por cliente: cantidad de pedidos y totales.
+    STEP por_cliente = AGGREGATE {
+        GROUP_BY cliente;
+        COUNT() AS pedidos;
+        SUM(importe) AS total;
+        SUM(importe_con_igv) AS total_con_igv;
+    }
+
+    // Primero quien más gastó.
+    STEP ranking = SORT {
+        BY total DESC;
+    }
+
+    SINK reporte = CSV(file: "out/gasto_por_cliente.csv");
+
+    FLOW {
+        pedidos -> validos -> con_igv -> por_cliente -> ranking -> reporte;
+    }
+}

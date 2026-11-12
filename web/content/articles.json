@@ -9,6 +9,15 @@
     "program": "ventas"
   },
   {
+    "slug": "tutorial",
+    "title": "De un CSV a un resultado",
+    "summary": "Tutorial completo: contrato, transformación, error, compilación, ejecución y archivo.",
+    "intro": "Recorrido guiado para quien no programa. Usa un CSV incluido, así que no necesitas preparar datos. Los bloques de terminal y las salidas se obtuvieron ejecutando los comandos; los fragmentos de código son partes del programa completo del final.",
+    "sources": [{ "path": "docs/tutorial.md", "sections": [] }],
+    "examples": ["gasto-por-cliente", "corregir-nulos"],
+    "program": "gasto-por-cliente"
+  },
+  {
     "slug": "estructura",
     "title": "PIPELINE, STEP y FLOW",
     "summary": "Declaraciones y conexiones para leer un programa completo.",

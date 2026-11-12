@@ -38,7 +38,7 @@ async (page) => {
   await page.evaluate(() => localStorage.removeItem("cauce-workspace-v1"));
   await page.reload();
   await page.getByRole("heading", { name: "Elige un problema" }).waitFor();
-  if ((await page.locator(".example-list article").count()) !== 5)
+  if ((await page.locator(".example-list article").count()) !== 6)
     throw new Error("Catálogo incompleto");
   // Acceso directo a detalle y compilación real desde copia, sin inicializar Python en el catálogo.
   const resources = await page.evaluate(() =>

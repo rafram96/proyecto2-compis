@@ -2,7 +2,7 @@
 
 ## Elegir y abrir una copia
 
-Comienza por [Ventas por cliente](/ejemplos/ventas). Lee el problema, el código y los requisitos. Abrir una copia en el estudio crea un documento independiente con nombre, revisión 1, inspector Resultado y pases predeterminados. El documento anterior queda en Borradores anteriores. Navegar por ejemplos o documentación no modifica tu documento.
+Si es tu primera vez, el tutorial [De un CSV a un resultado](/docs/tutorial) recorre un programa completo, desde el archivo de datos hasta el archivo de salida, con un CSV incluido que no requiere preparación. Para practicar con el estudio, comienza por [Ventas por cliente](/ejemplos/ventas). Lee el problema, el código y los requisitos. Abrir una copia en el estudio crea un documento independiente con nombre, revisión 1, inspector Resultado y pases predeterminados. El documento anterior queda en Borradores anteriores. Navegar por ejemplos o documentación no modifica tu documento.
 
 ## Compilar e inspeccionar
 
@@ -12,7 +12,7 @@ Compilar no lee datasets ni certifica sus valores. El análisis sigue siendo loc
 
 ## Ejecutar y consultar resultados
 
-Con el servicio conectado, ve a Resultados, elige el pipeline ventas y enlaza ventas.pedidos con orders@1. Pulsa Ejecutar para enviar el programa. Si el dataset aparece sin preparar, ejecuta `python -m service.prepare` en el servidor y reinicia el servicio. JOIN utiliza datasets incluidos; ventas, riesgo y rangos requieren preparación. La compilación no realiza esa preparación.
+Con el servicio conectado, ve a Resultados, elige el pipeline ventas y enlaza ventas.pedidos con orders@1. Pulsa Ejecutar para enviar el programa. Si el dataset aparece sin preparar, ejecuta `python -m service.prepare` en el servidor y reinicia el servicio. JOIN y el tutorial utilizan datasets incluidos; ventas, riesgo y rangos requieren preparación. La compilación no realiza esa preparación.
 
 El trabajo pasa por En cola y Ejecutando hasta Completado, Fallido, Cancelado o Tiempo agotado. Cancelar ejecución termina el proceso hijo. En Completado puedes elegir la salida, consultar una página de hasta 100 filas, desplegar su esquema y descargar el archivo completo. Una salida de cero filas es válida. OUTPUT se materializa en Parquet; SINK conserva su formato. Los contratos dinámicos de JOIN permanecen con O0 y con optimización.
 

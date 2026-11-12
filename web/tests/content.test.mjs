@@ -80,3 +80,24 @@ test("lector conserva código, tablas, listas continuadas y anclas con acentos o
     "segunda",
   ]);
 });
+
+test("tutorial publicado: bloques con lenguaje conocido, programa válido y enlaces internos", () => {
+  const article = content.articles.find((a) => a.slug === "tutorial");
+  assert.ok(article);
+  const example = content.examples.find((e) => e.slug === article.program);
+  assert.equal(example.source, "demo/tutorial.etl");
+  assert.deepEqual(example.datasets, [
+    { pipeline: "gasto_por_cliente", declaration: "pedidos", dataset: "join-orders", version: "1" },
+  ]);
+  const blocks = markdown(article.body);
+  const languages = new Set(blocks.filter((b) => b.kind === "code").map((b) => b.language));
+  assert.deepEqual([...languages].sort(), ["csv", "output", "sh", "text"]);
+  for (const block of blocks.filter((b) => b.kind === "code" && b.language === "text"))
+    assert.ok(example.code.includes(block.text) || block.text.includes("importes"));
+  const links = [...article.body.matchAll(/\]\(([^)]+)\)/g)].map((m) => m[1]);
+  assert.ok(links.includes("/estudio?vista=ejecucion"));
+  for (const link of links)
+    assert.match(link, /^(\/docs\/|\/ejemplos\/|\/estudio\?vista=[a-z]+$)/);
+  const guide = content.articles.find((a) => a.slug === "primer-programa");
+  assert.ok(guide.body.includes("(/docs/tutorial)"));
+});

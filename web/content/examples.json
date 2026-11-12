@@ -27,6 +27,42 @@
     ]
   },
   {
+    "slug": "gasto-por-cliente",
+    "title": "Gasto por cliente desde un CSV",
+    "name": "tutorial.etl",
+    "source": "demo/tutorial.etl",
+    "goal": "Recorrer el camino completo de un CSV incluido a un archivo de resultados: contrato, filtro, columna derivada, agregación y orden.",
+    "operations": [
+      "FILTER",
+      "DERIVE",
+      "AGGREGATE",
+      "SORT"
+    ],
+    "explanation": "Programa del tutorial «De un CSV a un resultado». El contrato SOURCE declara cliente INT e importe DECIMAL sin nulos. Filtra importes positivos, deriva importe_con_igv = importe * 1.18, agrupa por cliente con COUNT y SUM y ordena por total descendente.",
+    "requirements": [
+      "demo/joins_pedidos.csv está incluido; no requiere scripts/create_demo_data.py ni python -m service.prepare.",
+      "En Resultados elige el pipeline gasto_por_cliente y enlaza gasto_por_cliente.pedidos → join-orders@1, disponible sin preparación."
+    ],
+    "runtime": "El SINK escribe gasto_por_cliente.csv con dos filas: (2, 2, 70, 82.60) y (1, 1, 10, 11.80). Con la CLI queda en demo/out/; el servicio lo entrega como descarga.",
+    "expectation": {
+      "ok": true,
+      "pipelines": 1
+    },
+    "datasets": [
+      {
+        "pipeline": "gasto_por_cliente",
+        "declaration": "pedidos",
+        "dataset": "join-orders",
+        "version": "1"
+      }
+    ],
+    "expectedText": "Compila sin diagnósticos. La IR es igual antes y después de los pases predeterminados. Si escribes importes en el filtro, el contrato permite detectar E_COLUMN antes de leer datos.",
+    "docs": [
+      "tutorial",
+      "operaciones"
+    ]
+  },
+  {
     "slug": "riesgo-crediticio",
     "title": "Riesgo crediticio y composición",
     "name": "credit_risk.etl",

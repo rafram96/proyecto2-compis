@@ -11,6 +11,25 @@ import sys
 from uuid import uuid4
 
 
+def verify_tutorial_downloads(web):
+    """Las descargas del estudio deben ser byte a byte el CSV que escribe el runtime local."""
+    import tempfile
+    from etl_dsl import compile_program, parse
+    from etl_dsl.runtime import PolarsRuntime
+    demo = web.parent / "demo"
+    with tempfile.TemporaryDirectory() as temp:
+        (Path(temp) / "joins_pedidos.csv").write_bytes((demo / "joins_pedidos.csv").read_bytes())
+        namespace = {"__name__": "verify_tutorial"}
+        exec(compile_program(parse((demo / "tutorial.etl").read_text(encoding="utf-8"))), namespace)
+        with PolarsRuntime(temp) as runtime:
+            namespace["PIPELINES"]["gasto_por_cliente"](runtime)
+        expected = (Path(temp) / "out/gasto_por_cliente.csv").read_bytes()
+    for name in ("desktop-light", "mobile-dark"):
+        if (web / f".playwright-cli/t-{name}.csv").read_bytes() != expected:
+            raise SystemExit(f"La descarga del tutorial ({name}) difiere del runtime local.")
+    print("Descargas del tutorial verificadas byte a byte contra el runtime local (2).")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--execution-only", action="store_true", help="Recorrido HTTP/runner/archivos; funciona en producción sin /src/")
@@ -20,6 +39,8 @@ def main():
     parser.add_argument("--evaluation-only", action="store_true", help="Recorrido /evaluacion y descargas C5; también en producción")
     parser.add_argument("--studio-only", action="store_true",
                         help="Divisor, disposición y enlaces /estudio?vista=…; también en producción (requiere la API)")
+    parser.add_argument("--tutorial-only", action="store_true",
+                        help="Tutorial CSV → resultado: artículo, enlaces, copia, error, ejecución y descarga (requiere la API)")
     parser.add_argument("--url", default="http://127.0.0.1:5173/")
     args = parser.parse_args()
     if args.execution_only and not args.timeout_api:
@@ -37,7 +58,8 @@ def main():
                   ("content.js", ('"content":true', '"storageFailure":true')),
                   ("inspectors.js", ('"inspectors":true', '"noRecompileOnExplore":true')),
                   ("evaluation.js", ('"evaluation":true', '"downloads":8', '"apiWhileReading":0')),
-                  ("studio.js", ('"studio":true', '"noRecompileOnResize":true', '"viewLinks":9', '"linkJourneys":true'))]
+                  ("studio.js", ('"studio":true', '"noRecompileOnResize":true', '"viewLinks":9', '"linkJourneys":true')),
+                  ("tutorial.js", ('"tutorial":true', '"journeys":2', '"execution":true', '"downloads":2'))]
         if args.execution_only:
             suites = [("execution.js", ('"execution":true', '"timeout":true', '"download":true'))]
         if args.content_only:
@@ -48,6 +70,8 @@ def main():
             suites = suites[4:5]
         if args.studio_only:
             suites = suites[5:6]
+        if args.tutorial_only:
+            suites = suites[6:7]
         for script, required in suites:
             code = (web / "tests/browser" / script).read_text(encoding="utf-8").strip().removesuffix(";")
             code = code.replace("__CAUCE_TIMEOUT_API__", args.timeout_api)
@@ -64,6 +88,11 @@ def main():
         sys.path[:0] = [str(web.parent), str(web / "src/compiler")]
         if args.studio_only:
             return
+        if args.tutorial_only or not (args.content_only or args.inspectors_only or args.execution_only
+                                      or args.evaluation_only):
+            verify_tutorial_downloads(web)
+            if args.tutorial_only:
+                return
         if args.evaluation_only or not (args.content_only or args.inspectors_only or args.execution_only):
             import hashlib
             import json

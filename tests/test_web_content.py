@@ -11,8 +11,8 @@ class WebContentTests(unittest.TestCase):
     def test_generated_content_is_current_and_explicit(self):
         content = build_content()
         self.assertEqual(DEST.read_text(encoding="utf-8"), serialized())
-        self.assertEqual(len(content['examples']), 5)
-        self.assertEqual(len(content['articles']), 6)
+        self.assertEqual(len(content['examples']), 6)
+        self.assertEqual(len(content['articles']), 7)
         for kind in content.values():
             validate_slugs(kind)
         for example in content['examples']:
