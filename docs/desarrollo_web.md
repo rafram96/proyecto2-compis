@@ -13,7 +13,7 @@ Clona el repositorio y cambia a la rama de trabajo que te hayan compartido:
 ```sh
 git clone git@github.com:rafram96/proyecto2-compis.git
 cd proyecto2-compis
-git switch --track origin/feat/studio-ux-audit
+git switch --track origin/feature/web
 ```
 
 Si utilizas HTTPS, cambia la URL de clonación por la que muestra GitHub. Los comandos siguientes parten de la raíz del repositorio, salvo que se indique lo contrario.
@@ -90,7 +90,7 @@ Para cambios en el compilador o el servicio ejecuta además `.venv/bin/python -m
 Crea tu propia rama a partir de la rama compartida y evita trabajar directamente en `main`:
 
 ```sh
-git switch feat/studio-ux-audit
+git switch feature/web
 git pull --ff-only
 git switch -c feat/descripcion-del-cambio
 # Edita, revisa con git status y ejecuta las comprobaciones pertinentes.
