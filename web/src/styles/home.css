@@ -5,7 +5,6 @@
 .built-heading p { max-width: 60ch; font-size: var(--fs-body); color: var(--muted-foreground); }
 .technology-controls { display: flex; gap: 8px; flex-wrap: wrap; }
 .technology-controls .tool-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; }
-.technology-pause svg { width: 16px; height: 16px; fill: currentColor; }
 .technology-viewport { overflow: hidden; border-block: 1px solid var(--border); }
 .technology-track { display: flex; width: max-content; animation: technology-scroll 72s linear infinite; animation-play-state: paused; }
 .technology-viewport[data-running="true"] .technology-track { animation-play-state: running; }

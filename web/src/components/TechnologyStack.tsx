@@ -47,7 +47,6 @@ function TechnologyList({ duplicate = false }: { duplicate?: boolean }) {
 
 export default function TechnologyStack() {
   const section = useRef<HTMLElement>(null);
-  const [paused, setPaused] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [visible, setVisible] = useState(false);
   const [pageVisible, setPageVisible] = useState(() => !document.hidden);
@@ -83,23 +82,6 @@ export default function TechnologyStack() {
           className="technology-controls"
           aria-label="Presentación del stack"
         >
-          {!expanded && (
-            <button
-              type="button"
-              className="tool-button technology-pause"
-              aria-pressed={paused}
-              onClick={() => setPaused((value) => !value)}
-            >
-              <svg viewBox="0 0 20 20" aria-hidden="true">
-                {paused ? (
-                  <path d="M6 3.5 15 10l-9 6.5Z" />
-                ) : (
-                  <path d="M5 4h3v12H5zM12 4h3v12h-3z" />
-                )}
-              </svg>
-              {paused ? "Reanudar movimiento" : "Pausar movimiento"}
-            </button>
-          )}
           <button
             type="button"
             className="tool-button technology-view"
@@ -115,7 +97,7 @@ export default function TechnologyStack() {
         className="technology-viewport"
         id="technology-viewport"
         data-expanded={expanded}
-        data-running={visible && pageVisible && !paused && !expanded}
+        data-running={visible && pageVisible && !expanded}
       >
         <div className="technology-track">
           <TechnologyList />
