@@ -8,6 +8,8 @@ dist/
 .venv/
 venv/
 .env
+.env.local
+.env.*.local
 
 # Prototipo local anterior; el código mantenido está en etl_dsl/
 /Referencias/
@@ -53,3 +55,13 @@ Proyecto2_Enunciado-Compis.pdf
 .idea/
 .DS_Store
 Thumbs.db
+
+# Material local y proyectos auxiliares
+/referencias/
+/02_Codigo_Laboratorios_y_Tareas/
+/CLAUDE.md
+/video/
+/csharp-x86-compi/
+/ejemplos_diseno/
+/.taste-skill/
+/ultimate-parser-app/

@@ -1,5 +1,7 @@
 # Stream, web del compilador ETL-DSL
 
+¿Primera vez en el proyecto? Empieza por la [guía de desarrollo web](../docs/desarrollo_web.md). Este documento reúne el detalle técnico de la implementación.
+
 Landing (`/`), catálogo (`/ejemplos`), documentación (`/docs`), evaluación C5 (`/evaluacion`) y estudio ampliado (`/studio`) del compilador de `etl_dsl/`. Se llama **Stream**: una corriente de datos que recorre fuentes, transformaciones y destinos. La marca `~>` conserva la metáfora del agua. `/estudio` continúa abriendo Studio para no romper enlaces anteriores.
 
 ```bash

@@ -9,6 +9,10 @@ El destino es **Python + Polars**, como en [la propuesta inicial](docs/Propuesta
 la sintaxis implementada corresponde a las
 referencias v0.2, no al ejemplo de operadores `|>` de esa propuesta.
 
+## Desarrollo de la web
+
+Para instalar y trabajar en Stream, consulta la [guía de desarrollo web](docs/desarrollo_web.md). Incluye el arranque local, el servicio de ejecución y las comprobaciones antes de compartir cambios.
+
 ## Instalación y uso
 
 Para un primer recorrido guiado, sin programar en Python, sigue el tutorial
