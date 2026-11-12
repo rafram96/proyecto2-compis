@@ -453,6 +453,14 @@ class ServiceTests(unittest.TestCase):
             with self.client(static=root) as (c, _, _):
                 for route in ('/', '/estudio', '/docs', '/ejemplos', '/docs/conectores', '/ejemplos/ventas', '/evaluacion'):
                     self.assertEqual(c.get(route).text, 'SPA')
+                # Enlaces internos con consulta: /estudio?vista=… y valores inválidos también reciben la SPA.
+                for route in ('/estudio?vista=ir', '/estudio?vista=ejecucion', '/estudio?vista=desconocida&x=1',
+                              '/evaluacion?fase=ejecucion&workload=join'):
+                    response = c.get(route)
+                    self.assertEqual((response.status_code, response.text), (200, 'SPA'), route)
+                for route in ('/api/v1/missing?vista=ir', '/assets/missing.js?vista=ir', '/evidencia/c5/ausente.csv?x=1'):
+                    self.assertEqual(c.get(route).status_code, 404, route)
+                self.assertEqual(c.get('/evidencia/c5/summary.csv?vista=ir').text, 'a,b\n')
                 for route in ('/api/missing', '/api/v1/missing', '/assets/missing.js', '/py/missing.whl',
                               '/evidencia/c5/ausente.csv', '/evidencia/c5', '/evidencia/otra'):
                     self.assertEqual(c.get(route).status_code, 404, route)

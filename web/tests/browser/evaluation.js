@@ -228,7 +228,7 @@ async (page) => {
   await page.getByRole("radio", { name: "final_flags_none" }).check();
   const filtered = page.url();
   await page.getByRole("link", { name: "Abrir el estudio" }).click();
-  await page.waitForURL("**/estudio");
+  await page.waitForURL((u) => u.pathname === "/estudio");
   await page.locator(".cm-content").waitFor();
   if (!(await page.locator(".cm-content").innerText()).includes("borrador evaluación ñ")) fail("Se perdió el documento");
   if ((await page.getByLabel("Pases de optimización").inputValue()) !== "custom") fail("Se perdieron los pases");

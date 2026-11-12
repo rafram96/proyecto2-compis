@@ -5,6 +5,17 @@ import { ArticleBody } from "../components/ArticleBody";
 import { Code } from "../components/Code";
 import { OpenExample } from "../components/OpenExample";
 import { ContentMissing, useContentFocus } from "./contentNavigation";
+/** Artículos donde una vista del estudio continúa la lectura con el documento propio. */
+const STUDIO_VIEWS: Record<string, { href: string; text: string }> = {
+  "null-contratos": {
+    href: "/estudio?vista=resultado",
+    text: "Revisar los diagnósticos de tu documento en el estudio",
+  },
+  estructura: {
+    href: "/estudio?vista=flow",
+    text: "Ver el FLOW de tu documento en el estudio",
+  },
+};
 export default function DocsPage({ slug }: { slug?: string }) {
   const article = slug ? findArticle(slug) : undefined;
   const heading = useContentFocus(slug);
@@ -74,6 +85,14 @@ export default function DocsPage({ slug }: { slug?: string }) {
                 </p>
                 <Code verbatim code={example.code} />
                 <OpenExample example={example} />
+                {STUDIO_VIEWS[article.slug] && (
+                  <p className="studio-view-link">
+                    <a href={STUDIO_VIEWS[article.slug].href}>
+                      {STUDIO_VIEWS[article.slug].text}
+                    </a>{" "}
+                    · abre tu documento actual en esa vista, no este programa.
+                  </p>
+                )}
                 <h2>Ejemplos relacionados</h2>
                 <ul>
                   {article.examples.map((slug) => (

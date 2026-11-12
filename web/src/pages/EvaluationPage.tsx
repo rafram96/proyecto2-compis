@@ -623,6 +623,11 @@ function StructuralProofs({ entry, selection }: { entry: Structure; selection: S
           )}
         </article>
       )}
+      <p className="eval-studio-link">
+        <a href="/estudio?vista=ir">Abrir la vista IR del estudio</a> para consultar la evidencia O1/O3 que el
+        compilador emite para el documento que tengas abierto. No carga este programa de la campaña: tu documento se
+        conserva y solo cambia la vista elegida.
+      </p>
     </div>
   );
 }

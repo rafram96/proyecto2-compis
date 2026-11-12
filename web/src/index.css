@@ -479,9 +479,18 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 .workspace select { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 8px; color: var(--foreground); max-width: 100%; }
 .save-status { margin-left: auto; color: var(--muted-foreground); max-width: 70ch; }
 .save-status[data-saved="false"] { color: var(--warning); }
-.workspace-panels { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+/* Editor e inspector con divisor propio de 44 px: el objetivo táctil no tapa la barra de desplazamiento de CodeMirror. */
+.workspace-panels { display: grid; grid-template-columns: minmax(17rem, var(--editor-fr, 50fr)) 44px minmax(19rem, var(--inspector-fr, 50fr)); }
 .code-panel, .inspector-panel { min-width: 0; }
-.code-panel { border-right: 1px solid var(--border); }
+.panel-splitter { display: flex; align-items: flex-start; justify-content: center; background: var(--surface); border-inline: 1px solid var(--border); cursor: col-resize; touch-action: none; user-select: none; }
+.panel-splitter-grip { position: sticky; top: calc(50svh - 28px); margin-top: 104px; width: 4px; height: 36px; border-radius: 2px; background: var(--muted-foreground); opacity: 0.55; transition: opacity 120ms var(--ease-out), background-color 120ms var(--ease-out), height 160ms var(--ease-out); }
+.panel-splitter:hover .panel-splitter-grip { opacity: 1; }
+.panel-splitter:focus-visible { outline: 3px solid var(--ring); outline-offset: -3px; }
+.panel-splitter:focus-visible .panel-splitter-grip, .panel-splitter[data-dragging] .panel-splitter-grip { opacity: 1; background: var(--primary); height: 56px; }
+.panel-splitter[data-dragging] { background: var(--surface-strong); }
+.is-resizing-panels, .is-resizing-panels * { cursor: col-resize !important; user-select: none !important; }
+@media (prefers-reduced-motion: reduce) { .panel-splitter-grip { transition: none; } }
+.view-notice { margin: 0; padding: 10px 16px; font-size: var(--fs-s); color: var(--warning); background: var(--card); border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
 .panel-caption { height: 50px; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; font-size: var(--fs-s); background: var(--surface); gap: 12px; }
 .panel-caption span:last-child { color: var(--muted-foreground); white-space: nowrap; }
 .panel-caption span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -529,7 +538,7 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
   .save-status { margin-left: 0; width: 100%; }
   .document-name input { font-size: 16px; min-height: 40px; }
   .workspace-panels { display: block; }
-  .code-panel { border-right: 0; }
+  .panel-splitter { display: none; }
   .workspace-panels[data-pane="code"] .inspector-panel, .workspace-panels[data-pane="inspector"] .code-panel { display: none; }
   .mobile-panes { display: flex; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--border); }
   .mobile-panes button { background: var(--surface); color: var(--foreground); padding: 10px 18px; border: 1px solid var(--border); border-radius: 6px; min-height: 44px; cursor: pointer; }
@@ -809,6 +818,10 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 .eval-sample { fill: var(--card); stroke: var(--primary); stroke-width: 1.5; }
 .eval-median { stroke: var(--foreground); stroke-width: 3; stroke-linecap: round; }
 .eval-proofs { display: grid; gap: 20px; margin-top: 24px; }
+.studio-view-link { margin-top: 12px; font-size: var(--fs-s); color: var(--muted-foreground); }
+.studio-view-link a { color: var(--foreground); display: inline-block; padding-block: 10px; text-underline-offset: 3px; }
+.eval-studio-link { font-size: var(--fs-s); color: var(--muted-foreground); max-width: 72ch; }
+.eval-studio-link a { color: var(--foreground); text-underline-offset: 3px; }
 .eval-proof { padding: 24px; background: var(--surface); border-radius: 8px; min-width: 0; }
 .eval-proof h3 { font-size: 1.125rem; line-height: 1.3; margin-bottom: 14px; letter-spacing: -0.01em; }
 .eval-proof dl { margin: 0; display: grid; gap: 14px; }

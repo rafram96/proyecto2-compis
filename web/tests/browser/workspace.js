@@ -39,7 +39,7 @@ async (page) => {
   await page
     .getByRole("link", { name: "Continuar en el estudio", exact: true })
     .click();
-  await page.waitForURL("**/estudio");
+  await page.waitForURL((u) => u.pathname === "/estudio");
   await waitLive();
   if ((await page.getByLabel("Pases de optimización").inputValue()) !== "O0")
     throw new Error("No se transfirieron los pases de la demo");
@@ -168,7 +168,7 @@ async (page) => {
     .click();
   await page.waitForURL(origin + "/");
   await page.goBack();
-  await page.waitForURL("**/estudio");
+  await page.waitForURL((u) => u.pathname === "/estudio");
   if (
     (await page.getByLabel("Nombre del documento").inputValue()) !==
     "importado.etl"
@@ -182,7 +182,7 @@ async (page) => {
     .getByRole("main")
     .getByRole("link", { name: "Abrir el estudio" })
     .click();
-  await page.waitForURL("**/estudio");
+  await page.waitForURL((u) => u.pathname === "/estudio");
 
   // Fallo real de descarga inicial de Pyodide en el worker, seguido de recuperación.
   await page

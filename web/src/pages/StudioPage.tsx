@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { restartCompiler } from "../compiler/client";
 import { examples } from "../content";
 import PassSelector from "../components/inspectors/PassSelector";
@@ -19,6 +19,20 @@ import {
   useWorkspace,
 } from "../workspace/store";
 import { downloadText } from "../workspace/files";
+import {
+  EXECUTION_SLUG,
+  inspectorView,
+  parseView,
+  serializeView,
+  viewLabel,
+  viewSlugs,
+} from "../workspace/view";
+import type { Inspector as InspectorName } from "../workspace/model";
+import type { ParsedView, StudioView } from "../workspace/view";
+import PanelSplitter, {
+  splitStyle,
+  usePanelSplit,
+} from "../components/PanelSplitter";
 import { useCompilation } from "../workspace/useCompilation";
 import type { Diagnostic, Span } from "../compiler/types";
 const ExecutionPanel = lazy(() => import("../execution/ExecutionPanel"));
@@ -29,8 +43,16 @@ export default function StudioPage() {
   const { workspace, notice, saved } = useWorkspace();
   const doc = workspace.active;
   const { result, current, runtime, busy, error, run } = useCompilation(doc);
-  const [pane, setPane] = useState<"code" | "inspector">("code");
+  // La vista llega en la URL; el documento y su revisión nunca.
+  const [initialView] = useState(() => parseView(location.search));
+  const [pane, setPane] = useState<"code" | "inspector">(
+    initialView.view?.kind === "inspector" ? "inspector" : "code",
+  );
   const [message, setMessage] = useState("");
+  const [viewNotice, setViewNotice] = useState("");
+  const [reveal, setReveal] = useState(0);
+  const [split, commitSplit] = usePanelSplit();
+  const panels = useRef<HTMLDivElement>(null);
   const [focusRange, setFocusRange] = useState<{
     from: number;
     to: number;
@@ -38,10 +60,57 @@ export default function StudioPage() {
   }>();
   const input = useRef<HTMLInputElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
+  const replaceView = (view: StudioView) =>
+    history.replaceState(
+      history.state,
+      "",
+      "/estudio" + serializeView(view) + location.hash,
+    );
+  // Seleccionar una vista solo cambia el campo inspector: no crea revisión ni recompila.
+  const applyView = useCallback(({ view, ignored }: ParsedView) => {
+    if (view?.kind === "inspector") {
+      if (getWorkspace().workspace.active.inspector !== view.inspector)
+        updateDocument({ inspector: view.inspector });
+      setPane("inspector");
+    } else if (view?.kind === "execution") setReveal((n) => n + 1);
+    if (!ignored.length) return setViewNotice("");
+    const kept = view
+      ? `Se abre ${viewLabel(view)}.`
+      : `Se mantiene ${viewLabel(inspectorView(getWorkspace().workspace.active.inspector))}, la vista actual del documento.`;
+    setViewNotice(
+      `Se ignoró ${ignored.join(", ")} en el enlace. ${kept} Vistas válidas: ${viewSlugs().join(", ")}.`,
+    );
+    history.replaceState(
+      history.state,
+      "",
+      "/estudio" + (view ? serializeView(view) : "") + location.hash,
+    );
+  }, []);
   useEffect(() => {
     document.title = "Estudio · Cauce";
-    heading.current?.focus({ preventScroll: true });
-  }, []);
+    if (initialView.view?.kind !== "execution")
+      heading.current?.focus({ preventScroll: true });
+    applyView(initialView);
+    // Atrás/adelante y enlaces internos con la misma ruta y otra vista.
+    const restore = () => {
+      if (location.pathname === "/estudio") applyView(parseView(location.search));
+    };
+    window.addEventListener("popstate", restore);
+    return () => window.removeEventListener("popstate", restore);
+  }, [applyView, initialView]);
+  // Si la URL nombra un inspector y el documento activo cambia (ejemplo, borrador),
+  // la URL pasa a describir la vista real; sin parámetro, la URL no se toca.
+  useEffect(() => {
+    const shown = parseView(location.search).view;
+    const active = getWorkspace().workspace.active.inspector;
+    if (shown?.kind === "inspector" && shown.inspector !== active)
+      replaceView(inspectorView(active));
+  }, [doc.id, doc.inspector]);
+  function selectInspector(inspector: InspectorName) {
+    updateDocument({ inspector });
+    replaceView(inspectorView(inspector));
+    setViewNotice("");
+  }
   const analysis = result?.result.analysis;
   const diagnostics = current ? (analysis?.diagnostics ?? []) : [];
   const python = pythonDownload(doc, result);
@@ -139,7 +208,18 @@ export default function StudioPage() {
           </label>
           <span className="revision">Revisión {doc.revision}</span>
           <div className="document-actions">
-            <a className="tool-button" href="#resultados">Ejecutar y resultados</a>
+            <a
+              className="tool-button"
+              href={`/estudio?vista=${EXECUTION_SLUG}`}
+              onClick={(event) => {
+                event.preventDefault();
+                replaceView({ kind: "execution" });
+                setViewNotice("");
+                setReveal((n) => n + 1);
+              }}
+            >
+              Ejecutar y resultados
+            </a>
             <button
               className="tool-button"
               onClick={() => input.current?.click()}
@@ -237,8 +317,22 @@ export default function StudioPage() {
             Inspector
           </button>
         </div>
-        <div className="workspace-panels" data-pane={pane}>
-          <section className="code-panel" aria-label="Código fuente">
+        {viewNotice && (
+          <p className="view-notice" role="status">
+            {viewNotice}
+          </p>
+        )}
+        <div
+          className="workspace-panels"
+          data-pane={pane}
+          ref={panels}
+          style={splitStyle(split)}
+        >
+          <section
+            className="code-panel"
+            id="studio-code"
+            aria-label="Código fuente"
+          >
             <div className="panel-caption">
               <span>{doc.name}</span>
               <span>Ctrl / ⌘ + Enter</span>
@@ -260,8 +354,15 @@ export default function StudioPage() {
               </Suspense>
             </div>
           </section>
+          <PanelSplitter
+            panels={panels}
+            value={split}
+            onCommit={commitSplit}
+            controls="studio-code studio-inspector"
+          />
           <section
             className="inspector-panel"
+            id="studio-inspector"
             aria-label="Inspector de compilación"
           >
             <div className="studio-out-bar">
@@ -270,7 +371,7 @@ export default function StudioPage() {
                   <button
                     key={f}
                     aria-pressed={f === fmt}
-                    onClick={() => updateDocument({ inspector: f })}
+                    onClick={() => selectInspector(f)}
                   >
                     {label}
                   </button>
@@ -354,7 +455,12 @@ export default function StudioPage() {
           )}
         </section>
         <Suspense fallback={<p>Cargando resultados…</p>}>
-          <ExecutionPanel doc={doc} analysis={analysis} current={current} />
+          <ExecutionPanel
+            doc={doc}
+            analysis={analysis}
+            current={current}
+            reveal={reveal}
+          />
         </Suspense>
         <div className="workspace-runtime">
           <p

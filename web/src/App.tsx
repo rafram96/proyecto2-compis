@@ -55,9 +55,11 @@ export default function App() {
         );
         if (!anchor || anchor.target || anchor.hasAttribute("download")) return;
         const url = new URL(anchor.href);
+        // Misma ruta y misma consulta: solo cambia el ancla y la resuelve el navegador.
+        // Misma ruta con otra consulta (p. ej. /estudio?vista=ir) no debe recargar la página.
         if (
           url.origin !== location.origin ||
-          url.pathname === location.pathname
+          (url.pathname === location.pathname && url.search === location.search)
         )
           return;
         event.preventDefault();

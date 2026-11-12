@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AnalysisResult } from "../compiler/types";
 import type { Document } from "../workspace/model";
 import type { Binding, Capabilities } from "./types";
@@ -9,7 +9,15 @@ import { label, pipelines } from "../components/inspectors/model";
 import { getWorkspace } from "../workspace/store";
 import Results from "./Results";
 
-export default function ExecutionPanel({ doc, analysis, current }: { doc: Document; analysis?: AnalysisResult | null; current: boolean }) {
+export default function ExecutionPanel({ doc, analysis, current, reveal = 0 }: { doc: Document; analysis?: AnalysisResult | null; current: boolean; reveal?: number }) {
+  const title = useRef<HTMLHeadingElement>(null);
+  // ?vista=ejecucion: lleva a esta sección sin cambiar el documento ni iniciar trabajos.
+  useEffect(() => {
+    if (!reveal) return;
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    title.current?.closest("section")?.scrollIntoView({ block: "start", behavior: reduce ? "auto" : "smooth" });
+    title.current?.focus({ preventScroll: true });
+  }, [reveal]);
   const state = useSession(doc.id);
   const [caps, setCaps] = useState<Capabilities | null>(null);
   const [connection, setConnection] = useState("Consultando servicio…");
@@ -79,7 +87,7 @@ export default function ExecutionPanel({ doc, analysis, current }: { doc: Docume
     finally { setCancelling(false); }
   }
   return <section className="execution-panel" id="resultados" aria-labelledby="results-title" data-ui>
-    <div className="execution-heading"><div><h2 id="results-title">Resultados</h2>
+    <div className="execution-heading"><div><h2 id="results-title" ref={title} tabIndex={-1}>Resultados</h2>
       <p>Ejecutar envía este programa y sus opciones al servicio Python. Los datasets autorizados ya están en el servidor; compilar sigue siendo local.</p></div>
       <button className="tool-button" onClick={() => setAttempt((n) => n + 1)}>Reconectar</button>
     </div>

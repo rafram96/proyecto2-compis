@@ -29,7 +29,7 @@ async (page) => {
     await page
       .getByRole("button", { name: "Abrir una copia en el estudio" })
       .click();
-    await page.waitForURL("**/estudio");
+    await page.waitForURL((u) => u.pathname === "/estudio");
     await page.locator(".cm-content").waitFor();
   };
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -69,7 +69,7 @@ async (page) => {
   )
     throw new Error("Acción sin foco visible");
   await page.keyboard.press("Enter");
-  await page.waitForURL("**/estudio");
+  await page.waitForURL((u) => u.pathname === "/estudio");
   await page.locator(".cm-content").waitFor();
   same(
     (await workspace()).active.source,
@@ -137,7 +137,7 @@ async (page) => {
   await page.goBack();
   await page.waitForURL("**/docs/operaciones#expresiones");
   await page.goForward();
-  await page.waitForURL("**/estudio");
+  await page.waitForURL((u) => u.pathname === "/estudio");
   same(
     (await workspace()).active,
     beforeDocs.active,
