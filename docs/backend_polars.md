@@ -6,12 +6,17 @@
 .etl -> Lark -> AST -> validación -> IR -> semántica estática -> pases -> Python con Polars (LazyFrame) -> SINK
 ```
 
+`backend.build_ir` valida el AST, lo baja a IR, infiere esquemas sobre la IR
+original y aplica los pases; `generate` produce Python desde la IR optimizada.
+Compilar no abre conectores ni lee datos.
+
 ## IR y optimización
 
 `ir.lower` baja el AST validado a un DAG por pipeline: un nodo por declaración
 (`SOURCE`, `INPUT`, `USE`, cada `STEP`, `SINK`, `OUTPUT`) con sus entradas
 resueltas desde `FLOW` y en orden topológico. Las expresiones se reutilizan del
-AST. `--format ir` imprime la IR antes y después de los pases:
+AST. `--format ir` imprime la IR antes y después de los pases; este es el bloque
+«después» de `python -m etl_dsl demo/optimizaciones.etl --format ir`:
 
 ```text
 pipeline optimizaciones (raíz) {
@@ -22,39 +27,54 @@ pipeline optimizaciones (raíz) {
 }
 ```
 
+Los cinco pases se aplican por defecto en este orden:
+
 | Pase | Qué hace |
 | --- | --- |
-| `constantes` | Pliega `+ - *` y comparaciones entre literales; simplifica `AND`, `OR` y `NOT` con `TRUE`/`FALSE` respetando la lógica de tres valores. Un `FILTER` que queda en `TRUE` se elimina. La división no se pliega. |
-| `rangos` | Elimina filtros o términos AND implicados por intervalos y ausencia de NULL; registra hechos y pruebas en la IR. |
+| `constantes` | Pliega `+ - *`, el `-` unario, `NOT` y comparaciones entre literales numéricos o de texto; simplifica `AND`, `OR` con `TRUE`/`FALSE` respetando la lógica de tres valores. No pliega `NULL` ni la división. Un `FILTER` que queda en `TRUE` se elimina. |
+| `rangos` | Elimina filtros o términos AND implicados por intervalos y ausencia de NULL; registra hechos y pruebas en la IR ([optimizacion_rangos.md](optimizacion_rangos.md)). |
 | `filtros` | Fusiona un `FILTER` con el `FILTER` anterior cuando este no tiene otros consumidores. |
-| `joins` | Sustituye INNER JOIN con VERIFY MANY_TO_ONE por CHECK_JOIN cuando todos los consumidores proyectan solo columnas izquierdas. Conserva lecturas y validaciones. |
+| `joins` | Sustituye INNER JOIN con VERIFY MANY_TO_ONE por CHECK_JOIN cuando todos los consumidores proyectan solo columnas izquierdas. Conserva lecturas y validaciones ([optimizacion_joins.md](optimizacion_joins.md)). |
 | `muertos` | Elimina pasos cuyo resultado no llega a ningún `SINK`, `OUTPUT` ni `USE`. Los `INPUT` se conservan como interfaz; CHECK_JOIN y JOIN con garantía son raíces con efectos. |
 
-Todos se aplican por defecto. `-O0` los desactiva y `--pases a,b` elige cuáles y
-en qué orden. Las pruebas comprueban que los resultados con y sin pases son
-iguales. Un nodo fusionado conserva en `origin` las declaraciones que representa,
-y sus errores de ejecución citan ambas (`grandes+pagadas`).
+`-O0` los desactiva y `--pases a,b` elige cuáles y en qué orden (se admiten
+repeticiones); las dos opciones son excluyentes y un nombre desconocido termina con
+error antes de compilar. La semántica estática se calcula siempre sobre la IR
+original, también con `-O0`. Las pruebas comprueban que los resultados con y sin
+pases son iguales. Un nodo fusionado conserva en `origin` las declaraciones que
+representa, y sus errores de ejecución citan ambas (`grandes+pagadas`).
+
+## Código generado
 
 `python main.py` compila los programas de `input/` a `output/*.py`. La generación
-de código valida nombres de conectores y sus opciones, ordena las declaraciones
-topológicamente según `FLOW` y emite una función Python por pipeline. Los datos
-no se consultan durante esta fase. C2 detecta incompatibilidades demostrables de
+valida nombres de conectores y sus opciones (`E_CONNECTOR`) y emite una función
+Python por pipeline, con los nodos en el orden topológico de la IR. Los datos no
+se consultan durante esta fase. C2 detecta incompatibilidades demostrables de
 columnas y tipos antes de optimizar; archivos, nulos reales y conocimiento
 desconocido conservan sus chequeos en ejecución.
 
 Cada paso genera un `LazyFrame` nuevo a partir de su entrada, envuelto en
-`rt.step(plan, etiqueta)`. `rt.step` resuelve el esquema del plan con
-`collect_schema()` sin leer datos, por lo que columnas inexistentes o tipos
-incompatibles se detectan en el paso que los causa. Nada se calcula hasta que un
-`SINK` o un contrato con columnas no anulables necesita los datos; Polars
-optimiza el plan completo en ese momento.
+`rt.step(plan, etiqueta)` y precedido de `rt.require_columns`. La etiqueta indica
+archivo, línea, columna, pipeline y declaración. Fragmento real del Python generado
+para `input/duckdb.etl`:
 
 ```python
-t_2 = rt.step(t_1.filter((pl.col('monto') > pl.lit(0))), 'positivas (3:5)')
+    rt.require_columns(t_1, ['monto'], 'input/duckdb.etl:6:5 ventas_por_cliente.positivas')
+    t_2 = rt.step(t_1.filter((pl.col('monto') > pl.lit(0))), 'input/duckdb.etl:6:5 ventas_por_cliente.positivas')
 ```
 
-`python main.py --run` compila y ejecuta. Cada instancia `USE` invoca la función
-del pipeline correspondiente y enlaza sus puertos lógicos.
+`rt.step` resuelve el esquema del plan con `collect_schema()` sin ejecutarlo, por
+lo que columnas inexistentes, tipos incompatibles o nombres ambiguos se detectan
+en el paso que los causa. Para un CSV, resolver el esquema puede leer la cabecera
+y la muestra de inferencia. Las transformaciones se calculan cuando un `SINK`
+escribe, cuando un contrato cuenta nulos de columnas sin `?` o cuando
+`VERIFY MANY_TO_ONE` materializa sus entradas; Polars optimiza el plan en ese
+momento. Las fuentes SQLite y DuckDB se leen completas al evaluar el `SOURCE`.
+
+`python main.py --run` compila y ejecuta; informa cada pipeline con
+`POLARS: PIPELINE nombre ejecutado.` y cada archivo escrito con `SINK: ruta`.
+Cada instancia `USE` invoca la función del pipeline correspondiente y enlaza sus
+puertos lógicos.
 
 Por defecto se ejecutan los pipelines que no son referenciados por `USE` y no
 tienen `INPUT`. `--pipeline nombre` permite seleccionar pipelines explícitamente;
@@ -65,26 +85,29 @@ del paquete instalado, pero no vuelve a leer ni interpretar el archivo `.etl`.
 Los caminos relativos de conectores usan como base la carpeta del `.etl`.
 El código generado conserva esa ruta absoluta por defecto y permite cambiarla
 al ejecutarse con `--base-dir`. `--output` cambia dónde se guarda el código, sin
-alterar dónde escriben los `SINK`.
+alterar dónde escriben los `SINK`. El [tutorial](tutorial.md) recorre estos
+comandos con un CSV incluido.
 
-```powershell
-.\.venv\Scripts\python.exe scripts\create_demo_data.py
-.\.venv\Scripts\python.exe main.py --run
-.\.venv\Scripts\python.exe output\credit_risk.py --pipeline order_report
+```sh
+python scripts/create_demo_data.py
+python main.py --run
+python output/credit_risk.py --pipeline order_report
 ```
 
-Con Docker: `docker compose run --rm etl` genera los datos de ejemplo y ejecuta
-todos los pipelines; `docker compose run --rm tests` corre las pruebas.
+En Windows, `.venv\Scripts\python.exe` sustituye a `python` si el entorno no está
+activado. Con Docker: `docker compose run --rm etl` genera los datos de ejemplo y
+ejecuta todos los pipelines; `docker compose run --rm tests` corre las pruebas.
 
 ## Conectores
 
 Todas las opciones son literales. Las rutas, tablas, esquemas, delimitadores y
-marcadores de nulos son cadenas; `header` es booleano. Los parámetros que no se
-indican como opcionales son obligatorios.
+marcadores de nulos son cadenas no vacías (`nullstr` puede ser vacía); `header`
+es booleano. Los parámetros que no se indican como opcionales son obligatorios.
+Una opción desconocida, ausente o de otro tipo produce `E_CONNECTOR` al compilar.
 
 | Conector | SOURCE | SINK | Opciones |
 | --- | --- | --- | --- |
-| `CSV` | Sí | Sí | `file`; `header` (TRUE), `delimiter` (","), `nullstr` ("") opcionales |
+| `CSV` | Sí | Sí | `file`; `header` (TRUE), `delimiter` (",", un carácter), `nullstr` ("") opcionales |
 | `PARQUET` | Sí | Sí | `file` |
 | `DUCKDB` | Sí | Sí | `file`, `table`, `schema` opcional (por defecto `main`); `mode` solo para SINK |
 | `SQLITE` | Sí | No | `file`, `table` |
@@ -92,20 +115,22 @@ indican como opcionales son obligatorios.
 CSV y Parquet se leen de forma diferida con `pl.scan_csv` y `pl.scan_parquet`.
 CSV infiere tipos con las primeras 10 000 filas. Con `nullstr` vacío, un campo
 ausente se lee como `NULL` y un `""` entrecomillado conserva el texto vacío; con
-otro `nullstr`, los campos iguales a ese valor se leen como `NULL`.
+otro `nullstr`, los campos iguales a ese valor se leen como `NULL`. Un SINK CSV
+usa las mismas opciones al escribir: cabecera, delimitador y `nullstr` para los nulos.
 
-Los `SOURCE` requieren archivos locales existentes; no se aceptan patrones glob
-ni URLs. Una opción `table: "schema.tabla"` se interpreta como un solo nombre:
-para DuckDB se debe usar `schema: "schema", table: "tabla"`.
+Los `SOURCE` requieren archivos locales existentes (`E_SOURCE` si faltan); no se
+aceptan patrones glob ni URLs. Una opción `table: "schema.tabla"` se interpreta
+como un solo nombre: para DuckDB se debe usar `schema: "schema", table: "tabla"`.
 
 DuckDB y SQLite solo se usan como conectores: se leen completos con `fetchall`
 y se convierten a un `DataFrame` de Polars según un mapa de tipos, sin pyarrow.
 El paquete `duckdb` se importa solo si el programa usa el conector `DUCKDB`.
-SQLite usa la biblioteca estándar `sqlite3` en solo lectura; las afinidades
-enteras se mapean a `Int64`, las textuales a `String`, BLOB a `Binary`,
-REAL/NUMERIC/DECIMAL a `Float64` y BOOL/DATE/DATETIME a sus tipos
-correspondientes. Las declaraciones restantes usan `String`. DuckDB conserva
-`DECIMAL(p,s)` como `pl.Decimal(p, s)`.
+SQLite usa la biblioteca estándar `sqlite3` en solo lectura y no puede ser
+destino. Sus afinidades enteras se mapean a `Int64`, las textuales a `String`,
+BLOB a `Binary`, REAL/NUMERIC/DECIMAL a `Float64` y BOOL/DATE/DATETIME/TIMESTAMP a
+sus tipos correspondientes. Las declaraciones restantes usan `String`. DuckDB
+conserva `DECIMAL(p,s)` como `pl.Decimal(p, s)`; los tipos sin correspondencia los
+infiere Polars.
 
 Los SINK CSV/Parquet crean las carpetas necesarias y reemplazan el archivo de
 salida si ya existe. Un SINK DuckDB tiene `mode: "error"` por defecto (rechaza
@@ -121,19 +146,23 @@ por defecto:
 | --- | --- | --- |
 | `SUM(x)` | `pl.when(x.count() > 0).then(x.sum())` | En Polars la suma de solo nulos es 0; en SQL es `NULL` |
 | `COUNT()` | `pl.len().cast(pl.Int64)` | Cuenta filas, incluidas las nulas |
+| `COUNT(x)` | `x.count().cast(pl.Int64)` | Cuenta valores no nulos |
+| `AVG`, `MIN`, `MAX` | `x.mean()`, `x.min()`, `x.max()` | Ignoran nulos |
+| `AGGREGATE` | `group_by(..., maintain_order=True)` | Grupos en orden de aparición; sin `GROUP_BY`, una fila |
 | `JOIN` | `join(..., coalesce=False)` | Conserva las claves de ambos lados; las claves nulas no coinciden |
 | `SORT` | `sort(..., nulls_last=True, maintain_order=True)` | Nulos al final y orden estable |
-| `AGGREGATE` | `group_by(..., maintain_order=True)` | Grupos en orden de aparición |
+| `DISTINCT` | `select(...).unique(maintain_order=True)` | Orden de primera aparición |
+| `DROP_NULLS` | `drop_nulls(subset=[...])` | Solo las columnas listadas |
 | `TRIM(s)` | `s.str.strip_chars(' ')` | Quita solo espacios, como SQL |
 | `NULLIF(a, b)` | `pl.when(a == b).then(None).otherwise(a)` | |
-| `SAFE_DIVIDE(a, b)` | `pl.when(b != 0).then(a / b)` | `NULL` cuando `b` es 0 |
+| `SAFE_DIVIDE(a, b)` | `pl.when(b != 0).then(a / b)` | `NULL` cuando `b` es 0 o nulo |
 | `FILL_NULL` | `pl.coalesce(columna, valor)` | |
 | Literal `0.1` | `pl.lit(Decimal('0.1'))` | Precisión exacta, sin pasar por float |
 
-`FILTER` conserva solo las filas cuya condición es `TRUE`. `FILL_NULL` reemplaza
-solo columnas existentes; `DERIVE` debe crear columnas nuevas. Las referencias de
-todas las asignaciones se validan contra la entrada original, para evitar
-dependencias laterales entre aliases.
+`FILTER` conserva solo las filas cuya condición es `TRUE`; `AND`, `OR` y `NOT`
+siguen la lógica de tres valores. `FILL_NULL` reemplaza solo columnas existentes;
+`DERIVE` debe crear columnas nuevas. Las referencias de todas las asignaciones se
+validan contra la entrada original, para evitar dependencias laterales entre aliases.
 
 ## Contratos
 
@@ -142,12 +171,16 @@ en el mismo orden, la familia de tipos y los nulos reales. No convierten los
 datos. `INT` acepta enteros de Polars; `DECIMAL` es una familia numérica que
 admite enteros, decimales y reales; `STRING` corresponde a `String`, `BOOL` a
 `Boolean`, `DATE` a `Date` y `DATETIME` a `Datetime`. Las columnas sin `?` se
-verifican con `null_count()`.
+verifican con `null_count()`. Un `OUTPUT TABLE` sin columnas solo resuelve el
+esquema. Los contratos de un `USE` se comprueban en el pipeline instanciado.
 
 Se rechazan columnas de salida que difieran solo en mayúsculas (`E_AMBIGUOUS_COLUMNS`),
-para que los resultados puedan escribirse también en DuckDB. Los errores llevan
-códigos (`E_COLUMN`, `E_SCHEMA`, `E_TYPE`, `E_NULL`, `E_SOURCE`, `E_POLARS`…) y la
-etiqueta del bloque con su ubicación en el `.etl`.
+para que los resultados puedan escribirse también en DuckDB; en un JOIN, los
+nombres de ambos lados deben ser distintos. Los errores de ejecución llevan
+códigos (`E_COLUMN`, `E_SCHEMA`, `E_TYPE`, `E_NULL`, `E_SOURCE`, `E_SQLITE`,
+`E_DUCKDB`, `E_POLARS`, `E_JOIN_*`…) y la etiqueta del bloque con su ubicación
+en el `.etl`. Cuando el esquema se conoce al compilar, C2 informa muchos de estos
+casos antes de ejecutar; el runtime los vuelve a comprobar con los datos reales.
 
 ## API Python para puertos externos
 
@@ -184,7 +217,12 @@ ejecuciones anteriores se conservan hasta que se vuelvan a generar.
 Las pruebas cubren los ejemplos originales con resultados concretos, las diez
 operaciones, composición, nulos, conectores, contratos, precisión decimal y
 ejecución del `.py` generado desde otro directorio. Versiones verificadas:
-Polars 2.1.0 y DuckDB 1.5.6 (ver `requirements.txt`).
+Lark 1.3.1, Polars 2.1.0 y DuckDB 1.5.6 (ver `requirements.txt`).
+
+La web ejecuta mediante un servicio privado que recompila el fuente y usa este
+mismo runtime; sustituye las rutas de `SOURCE` por datasets autorizados y
+redirige los `SINK` a un directorio por trabajo
+([servicio_ejecucion.md](servicio_ejecucion.md)).
 
 El backend anterior, Python + SQL DuckDB, está descrito en
 [backend_duckdb.md](backend_duckdb.md) y se conserva en el commit 4109895.

@@ -1,11 +1,16 @@
 # Referencia del lenguaje ETL
 
+Referencia de la sintaxis ETL-DSL v0.2 tal como la implementan `etl_dsl/grammar.lark`,
+`validation.py`, `semantic.py` y `backend.py`. Para un recorrido guiado desde un CSV
+hasta un archivo de salida, véase el [tutorial](tutorial.md).
+
 ## Programa y declaraciones
 
 Un archivo contiene uno o más `PIPELINE nombre { ... }`. Cada pipeline contiene
 una o más declaraciones y exactamente un `FLOW`, colocado al final. Los nombres
-distinguen mayúsculas y minúsculas; las palabras clave se escriben en mayúsculas.
-Los comentarios comienzan con `//` y terminan al final de la línea.
+distinguen mayúsculas y minúsculas; las palabras clave se escriben en mayúsculas
+(`filter` no es `FILTER`). Los comentarios comienzan con `//` y terminan al final
+de la línea.
 
 ```text
 INPUT entrada: TABLE[id: INT, importe: DECIMAL?];
@@ -19,14 +24,20 @@ USE otro_pipeline AS instancia;
 
 `INPUT` y `OUTPUT` describen puertos lógicos; `SOURCE` y `SINK` describen acceso
 físico. `INPUT` exige esquema; `OUTPUT` admite `TABLE` sin columnas conocidas.
-`SOURCE` admite una anotación opcional. Los esquemas explícitos son no vacíos y
-no admiten nombres de campo duplicados. Los tipos son `INT`, `DECIMAL`, `STRING`,
-`BOOL`, `DATE` y `DATETIME`; `?` indica nulabilidad.
+`SOURCE` admite una anotación opcional, que debe enumerar columnas (`TABLE` solo
+no está permitido). Los esquemas explícitos son no vacíos y no admiten nombres de
+campo duplicados. Los tipos son `INT`, `DECIMAL`, `STRING`, `BOOL`, `DATE` y
+`DATETIME`; `?` indica que la columna admite `NULL`. Los nombres de pipelines,
+declaraciones y columnas empiezan por letra o `_` y continúan con letras, dígitos
+o `_`. Dos declaraciones de un mismo pipeline no pueden compartir nombre.
 
-Los conectores aceptan argumentos nombrados con valores literales: números,
-cadenas entre comillas dobles con escapes JSON, `TRUE`, `FALSE` y `NULL`. Los
-números negativos también están permitidos. No aceptan expresiones ni llamadas
-a funciones como argumentos. El backend valida sus opciones al generar Python.
+Los conectores reciben argumentos nombrados, sin repetir, con valores literales:
+números (también negativos), cadenas entre comillas dobles con escapes JSON,
+`TRUE`, `FALSE` y `NULL`. No aceptan expresiones ni llamadas a funciones. La
+gramática admite esos literales, pero las opciones de los conectores actuales son
+cadenas, salvo `header`, que es booleana: un número o `NULL` como opción se
+rechaza con `E_CONNECTOR`. Los conectores son `CSV`, `PARQUET`, `SQLITE` (solo
+`SOURCE`) y `DUCKDB`; sus opciones están en [backend_polars.md](backend_polars.md).
 
 ## Operaciones
 
@@ -47,11 +58,19 @@ sus entradas.
 | `FILL_NULL` | `importe = 0; nombre = "UNKNOWN";` |
 | `DROP_NULLS` | `COLUMNS importe, nombre;` |
 
-`GROUP_BY` es opcional. Las agregaciones son `COUNT`, `SUM`, `AVG`, `MIN`, `MAX`.
-Solo `COUNT()` admite cero argumentos; las restantes requieren una expresión.
-Los JOIN admiten `INNER`, `LEFT`, `RIGHT`, `FULL` y varias igualdades conectadas
-con `AND`; cada igualdad debe conectar una columna `left` con otra `right`.
-`SORT` usa `ASC` cuando se omite la dirección.
+`GROUP_BY` es opcional; sin él, `AGGREGATE` produce una sola fila. Las
+agregaciones son `COUNT`, `SUM`, `AVG`, `MIN` y `MAX`. Solo `COUNT()` admite cero
+argumentos y cuenta filas; `COUNT(expr)` cuenta los valores no nulos. Las
+restantes requieren una expresión (`E_ARITY`). Las listas de columnas, claves de
+orden, asignaciones, alias y renombres no admiten repetidos (`E_DUPLICATE`).
+
+Los JOIN admiten `INNER`, `LEFT`, `RIGHT` y `FULL`, y varias igualdades conectadas
+con `AND`; cada igualdad debe conectar una columna `left` con otra `right`
+(`E_JOIN_CONDITION`). El resultado conserva todas las columnas de ambos lados,
+incluidas las dos claves, por lo que los nombres de un lado no pueden repetirse en
+el otro, ni siquiera cambiando mayúsculas (`E_AMBIGUOUS_COLUMNS`): por ejemplo,
+`left.id == right.id` requiere un `RENAME` previo. `SORT` usa `ASC` cuando se
+omite la dirección y deja los `NULL` al final.
 
 ## Expresiones
 
@@ -67,24 +86,36 @@ Precedencia de menor a mayor:
 8. Literales, columnas, llamadas y paréntesis
 
 Los operadores aritméticos binarios asocian por la izquierda. No se permiten
-comparaciones encadenadas (`a < b < c`); se deben conectar mediante `AND`.
-La asignación usa `=`, la comparación de igualdad usa `==`.
+comparaciones encadenadas (`a < b < c` es un error de sintaxis); se deben conectar
+mediante `AND`. La asignación usa `=`, la comparación de igualdad usa `==`.
+Los números sin punto ni exponente son enteros; los demás (`1.18`, `1e3`) son
+decimales exactos. Las cadenas usan comillas dobles y escapes JSON; los booleanos
+son `TRUE` y `FALSE`.
 
 Las funciones escalares son `COALESCE` (al menos dos argumentos), `NULLIF` y
-`SAFE_DIVIDE` (dos argumentos), `LOWER`, `UPPER` y `TRIM` (un argumento).
-Se permiten llamadas anidadas. La gramática admite referencias `columna` o
-`calificador.columna`; el backend actual solo admite calificadores `left` y
-`right` en condiciones JOIN. En otras operaciones se usan columnas sin calificar.
+`SAFE_DIVIDE` (dos argumentos), `LOWER`, `UPPER` y `TRIM` (un argumento); otra
+cantidad produce `E_ARITY`. Se permiten llamadas anidadas. La gramática admite
+referencias `columna` o `calificador.columna`, pero el análisis estático solo
+acepta calificadores `left` y `right` en condiciones JOIN (`E_QUALIFIER`). En las
+demás operaciones se usan columnas sin calificar. `TRIM` quita solo espacios.
 
 Las comparaciones directas con el literal `NULL` se parsean pero se rechazan en
-la validación: se debe escribir `IS NULL` o `IS NOT NULL`. La ejecución en
-Polars sigue la lógica de tres valores de SQL; `FILTER` conserva solo `TRUE`.
-`SAFE_DIVIDE(a,b)` devuelve `NULL` cuando `b` es 0.
+la validación (`E_NULL_COMPARISON`): se debe escribir `IS NULL` o `IS NOT NULL`.
+La ejecución sigue la lógica de tres valores de SQL: una comparación o una
+operación aritmética con un valor nulo da `NULL`; `FALSE AND x` es `FALSE` y
+`TRUE OR x` es `TRUE` aunque `x` sea `NULL`. `FILTER` conserva solo las filas cuya
+condición es `TRUE`. `COALESCE` devuelve el primer argumento no nulo; `NULLIF(a,b)`
+devuelve `NULL` cuando `a == b`; `SAFE_DIVIDE(a,b)` devuelve `NULL` cuando `b` es 0
+o nulo. `SUM`, `AVG`, `MIN` y `MAX` ignoran nulos, y la suma de un grupo sin
+valores es `NULL`, no 0. Las claves nulas de un JOIN no coinciden entre sí.
 
-`DERIVE` agrega columnas; `FILL_NULL` reemplaza nulos de columnas existentes.
-Sus asignaciones usan el esquema de entrada del bloque, sin depender de las
-otras asignaciones del mismo bloque. `DISTINCT` proyecta las columnas listadas
-y elimina combinaciones repetidas. El runtime verifica estas restricciones.
+`DERIVE` agrega columnas nuevas; `FILL_NULL` reemplaza nulos de columnas
+existentes. Sus asignaciones usan el esquema de entrada del bloque, sin depender
+de las otras asignaciones del mismo bloque. `DISTINCT` proyecta las columnas
+listadas y elimina combinaciones repetidas, en el orden de su primera aparición.
+Cuando el esquema es conocido, el análisis estático rechaza estas violaciones
+(`E_AMBIGUOUS_COLUMNS` para un `DERIVE` que reutiliza un nombre, `E_COLUMN` para
+una referencia o destino inexistente); el runtime las vuelve a comprobar.
 
 ## Conexiones y composición
 
@@ -109,6 +140,9 @@ sus `OUTPUT`. Se permiten referencias a pipelines definidos después. Se rechaza
 instancias de pipelines desconocidos, recursión entre pipelines, ciclos del flujo,
 enlaces repetidos y puertos inexistentes o usados en la dirección incorrecta.
 El chequeo de ciclos representa cada instancia `USE` como un nodo indivisible.
+Cada `USE` verifica sus entradas contra los `INPUT` del pipeline instanciado y
+publica un esquema por cada `OUTPUT`; varias instancias del mismo pipeline son
+independientes.
 
 ## AST y destino Polars
 
@@ -139,6 +173,9 @@ funcione instalado fuera del repositorio.
 `token.py` define `Token` y `Span`; `parser.py` analiza la sintaxis;
 `visitor.py` contiene `ASTBuilder`, `NodeVisitor` y el recorrido `walk`;
 `ast.py` define los nodos y `type.py` define los tipos escalares.
+`validation.py` comprueba la estructura, `ir.py` baja el AST a IR, `semantic.py`
+infiere esquemas, `passes.py` optimiza, `backend.py` genera Python y `runtime.py`
+lo ejecuta; `analysis.py` reúne las fases para la CLI y la web.
 El scanner aislado usa el lexer básico de Lark: una palabra clave puede recibir
 una categoría distinta cuando el parser la interpreta como nombre mediante el
 lexer contextual.
@@ -151,20 +188,28 @@ extensiones y se continúa después de errores en un archivo. El estado final es
 El código se genera solo después de validar el programa; no se eliminan
 artefactos de ejecuciones anteriores.
 
-`--format ast` guarda `.ast.json`; `--format ir` guarda `.ir.txt`; `--format tree` guarda `.tree.txt`;
-`--format tokens` guarda `.tokens.json`;
-`--format check` solo valida. Se pueden cambiar las rutas con
-`python main.py otra_entrada --output otra_salida`. `--run` ejecuta los pipelines
-con Polars después de compilar. Los `.py` también pueden ejecutarse directamente,
+`--format` elige la salida: `python` (predeterminada), `check`, `ast`, `ir`,
+`tree` o `tokens`. Al procesar una carpeta, o con `--output`, se guardan como
+`.py`, `.ast.json`, `.ir.txt`, `.tree.txt` y `.tokens.json`; con un archivo
+individual, los formatos de inspección se muestran en consola y `python` se guarda
+en `output/`. `--format check` solo valida e informa la cantidad de pipelines.
+`python main.py otra_entrada --output otra_salida` cambia las rutas. `--run`
+(solo con `--format python`) ejecuta los pipelines con Polars después de compilar;
+`--pipeline nombre` (repetible, requiere `--run`) los selecciona. `-O0` desactiva
+los pases y `--pases a,b` los elige en orden; ambas opciones son excluyentes y un
+pase desconocido es un error. Los `.py` también pueden ejecutarse directamente,
 con el paquete `etl_dsl` instalado. Más detalles en [backend_polars.md](backend_polars.md).
 
 ## Comprobación estática
 
 C2 propaga esquemas, tipos y nulabilidad antes de optimizar, sin consultar datos.
-Detecta columnas inexistentes sobre esquemas completos, predicados no booleanos,
-operandos incompatibles y contratos imposibles. Conserva conocimiento parcial
-cuando SOURCE no tiene contrato. Las [reglas semánticas](semantica_estatica.md)
-describen las diez operaciones y los chequeos que permanecen en ejecución.
+Detecta columnas inexistentes sobre esquemas completos (`E_COLUMN`), predicados no
+booleanos y operandos incompatibles (`E_TYPE`), contratos imposibles (`E_SCHEMA`,
+`E_TYPE`), nombres ambiguos (`E_AMBIGUOUS_COLUMNS`) y calificadores fuera de JOIN
+(`E_QUALIFIER`). Conserva conocimiento parcial cuando `SOURCE` no tiene contrato:
+en ese caso una columna mal escrita solo se detecta al ejecutar. Las
+[reglas semánticas](semantica_estatica.md) describen las diez operaciones y los
+chequeos que permanecen en ejecución.
 
 ## Garantía local de JOIN (C4)
 
