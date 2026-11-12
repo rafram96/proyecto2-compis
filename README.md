@@ -103,6 +103,37 @@ docker compose run --rm tests
 `input/` y `output/` se montan como volúmenes, así que los resultados quedan en
 el repositorio local.
 
+## Entorno web
+
+Editor Monaco con resaltado del DSL y errores léxicos, sintácticos, estructurales
+y de tipos marcados mientras se escribe. A la derecha muestra el grafo de la IR
+antes y después de optimizar, el AST, la IR en texto, el código Polars generado
+y las tablas que produce cada `SINK` y `OUTPUT` al ejecutar.
+
+```powershell
+.\.venv\Scripts\python.exe scripts\create_demo_data.py
+.\.venv\Scripts\python.exe -m etl_dsl.web          # http://127.0.0.1:8000
+# o con Docker
+docker compose up web
+```
+
+`/?ejemplo=demo/tipos.etl` abre un ejemplo directamente. `Ctrl + Enter` ejecuta.
+Al hacer clic en un nodo del grafo, en un nodo del AST o en un problema, se
+selecciona su declaración en el editor. Los programas solo pueden leer y escribir
+dentro de `input/`, que también es la base de las rutas relativas; el servidor
+escucha solo en este equipo salvo que se indique `--host`.
+
+| Endpoint | Qué hace |
+| --- | --- |
+| `POST /api/compile` | `{"source", "passes"?}` → diagnósticos, AST, IR antes y después con su grafo y esquemas, y código |
+| `POST /api/run` | Lo mismo, más las primeras 100 filas de cada `SINK` y `OUTPUT` |
+| `GET /api/examples` | Programas de `input/` y `demo/` |
+
+La lógica está en `etl_dsl/api.py` (`compile_source`, `run_source`), que no
+depende de FastAPI: cada fase devuelve lo que alcanzó a producir aunque una
+fase posterior falle. Monaco se carga desde jsDelivr, así que el navegador
+necesita conexión a internet.
+
 ## Ejemplo
 
 ```text
@@ -135,7 +166,10 @@ proyecto2-compis/
 │   ├── visitor.py          # Constructor del AST y recorridos
 │   ├── type.py             # Tipos escalares del DSL
 │   ├── main.py             # Procesamiento de archivos y CLI
+│   ├── api.py              # Compilar y ejecutar texto -> JSON (para el entorno)
+│   ├── web/                # Servidor FastAPI y página del editor (static/)
 │   ├── ir.py               # IR: DAG de operadores y su formato textual
+│   ├── typecheck.py        # Esquemas inferidos y verificación de tipos
 │   ├── passes.py           # Pases de optimización sobre la IR
 │   ├── backend.py          # Generación de Python + Polars desde la IR
 │   ├── runtime.py          # Conectores y ejecución en Polars
@@ -164,8 +198,11 @@ módulos estándar de Python llamados `ast` y `token`.
 - [Tipos](etl_dsl/type.py): catálogo `ScalarType` usado por el AST y su constructor.
 - [IR](etl_dsl/ir.py): baja el AST a un DAG de operadores por pipeline, en orden
   topológico según `FLOW`, y lo imprime como texto (`--format ir`).
+- [Tipos](etl_dsl/typecheck.py): infiere el esquema de cada nodo de la IR y
+  reporta al compilar columnas inexistentes, tipos incompatibles y contratos
+  que no se cumplen.
 - [Pases](etl_dsl/passes.py): plegado de constantes, fusión de filtros y
-  eliminación de pasos muertos (O4).
+  eliminación de código muerto (O4).
 - [Backend](etl_dsl/backend.py): genera Python desde la IR optimizada, compila
   expresiones a Polars y traduce `USE` a llamadas entre funciones Python.
 - [Runtime](etl_dsl/runtime.py): resuelve el plan de Polars paso a paso y verifica columnas,
@@ -184,8 +221,8 @@ todas las transformaciones se ejecutan en Polars.
 
 Los contratos comprueban nombres, orden, familias de tipos y nulabilidad en
 ejecución. Los pasos son `LazyFrame` y solo se calculan en un `SINK` (o en un
-contrato que verifica nulos), así que Polars optimiza el plan completo. Quedan pendientes el
-análisis estático de tipos y los pases O1 (rangos) y O3 (joins). [docs/backend_polars.md](docs/backend_polars.md) describe este backend;
+contrato que verifica nulos), así que Polars optimiza el plan completo. Los tipos se
+verifican al compilar cuando los esquemas se conocen; quedan pendientes los pases O1 (rangos) y O3 (joins). [docs/backend_polars.md](docs/backend_polars.md) describe este backend;
 [docs/backend_duckdb.md](docs/backend_duckdb.md), el backend DuckDB anterior (commit 4109895).
 
 La referencia de sintaxis y las decisiones para el backend están en

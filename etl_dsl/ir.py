@@ -15,6 +15,7 @@ import json
 
 from . import ast as a
 from .token import Span
+from .type import ScalarType
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,6 +54,24 @@ class Pipeline:
 class Module:
     pipelines: tuple[Pipeline, ...]
     defaults: tuple[str, ...]  # pipelines raíz: sin INPUT y no usados por USE
+
+
+@dataclass(frozen=True, slots=True)
+class Col:
+    """Columna de un esquema inferido por typecheck."""
+    name: str
+    type: ScalarType | None  # None: tipo desconocido
+    nullable: bool = True
+
+    def text(self) -> str:
+        return f"{self.name}: {self.type.value if self.type else 'ANY'}{'?' if self.nullable else ''}"
+
+
+Schema = tuple[Col, ...] | None  # None: columnas desconocidas
+
+
+def schema_text(schema: Schema) -> str:
+    return "TABLE" if schema is None else "[" + ", ".join(col.text() for col in schema) + "]"
 
 
 KINDS = {a.Filter: "FILTER", a.Select: "SELECT", a.Derive: "DERIVE", a.Aggregate: "AGGREGATE",
@@ -127,7 +146,8 @@ def _connector_text(connector) -> str:
                                             for arg in connector.arguments) + ")"
 
 
-def _body(node: Node) -> str:
+def body_text(node: Node) -> str:
+    """Contenido de un nodo con la notación del DSL (condición, columnas, conector…)."""
     p = node.payload
     if node.kind == "SOURCE":
         return f"{_connector_text(p.connector)} : {_schema_text(p.schema)}"
@@ -157,12 +177,22 @@ def _body(node: Node) -> str:
     return ""
 
 
+def _inferred(node: Node) -> bool:
+    """Si el esquema del nodo se infiere; en SOURCE, INPUT y OUTPUT tipado es el declarado."""
+    if node.kind in {"USE", "SOURCE", "INPUT"}:
+        return False
+    return node.kind != "OUTPUT" or node.payload.schema.fields is None
+
+
 def _ref_text(ref: Ref) -> str:
     return "%" + ref.node + (f".{ref.port}" if ref.port else "")
 
 
-def format_module(module: Module) -> str:
-    """Formato textual de la IR: una línea por nodo, en orden topológico."""
+def format_module(module: Module, schemas=None) -> str:
+    """Formato textual de la IR: una línea por nodo, en orden topológico.
+
+    `schemas` (de typecheck.check) agrega a cada nodo su esquema de salida inferido.
+    """
     out = []
     for pipe in module.pipelines:
         out.append(f"pipeline {pipe.name}" + (" (raíz)" if pipe.name in module.defaults else "") + " {")
@@ -170,9 +200,11 @@ def format_module(module: Module) -> str:
         for node in pipe.nodes:
             args = ", ".join((f"{port}=" if port else "") + _ref_text(ref) for port, ref in node.inputs)
             line = f"  {('%' + node.name).ljust(width)} = {node.kind}" + (f"({args})" if args else "")
-            body = _body(node)
+            body = body_text(node)
             if body:
                 line += " { " + body + " }"
+            if schemas is not None and _inferred(node):
+                line += " : " + schema_text(schemas[pipe.name, node.name])
             if node.origin != (node.name,):
                 line += "  // " + " + ".join(node.origin)
             out.append(line)

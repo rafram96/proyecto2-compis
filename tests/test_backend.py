@@ -132,21 +132,32 @@ class BackendTests(unittest.TestCase):
             run_pipelines(self.rt, module['PIPELINES'], [], ['missing'])
 
     def test_column_errors_and_assignment_scope(self):
+        # Con INPUT tipado se detectan al compilar; sin esquema conocido, al ejecutar.
         for op in ['DERIVE { id = 0; }', 'DERIVE { a = 1; b = a + 1; }',
                    'FILL_NULL { missing = 0; }', 'SELECT { COLUMNS ID; }',
                    'RENAME { id AS x; }', 'RENAME { missing AS new; }',
                    'DERIVE { ID = 1; }', 'DERIVE { bad = s + 1; }']:
-            with self.subTest(op=op), self.assertRaises(ExecutionError):
-                self.evaluate(single(op), frame([(1, 2.0, '')]))
+            with self.subTest(op=op):
+                with self.assertRaises(CompileError):
+                    generated(single(op))
+                untyped = single(op).replace('INPUT data: TABLE[id: INT, x: DECIMAL?, s: STRING?]',
+                                             'SOURCE data = CSV(file: "data.csv")')
+                module = generated(untyped)
+                with tempfile.TemporaryDirectory() as temp, PolarsRuntime(temp) as rt:
+                    pl.DataFrame({"id": [1], "x": [2.0], "s": ["a"]}).write_csv(Path(temp) / "data.csv")
+                    with self.assertRaises(ExecutionError):
+                        module["PIPELINES"]["p"](rt)["result"].collect()
 
     def test_join_ambiguous_columns_rejected(self):
         source = '''PIPELINE p { INPUT a: TABLE[id: INT]; INPUT b: TABLE[id: INT];
  STEP j = JOIN { TYPE INNER; ON left.id == right.id; }
  OUTPUT o: TABLE; FLOW { a -> j.left; b -> j.right; j -> o; } }'''
-        module = generated(source)
+        with self.assertRaisesRegex(CompileError, 'E_AMBIGUOUS_COLUMNS'):
+            generated(source)
+        # Sin esquemas conocidos lo detecta el runtime.
         table = frame([(1,)], {"id": pl.Int64})
         with self.assertRaisesRegex(ExecutionError, 'E_AMBIGUOUS_COLUMNS'):
-            module['PIPELINES']['p'](self.rt, {'a': table, 'b': table})
+            self.rt.disjoint(table, table, 'test')
 
     def test_contracts_and_case_sensitive_columns(self):
         for data, schema, code in [

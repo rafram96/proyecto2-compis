@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 
 from .ast import to_dict
-from .backend import build_ir, compile_program
+from .backend import CompileError, build_ir, generate
 from .diagnostics import ParseError
 from .ir import format_module
 from .passes import DEFAULT, PASSES
@@ -15,31 +15,41 @@ from .validation import validate
 from .visitor import ASTBuilder
 
 
+def _report(issues, source: str, path: Path, kind: str):
+    for issue in issues:
+        print(issue.format(source, str(path)), file=sys.stderr)
+    return ValueError(f"{path}: {len(issues)} error(es) de {kind}.")
+
+
 def _analyze(path: Path, fmt: str, base_dir=None, passes=DEFAULT) -> str:
     source = path.read_text(encoding="utf-8-sig")
     tree = parse_tree(source, filename=str(path))
     program = ASTBuilder().transform(tree)
     issues = validate(program)
     if issues:
-        for issue in issues:
-            print(issue.format(source, str(path)), file=sys.stderr)
-        raise ValueError(f"{path}: {len(issues)} error(es) de validación.")
+        raise _report(issues, source, path, "validación")
+    if fmt in {"check", "python", "ir"}:
+        # Los formatos del frontend no necesitan tipos; los demás pasan por la IR.
+        try:
+            before, after, types = build_ir(program, passes)
+        except CompileError as exc:
+            if not exc.diagnostics:
+                raise
+            raise _report(exc.diagnostics, source, path, "tipos") from None
     if fmt == "python":
-        return compile_program(program, filename=str(path), base_dir=base_dir or path.resolve().parent,
-                               passes=passes)
+        return generate(after, filename=str(path), base_dir=base_dir or path.resolve().parent)
     if fmt == "ir":
-        before, after = build_ir(program, passes)
         if not passes:
-            return format_module(before)
-        return (f"// IR antes de optimizar\n{format_module(before)}\n"
-                f"// IR después de: {', '.join(passes)}\n{format_module(after)}")
+            return format_module(before, types.schemas)
+        return (f"// IR antes de optimizar\n{format_module(before, types.schemas)}\n"
+                f"// IR después de: {', '.join(passes)}\n{format_module(after, types.schemas)}")
     if fmt == "ast":
         return json.dumps(to_dict(program), ensure_ascii=True, indent=2) + "\n"
     if fmt == "tokens":
         return json.dumps([to_dict(token) for token in scan(source, filename=str(path))], indent=2) + "\n"
     if fmt == "tree":
         return tree.pretty()
-    return f"OK: {path}: {len(program.pipelines)} pipeline(s); sintaxis y estructura válidas.\n"
+    return f"OK: {path}: {len(program.pipelines)} pipeline(s); sintaxis, estructura y tipos válidos.\n"
 
 
 def main(argv=None) -> int:

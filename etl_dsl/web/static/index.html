@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entorno DSL ETL</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Entorno DSL ETL</h1>
+    <label class="field">
+      <span>Ejemplo</span>
+      <select id="examples" aria-label="Cargar un programa de ejemplo"></select>
+    </label>
+    <fieldset class="passes" id="passes">
+      <legend>Optimizaciones</legend>
+    </fieldset>
+    <span class="status" id="status" role="status" aria-live="polite">Cargando…</span>
+    <button type="button" class="primary" id="run" title="Ctrl + Enter">Ejecutar</button>
+  </header>
+
+  <main class="layout">
+    <section class="pane editor-pane" aria-label="Programa">
+      <div id="editor" class="editor"></div>
+      <div class="problems">
+        <h2>Problemas</h2>
+        <ul id="problems"></ul>
+      </div>
+    </section>
+
+    <div class="splitter" id="splitter" role="separator" aria-orientation="vertical"
+         aria-label="Ancho del editor" title="Arrastra para cambiar el ancho"></div>
+
+    <section class="pane output-pane" aria-label="Resultado de la compilación">
+      <nav class="tabs" role="tablist">
+        <button type="button" role="tab" data-tab="graph" aria-selected="true">Grafo</button>
+        <button type="button" role="tab" data-tab="ast" aria-selected="false">AST</button>
+        <button type="button" role="tab" data-tab="ir" aria-selected="false">IR</button>
+        <button type="button" role="tab" data-tab="code" aria-selected="false">Código</button>
+        <button type="button" role="tab" data-tab="results" aria-selected="false">Resultados</button>
+      </nav>
+
+      <div class="panel" data-panel="graph" role="tabpanel">
+        <div class="panel-bar">
+          <div class="segmented" role="group" aria-label="Versión de la IR">
+            <button type="button" data-version="before" aria-pressed="false">Antes</button>
+            <button type="button" data-version="after" aria-pressed="true">Después</button>
+          </div>
+          <span class="hint">Clic en un nodo para verlo en el programa</span>
+        </div>
+        <div id="graph" class="graph"></div>
+        <div id="node-detail" class="node-detail" hidden></div>
+      </div>
+
+      <div class="panel" data-panel="ast" role="tabpanel" hidden>
+        <div id="ast" class="ast"></div>
+      </div>
+
+      <div class="panel" data-panel="ir" role="tabpanel" hidden>
+        <div class="ir-columns">
+          <div><h2>Antes de optimizar</h2><pre id="ir-before" class="code-block"></pre></div>
+          <div><h2>Después de optimizar</h2><pre id="ir-after" class="code-block"></pre></div>
+        </div>
+      </div>
+
+      <div class="panel" data-panel="code" role="tabpanel" hidden>
+        <div id="code" class="editor"></div>
+      </div>
+
+      <div class="panel" data-panel="results" role="tabpanel" hidden>
+        <div id="results" class="results"><p class="empty">Presiona Ejecutar para ver los datos de cada SINK y OUTPUT.</p></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/loader.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

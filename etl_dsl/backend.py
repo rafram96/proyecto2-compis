@@ -3,13 +3,21 @@ from pathlib import Path
 
 from . import ast as a
 from . import ir
+from .diagnostics import Diagnostic
 from .passes import DEFAULT, optimize
+from .typecheck import TypeInfo, check
 from .validation import validate
 from .visitor import walk
 
 
 class CompileError(ValueError):
-    pass
+    def __init__(self, message: str, diagnostics=()):
+        super().__init__(message)
+        self.diagnostics = tuple(diagnostics)
+
+    @classmethod
+    def from_diagnostics(cls, diagnostics):
+        return cls("\n".join(f"{d.code}: {d.message}" for d in diagnostics), diagnostics)
 
 
 def col(name: str) -> str:
@@ -122,7 +130,8 @@ class PythonGenerator:
         try:
             return _connector(connector, sink=sink)
         except ValueError as exc:
-            raise CompileError(f"{label}: E_CONNECTOR: {exc}") from exc
+            raise CompileError(f"{label}: E_CONNECTOR: {exc}",
+                               [Diagnostic("E_CONNECTOR", str(exc), connector.span)]) from exc
 
     def pipeline(self, pipe):
         self.lines.extend(["", f"def {self.functions[pipe.name]}(rt, inputs=None):",
@@ -229,14 +238,17 @@ class PythonGenerator:
         self.emit(f"{var} = rt.step({plan}, {label!r})")
 
 
-def build_ir(program: a.Program, passes=DEFAULT) -> tuple[ir.Module, ir.Module]:
-    """Valida y baja el programa a IR; devuelve la IR antes y después de los pases."""
+def build_ir(program: a.Program, passes=DEFAULT) -> tuple[ir.Module, ir.Module, TypeInfo]:
+    """Valida, baja a IR y verifica tipos; devuelve la IR antes y después de los pases."""
     issues = validate(program)
     if issues:
-        raise CompileError("\n".join(f"{i.code}: {i.message}" for i in issues))
+        raise CompileError.from_diagnostics(issues)
     module = ir.lower(program)
+    types = check(module)
+    if types.diagnostics:
+        raise CompileError.from_diagnostics(types.diagnostics)
     try:
-        return module, optimize(module, passes)
+        return module, optimize(module, passes), types
     except ValueError as exc:
         raise CompileError(str(exc)) from exc
 
@@ -266,5 +278,5 @@ def generate(module: ir.Module, *, filename="<string>", base_dir=".") -> str:
 
 def compile_program(program: a.Program, *, filename="<string>", base_dir=".", passes=DEFAULT) -> str:
     """AST -> IR optimizada -> Python. `passes=()` equivale a -O0."""
-    _, optimized = build_ir(program, passes)
+    _, optimized, _ = build_ir(program, passes)
     return generate(optimized, filename=filename, base_dir=base_dir)

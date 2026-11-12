@@ -106,7 +106,7 @@ class PassTests(unittest.TestCase):
         self.assertEqual(names, ["data", "c"])
 
     def test_single_passes_and_unknown(self):
-        only = [n.name for n in module(CHAIN, ("muertos",)).pipelines[0].nodes]
+        only = [n.name for n in module(CHAIN, ("codigo_muerto",)).pipelines[0].nodes]
         self.assertEqual(only, ["data", "f1", "f2", "f3", "d", "result"])
         with self.assertRaises(ValueError):
             optimize(lower(parse(CHAIN)), ("magia",))

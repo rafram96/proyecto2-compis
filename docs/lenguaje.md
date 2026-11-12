@@ -84,7 +84,7 @@ Polars sigue la lógica de tres valores de SQL; `FILTER` conserva solo `TRUE`.
 `DERIVE` agrega columnas; `FILL_NULL` reemplaza nulos de columnas existentes.
 Sus asignaciones usan el esquema de entrada del bloque, sin depender de las
 otras asignaciones del mismo bloque. `DISTINCT` proyecta las columnas listadas
-y elimina combinaciones repetidas. El runtime verifica estas restricciones.
+y elimina combinaciones repetidas. El compilador verifica estas restricciones cuando conoce el esquema de entrada y el runtime las vuelve a verificar al ejecutar.
 
 ## Conexiones y composición
 
