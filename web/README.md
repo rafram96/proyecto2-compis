@@ -73,8 +73,8 @@ Polars y DuckDB no hacen falta para compilar: el análisis local no ejecuta pipe
 - `/`: landing y demo breve. **Continuar en el estudio** copia el texto editado y los pases al documento activo, conservando el anterior.
 - `/estudio`: editor estable, inspectores Resultado/Tokens/Árbol/AST/FLOW/IR/Esquemas/Python y diagnósticos accesibles desde cualquier fase.
   `/estudio?vista=…` abre una vista concreta del documento activo (ver «Cierre de W1»).
-- `/ejemplos`: catálogo de cinco intenciones. `/ejemplos/:slug`: explicación, programa completo, expectativas y requisitos.
-- `/docs`: índice de seis guías. `/docs/:slug`: lectura con navegación entre artículos, anclas, tablas y resaltado existente.
+- `/ejemplos`: catálogo de seis intenciones. `/ejemplos/:slug`: explicación, programa completo, expectativas y requisitos.
+- `/docs`: índice de siete guías, entre ellas el tutorial `/docs/tutorial`. `/docs/:slug`: lectura con navegación entre artículos, anclas, tablas y resaltado existente.
 - Slugs inexistentes muestran recuperación al catálogo correspondiente y al estudio. Las demás rutas recuperan hacia Inicio/Estudio.
   `/evaluacion` publica la campaña C5 histórica (paso E). No hay URLs con programas ni datos personales.
 - La navegación interna usa History API; atrás/adelante conserva el documento. La URL no contiene programas ni datos.
@@ -95,11 +95,13 @@ y Nginx (`try_files $uri`) resuelven por la ruta; `_redirects` también se eval�
 Los manifiestos explícitos viven en `web/content/` (rutas relativas a la raíz del repositorio):
 
 - `examples.json`: slug, nombre, título, objetivo, ruta canónica `.etl`, operaciones, requisitos, expectativas y artículos relacionados.
-  Publica `ventas`, `riesgo-crediticio`, `corregir-nulos`, `rangos` y `join-verificado`. El último conserva las obligaciones
-  de `VERIFY MANY_TO_ONE`; el tercero se identifica como inválido y declara la sustitución que lo corrige.
-- `articles.json`: `primer-programa`, `estructura`, `operaciones`, `null-contratos`, `conectores` y `composicion`.
+  Publica `ventas`, `gasto-por-cliente`, `riesgo-crediticio`, `corregir-nulos`, `rangos` y `join-verificado`. El último conserva
+  las obligaciones de `VERIFY MANY_TO_ONE`; `corregir-nulos` se identifica como inválido y declara la sustitución que lo corrige.
+  `gasto-por-cliente` es el programa del tutorial (`demo/tutorial.etl`) y declara en `datasets` su binding
+  `gasto_por_cliente.pedidos → join-orders@1`, comprobado contra `service/catalog.py`.
+- `articles.json`: `primer-programa`, `tutorial`, `estructura`, `operaciones`, `null-contratos`, `conectores` y `composicion`.
   Cada artículo selecciona secciones exactas de `docs/lenguaje.md`, `semantica_estatica.md`, `backend_polars.md`
-  o la guía canónica `docs/guia_estudio.md`. Incluye introducción adaptada, enlaces y referencia a un programa válido completo.
+  o publica completas las guías canónicas `docs/guia_estudio.md` y `docs/tutorial.md`. Incluye introducción adaptada, enlaces y referencia a un programa válido completo.
 
 `gen_content.py` lee únicamente esa selección y genera `src/content/generated.json` con fuentes y hashes.
 Una sección renombrada falla en generación; `--check` y las pruebas detectan un resultado desactualizado.
@@ -108,7 +110,10 @@ para las tres demos históricas y deriva la corrección de NULL de la misma regl
 el catálogo y los artículos no presentan IR/Python precalculados nuevos. No se publica automáticamente el árbol del repositorio.
 
 El lector procesa un subconjunto de Markdown sin HTML crudo ni ejecución, conserva tablas/listas/código y adapta enlaces técnicos
-publicados a rutas reales. Los fragmentos incompletos están etiquetados; el programa completo se lee de la fuente canónica y usa
+publicados a rutas reales; los enlaces `/estudio?vista=…` solo se admiten con vistas publicadas (`gen_content.py` falla con otra).
+Cada bloque se rotula por su lenguaje: sin lenguaje o `text`, fragmento del DSL incompleto con resaltado; `sh`, comando de terminal;
+`output`, salida obtenida al ejecutarlo; `csv`, contenido de archivo. Los tres últimos son literales, sin resaltado ni cortes de línea
+(se desplazan y son enfocables). Los fragmentos incompletos están etiquetados; el programa completo se lee de la fuente canónica y usa
 el resaltado existente. Catálogo y documentación se cargan en diferido por página; no cargan CodeMirror ni Pyodide al consultar.
 No se añadieron dependencias.
 
@@ -119,7 +124,7 @@ Si hay ocho anteriores, se muestra un error y enlace para gestionar borradores, 
 Si el almacenamiento falla, la copia abre en memoria y el estudio muestra **Sin guardar**, con indicación de descargar antes de salir.
 No se garantiza recuperación tras cerrar/recargar en ese caso. El límite total de 512 KiB se mantiene.
 
-Los requisitos distinguen datasets incluidos (`demo/joins_*.csv`) y preparados por `python -m service.prepare`: ventas/riesgo reutilizan `scripts/create_demo_data.py`; rangos se prepara por separado con su propio esquema. Compilar no los consulta, no certifica sus valores y no ejecuta pipelines.
+Los requisitos distinguen datasets incluidos (`demo/joins_*.csv`, también el del tutorial) y preparados por `python -m service.prepare`: ventas/riesgo reutilizan `scripts/create_demo_data.py`; rangos se prepara por separado con su propio esquema. Compilar no los consulta, no certifica sus valores y no ejecuta pipelines.
 La ejecución y el Python descargado requieren el entorno Python del proyecto, sus dependencias y los archivos declarados.
 
 ## Documento, archivos y persistencia
@@ -195,7 +200,7 @@ Esta opción no sustituye la suite completa de desarrollo; añade verificación 
 ## Pendiente
 
 W1 queda **completo según sus criterios** (pasos A, B, E y cierre con divisor y `?vista`). W4 esencial implementado; las sugerencias semánticas siguen pendientes.
-Pendientes fuera de W1: tutorial CSV → resultado y actualización de `lenguaje.md`/`backend_polars.md`, evaluación con usuarios,
+La documentación final (tutorial y referencias vigentes) está publicada; ver «Documentación final y tutorial». Pendientes fuera de W1: evaluación con usuarios,
 verificación del fallback en el alojamiento que se elija y mapa Python → DSL (no decidido).
 Paso C/W2 implementa AST/FLOW y comparación de IR. W3 (servicio HTTP, bindings y ejecución Polars con datos) se implementa en el paso D descrito al final.
 No hay cuentas, colaboración, persistencia remota ni editor por bloques.
@@ -372,3 +377,20 @@ Ejecutado en Vite (5211, API 8031, timeout real 8032: suite histórica completa 
 en el build servido por FastAPI (8031) y en el contenedor Docker (8033): contenido, inspectores, evaluación, estudio y D, sin
 `/src/`. **174 pruebas Python** (también en Docker, 2 omitidas), **51 web**, generadores con `--check` y builds web/Docker.
 El fallback con consulta se comprobó además en `vite preview` y con `nginx:1.27-alpine` usando `nginx.conf`.
+
+## Documentación final y tutorial
+
+`/docs/tutorial` publica completo [docs/tutorial.md](../docs/tutorial.md) («De un CSV a un resultado»), enlazado desde
+«Tu primer programa». Su programa canónico es `demo/tutorial.etl`, publicado como `/ejemplos/gasto-por-cliente`; usa el CSV
+incluido `demo/joins_pedidos.csv` (`join-orders@1`), así que funciona sin `python -m service.prepare`. `lenguaje.md` y
+`backend_polars.md` se actualizaron contra la gramática, el backend, el runtime y la CLI; las secciones que seleccionan los
+artículos conservan sus encabezados.
+
+`ArticleBody.tsx` rotula cada bloque por su lenguaje (ver «Catálogo y documentación») y acepta enlaces `/estudio?vista=…`.
+`tests/browser/tutorial.js` (`verify_browser.py --tutorial-only`, también dentro de la suite completa; requiere la API, no
+necesita datos preparados) recorre el artículo y sus enlaces, abre la copia, provoca y corrige `E_COLUMN`, ejecuta hasta la
+tabla y descarga el CSV, que el script compara byte a byte con el runtime local. Escritorio/claro y móvil/oscuro, capturas
+`t-*.png` en las cuatro combinaciones, foco visible y sin desbordamiento. Verificado en Vite (5221 con datos preparados, 5222 con
+API sin preparar), en el build servido por FastAPI (8041, 8044) y en el contenedor Docker (8043), junto con contenido, estudio y
+D; la suite histórica completa, con las 32 comparaciones, pasó en Vite. **180 pruebas Python** (Docker: 180, 2 omitidas) y
+**52 web**. Detalle y correcciones en [docs/plan_desarrollo.md](../docs/plan_desarrollo.md).

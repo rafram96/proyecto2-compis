@@ -1,8 +1,8 @@
 # Cauce: estado real y plan de desarrollo
 
-Fecha de revisión: **11 de noviembre de 2026**.
+Fecha de revisión: **12 de noviembre de 2026**.
 
-Este plan parte del código actual de `etl_dsl/`, `tests/` y `web/`, y lo contrasta con [el enunciado](Enunciado_DSL.md). Cubre el compilador y la continuación de la web. C1, C2, C3, C4 y C5 están implementados. La continuación web entrega W1 (pasos A/B, paso E y su cierre con divisor de paneles y enlaces `/estudio?vista=…`), paso C/W2, la robustez esencial de W4 y D/W3 con ejecución privada real. W1 está completo según sus criterios; la continuación web no lo está (sugerencias semánticas de W4, tutorial, evaluación con usuarios y constructor por bloques siguen pendientes o fuera de alcance).
+Este plan parte del código actual de `etl_dsl/`, `tests/` y `web/`, y lo contrasta con [el enunciado](Enunciado_DSL.md). Cubre el compilador y la continuación de la web. C1, C2, C3, C4 y C5 están implementados. La continuación web entrega W1 (pasos A/B, paso E y su cierre con divisor de paneles y enlaces `/estudio?vista=…`), paso C/W2, la robustez esencial de W4 y D/W3 con ejecución privada real. W1 está completo según sus criterios. La documentación final del lenguaje (`lenguaje.md`, `backend_polars.md` y el tutorial «De un CSV a un resultado» publicado en `/docs/tutorial`) está entregada; la continuación web no está completa (sugerencias semánticas de W4, evaluación con usuarios y constructor por bloques siguen pendientes o fuera de alcance).
 
 Ampliación del plan: arquitectura de conexión, páginas adicionales y evaluación de edición visual, tomando como referencia el proyecto local `csharp-x86-compi/`. Se mantiene la libertad de adaptar sus ideas al dominio ETL. La ruta `/estudio` implementa los pasos A, C y D y el cierre de W1. `/ejemplos` y `/docs` implementan el paso B y `/evaluacion` el paso E; el editor por bloques sigue pendiente.
 
@@ -29,7 +29,7 @@ La [definición de arquitectura de la aplicación](arquitectura_aplicacion.md) c
 | Conectores | ✅ | Lectura CSV, Parquet, SQLite y DuckDB; escritura CSV, Parquet y DuckDB: `runtime.py`. DuckDB es un conector; las transformaciones usan Polars. |
 | Ejecución | ✅ | `LazyFrame`, selección de pipelines, entradas externas mediante API Python y comprobaciones en ejecución. |
 | CLI | ✅ | Compilación individual y por carpetas, seis formatos, ejecución, selección de pases, rutas base y continuación del lote tras errores: `main.py`. |
-| Pruebas y entorno | ✅ | Suite `unittest`, dependencias, Docker y datos de demostración. Tras el cierre de W1 pasan **174 pruebas Python** y **51 pruebas web**; la evidencia histórica C5 conserva sus 131 pruebas. |
+| Pruebas y entorno | ✅ | Suite `unittest`, dependencias, Docker y datos de demostración. Tras la documentación final pasan **180 pruebas Python** y **52 pruebas web**; la evidencia histórica C5 conserva sus 131 pruebas. |
 | Evaluación experimental | ✅ | `benchmarks/`: ocho workloads, baselines contractuales, equivalencia obligatoria, compilación/ejecución separadas y CSV/JSON/reporte. Campaña real hasta un millón de filas; [metodología y límites](evaluacion.md). |
 
 **Distinción importante:** el compilador ya funciona de punta a punta por terminal. La brecha principal está en verificar propiedades de los datos antes de ejecutarlos y usarlas para optimizar.
@@ -49,7 +49,7 @@ La web conserva la demo breve del landing y amplía el estudio en `/estudio`. Se
 | Compilación al editar | ✅ | Tras cargar Python, espera de 320 ms; ejemplos editables, restauración y switch de optimización: `Studio.tsx`. |
 | Demostración de pases | ✅ | Comparación progresiva de constantes, filtros y pasos muertos: `Optimizer.tsx`. |
 | AST y FLOW explorables | ✅ | Paso C: árbol expandible, grafo de lectura desde AST/FLOW original, pipelines, puertos, lista accesible y selección del fuente. |
-| Catálogo y documentación | ✅ | Paso B: cinco ejemplos, seis artículos, slugs explícitos, código de fuente canónica, anclas y copias independientes mediante el workspace. |
+| Catálogo y documentación | ✅ | Paso B: seis ejemplos, siete artículos (incluido el tutorial CSV → resultado), slugs explícitos, código de fuente canónica, anclas y copias independientes mediante el workspace. |
 | Estudio ampliado | ✅ | `/estudio` con editor/inspector paralelos y divisor ajustable en escritorio (disposición en `cauce-studio-layout-v1`), alternancia móvil y enlaces `/estudio?vista=…`; el landing conserva su demo. |
 | Ejecución y resultados | ✅ | Paso D: Ejecutar envía fuente y bindings al servicio Python privado, que recompila y ejecuta con Polars; tabla paginada, esquema observado, gráfico de la página y descargas. Compilar sigue siendo local; no hay despliegue público. |
 | Archivos y persistencia del trabajo | ✅ | Importación/exportación `.etl`, Python vigente, revisión/pases y borradores locales versionados/validados. 128 KiB por documento, 8 anteriores, 512 KiB total; aviso si falla el guardado. |
@@ -181,8 +181,8 @@ anteriores y no ofrece Python de otra revisión. En el paso A no había ejecuci�
 Persistencia y recuperación detalladas en [web/README.md](../web/README.md).
 
 **Cierre de W1:** divisor editor/inspector y enlaces internos a vistas (sección 9.2), estados del estudio auditados sin
-faltantes y criterio de 9.2 cubierto con D/W3. Fuera de W1 quedan las sugerencias semánticas (W4), el tutorial y la
-documentación de lenguaje (sección 7), la evaluación con usuarios, la comprobación del fallback en el alojamiento que se
+faltantes y criterio de 9.2 cubierto con D/W3. Fuera de W1 quedaban las sugerencias semánticas (W4), el tutorial y la
+documentación de lenguaje (sección 7; entregados después, ver la última entrega), la evaluación con usuarios, la comprobación del fallback en el alojamiento que se
 elija y el constructor por bloques (F). Evidencia al final del documento.
 
 ### W2. Fases y optimizaciones explorables — P1/P2 — ✅ paso C
@@ -238,8 +238,8 @@ El contrato del servicio y un primer recorrido con un dataset incluido pueden de
 
 ## 7. Pruebas y documentación para cerrar el proyecto
 
-- [x] Suite actual: `.venv/bin/python -m unittest discover` — **174 pruebas, OK** (17 de evidencia C5 publicada, 4 de correspondencia de fuentes).
-- [x] Diagnósticos, revisiones, persistencia, worker, evaluación, vistas y disposición: `cd web && npm test` — **51 pruebas, OK**.
+- [x] Suite actual: `.venv/bin/python -m unittest discover` — **180 pruebas, OK** (17 de evidencia C5 publicada, 4 de correspondencia de fuentes, 5 del tutorial).
+- [x] Diagnósticos, revisiones, persistencia, worker, evaluación, vistas, disposición y tutorial publicado: `cd web && npm test` — **52 pruebas, OK**.
 - [x] Evidencia C5 publicada: `gen_evaluation.py --check` y recorrido `/evaluacion` con `playwright-cli` en Vite, FastAPI y Docker.
 - [x] C1/C2/C3/C4 en navegador: `.venv/bin/python web/scripts/verify_browser.py` — **32 comparaciones CPython/Pyodide, dos casos C2, prueba O1, eliminación O3 con obligaciones, abstenciones y recorrido de corrección, OK**.
 - [x] Build actual: `cd web && npm run build` — **OK**.
@@ -249,8 +249,9 @@ El contrato del servicio y un primer recorrido con un dataset incluido pueden de
 - [x] Completar comparación avanzada de IR (W2/paso C).
 - [x] Ejecutar ejemplos desde la web hasta preview y descarga (W3/paso D).
 - [x] Verificar `/estudio` en móvil y escritorio, teclado, foco, ambos temas y movimiento reducido.
+- [x] Recorrido del tutorial en navegador (`verify_browser.py --tutorial-only`): artículo, enlaces, copia, error, ejecución y descarga en Vite, FastAPI y Docker.
 - [x] Paridad CPython/Pyodide (32 presentaciones), diagnósticos y O1/O3 conservados; demos regeneradas con 157 pruebas.
-- [ ] Actualizar `docs/lenguaje.md` y `docs/backend_polars.md`; escribir un tutorial desde un CSV hasta un resultado.
+- [x] Actualizar `docs/lenguaje.md` y `docs/backend_polars.md`; escribir un tutorial desde un CSV hasta un resultado ([tutorial.md](tutorial.md), `/docs/tutorial`; evidencia al final).
 - [ ] Preparar reporte LaTeX de 6–10 páginas con evaluación, limitaciones, referencias y declaración de uso de IA.
 - [ ] Preparar demo técnica y ensayo de explicación de todas las fases por el equipo.
 - [ ] Verificar con el equipo la evidencia de las tres reuniones exigidas para la bonificación; su realización no se puede deducir del código.
@@ -402,7 +403,7 @@ El cierre solo añade el aviso de enlace con vista inválida, que no estaba en l
 
 **Criterio de cierre:** acceder directamente a un detalle, abrirlo en el estudio y comprobar que su código y datasets corresponden al ejemplo seleccionado.
 
-### 9.4. Documentación: `/docs` y `/docs/:slug` — ✅ selección inicial del paso B
+### 9.4. Documentación: `/docs` y `/docs/:slug` — ✅ paso B y tutorial
 
 **Usuario y resultado esperado:** quien necesita aprender una operación o resolver un error. Debe llegar de la explicación a un ejemplo ejecutable sin perder su borrador.
 
@@ -417,6 +418,8 @@ El cierre solo añade el aviso de enlace con vista inválida, que no estaba en l
 - Mostrar compatibilidad y límites: compilación sin datos, ejecución solo mediante el servicio privado (paso D), entorno Python del proyecto necesario y conectores de lectura/escritura del runtime.
 
 **Criterio de cierre:** desde un diagnóstico del estudio se abre su explicación; desde primeros pasos se abre un ejemplo válido; Volver restaura el trabajo anterior.
+
+**Tutorial (documentación final).** `/docs/tutorial` publica [tutorial.md](tutorial.md) completo como séptimo artículo, enlazado desde «Tu primer programa»; su programa es el ejemplo `gasto-por-cliente` (`demo/tutorial.etl`, dataset incluido `join-orders@1`). Los bloques se distinguen por lenguaje: fragmento del DSL, comando de terminal, salida obtenida y contenido CSV; los tres últimos se muestran literales y sin cortar líneas. Los artículos pueden enlazar `/estudio?vista=…` solo con vistas publicadas (`gen_content.py` falla con otra).
 
 ### 9.5. Evaluación: `/evaluacion` — ✅ paso E
 
@@ -687,3 +690,51 @@ cualquier paso del divisor); la repetición íntegra pasó. No es una evaluació
 `lenguaje.md`/`backend_polars.md`, reporte, evaluación con usuarios, verificación del fallback en el alojamiento que se elija
 y, si se decide, mapa Python → DSL. Constructor por bloques (F), cuentas, datasets propios, colaboración, persistencia remota y
 despliegue público siguen fuera de alcance. **No se declara completa toda la continuación web.**
+
+
+## Entrega documentación final — referencia del lenguaje, backend y tutorial CSV → resultado
+
+**Referencias vigentes.** `lenguaje.md` y `backend_polars.md` se auditaron contra `grammar.lark`, `validation.py`,
+`semantic.py`, `passes.py`, `backend.py`, `runtime.py` y `main.py`, comprobando cada cambio con el compilador. Correcciones:
+calificadores fuera de JOIN los rechaza el análisis estático (`E_QUALIFIER`), no el backend; el ejemplo de Python generado
+mostraba un formato de etiqueta antiguo (se sustituyó por un fragmento real de `input/duckdb.etl`); `rt.step` no «lee datos»
+sino que resuelve el esquema sin ejecutar el plan (en CSV puede leer cabecera y muestra), y SQLite/DuckDB se leen completos
+al evaluar el SOURCE; la CLI solo guarda formatos de inspección al procesar una carpeta o con `--output`; las restricciones de
+DERIVE/FILL_NULL las detecta C2 cuando el esquema se conoce. Se añadió lo que faltaba: opciones de conectores solo de cadena
+(salvo `header`; números y NULL dan `E_CONNECTOR`), SQLite solo lectura, identificadores, literales numéricos, `COUNT(expr)`,
+AGGREGATE sin GROUP_BY, nombres disjuntos en JOIN (`E_AMBIGUOUS_COLUMNS`, RENAME previo), lógica de tres valores (Kleene,
+`SAFE_DIVIDE` con denominador nulo, claves nulas en JOIN), orden predeterminado de los cinco pases, `-O0`/`--pases`
+excluyentes y con repeticiones, mensajes de `--run`, DISTINCT/DROP_NULLS en la tabla de semántica y la relación con el servicio.
+Los encabezados que selecciona `articles.json` se conservaron.
+
+**Tutorial.** [tutorial.md](tutorial.md) recorre `demo/tutorial.etl` (pipeline `gasto_por_cliente`) sobre el CSV incluido
+`demo/joins_pedidos.csv`: contrato SOURCE, FILTER, DERIVE (IGV con decimal exacto), AGGREGATE y SORT, un error real
+(`importes` → `E_COLUMN` en 10:15, detectado antes de leer datos gracias al contrato), compilación e inspección (estudio y
+CLI), ejecución (Resultados con `join-orders@1` y `--run`) y el archivo `out/gasto_por_cliente.csv`. No requiere
+`scripts/create_demo_data.py` ni `service.prepare`; el texto indica qué ejemplos sí. Publicado en `/docs/tutorial`, enlazado
+desde «Tu primer programa», con el ejemplo `/ejemplos/gasto-por-cliente` (dataset declarado en `examples.json`).
+`tests/test_tutorial.py` ejecuta los comandos del documento, compara sus salidas y el CSV, comprueba que cada fragmento es parte
+literal del programa, que el dataset declarado es el CSV incluido del catálogo del servicio y que el servicio, con el directorio
+de datasets vacío, produce la misma descarga. Una alteración del documento o del programa hace fallar las pruebas.
+
+**Web.** Leyendas por lenguaje de bloque (fragmento del DSL, comando de terminal, salida obtenida, contenido CSV); comandos y
+salidas literales, sin resaltado ni cortes de línea, enfocables y desplazables. Enlaces `/estudio?vista=…` en artículos con
+vistas publicadas (falla la generación con otra). Se corrigieron dos textos desactualizados desde D: la nota de cada ejemplo
+(«No hay ejecución de pipelines en la web») y la introducción de «Conectores». Sin rediseño ni dependencias nuevas.
+
+**Verificación (12 de noviembre de 2026).** **180 pruebas Python** (también en Docker, 2 omitidas allí), **52 web**,
+`gen_content`/`gen_http`/`gen_evaluation --check` (37/37 fuentes C5 coinciden: no se tocaron `etl_dsl/` ni `benchmarks/`),
+demos regeneradas (contador 180), build web e imágenes Docker `compiler`/`service`. Comandos del tutorial ejecutados tal como
+están escritos y servicio sin preparar (API 8044 con datasets vacíos) con descarga idéntica byte a byte a la CLI.
+`playwright-cli`, sin detener procesos ajenos: suite histórica completa (32 comparaciones CPython/Pyodide, contenido,
+inspectores, evaluación, estudio) más la nueva `tutorial.js` en Vite 5221 (API 8041) y `tutorial.js` en Vite 5222 contra la
+API sin preparar; D con la instancia de timeout real (8042) en Vite 5221; tutorial, contenido, estudio y D en el build servido
+por FastAPI (8041; tutorial también en 8044) y en el contenedor Docker (8043), sin imports de `/src/`. `tutorial.js` abre el
+artículo directamente, recorre índice y enlaces (ejemplo, atrás, paginación, vistas FLOW y Resultados), abre la copia con
+teclado, compila, provoca y corrige el error desde el diagnóstico, ejecuta hasta la tabla y descarga el CSV (comparado con el
+runtime local), en escritorio/claro y móvil/oscuro con capturas en las cuatro combinaciones y foco visible; las capturas se
+revisaron. No es una evaluación de usabilidad.
+
+**Pendiente:** sugerencias semánticas de W4, evaluación con usuarios, reporte LaTeX, demo técnica, verificación del fallback en
+el alojamiento que se elija y, si se decide, mapa Python → DSL. Constructor por bloques, cuentas, datasets propios,
+colaboración, persistencia remota y despliegue público siguen fuera de alcance.

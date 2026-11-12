@@ -11,6 +11,11 @@ referencias v0.2, no al ejemplo de operadores `|>` de esa propuesta.
 
 ## Instalación y uso
 
+Para un primer recorrido guiado, sin programar en Python, sigue el tutorial
+[De un CSV a un resultado](docs/tutorial.md): usa `demo/tutorial.etl` y un CSV incluido.
+La referencia del lenguaje está en [docs/lenguaje.md](docs/lenguaje.md) y la del backend
+en [docs/backend_polars.md](docs/backend_polars.md).
+
 Requiere Python 3.11 o posterior. En PowerShell:
 
 ```powershell
@@ -150,9 +155,10 @@ proyecto2-compis/
 │   ├── grammar.lark        # Gramática
 │   ├── validation.py       # Validaciones estructurales
 │   └── diagnostics.py      # Diagnósticos
+├── demo/                   # Programas de demostración, CSV incluidos y tutorial.etl
 ├── tests/
 ├── scripts/                # Datos reproducibles de demo
-└── docs/                   # Lenguaje, backend, enunciado y propuesta inicial
+└── docs/                   # Tutorial, lenguaje, backend, enunciado y propuesta inicial
 ```
 
 Los módulos se mantienen dentro de `etl_dsl` para evitar conflictos con los
@@ -272,9 +278,9 @@ si falla el guardado, descargar antes de salir. Rutas, fallback de hosting, coma
 límites en [web/README.md](web/README.md). Navegar por catálogo o documentación conserva el documento;
 solo Abrir una copia lo reemplaza y guarda el anterior como borrador, sin expulsarlo al alcanzar el límite.
 
-El catálogo publica ventas, riesgo crediticio, corrección de NULL (ejercicio inválido), rangos y JOIN verificado.
-Seis guías cubren primeros pasos, estructura, operaciones/expresiones, NULL/contratos/diagnósticos,
-conectores y composición. `web/content/examples.json` y `articles.json` seleccionan las fuentes canónicas;
+El catálogo publica ventas, gasto por cliente (programa del tutorial), riesgo crediticio, corrección de NULL
+(ejercicio inválido), rangos y JOIN verificado. Siete guías cubren primeros pasos, el tutorial «De un CSV a un
+resultado», estructura, operaciones/expresiones, NULL/contratos/diagnósticos, conectores y composición. `web/content/examples.json` y `articles.json` seleccionan las fuentes canónicas;
 `.venv/bin/python web/scripts/gen_content.py` genera el contenido web sin copiar programas a mano.
 Los artículos reutilizan secciones de documentación vigente; no publican propuestas ni planificación.
 
@@ -317,4 +323,14 @@ La API `/api/v1` acepta fuente ETL, recompila en un proceso hijo y mantiene queu
 
 Límites privados: un activo/cuatro posiciones adicionales, 30 s, RSS muestreado de 512 MiB, archivos acotados y caducidad de una hora. Cancelar termina el hijo; reiniciar limpia huérfanos sin reanudación. Los contratos dinámicos y las obligaciones JOIN permanecen con O0 y optimización. No hay transacción global ni sandbox público. Docker: `docker compose --profile web up --build cauce`, accesible solo en loopback.
 
-Contrato HTTP 1 (distinto del análisis JSON 4), comandos, límites completos, persistencia, serialización y verificación: [guía del servicio](docs/servicio_ejecucion.md). W1 está completo (cierre con divisor de paneles, enlaces a vistas y auditoría de estados del estudio; ver [web/README.md](web/README.md#cierre-de-w1-divisor-de-paneles-y-enlaces-a-vistas)). Siguen pendientes las sugerencias semánticas (W4), el tutorial, la actualización de `lenguaje.md`/`backend_polars.md` y la evaluación con usuarios; el constructor visual sigue fuera de alcance. No se modificaron las cifras C5.
+Contrato HTTP 1 (distinto del análisis JSON 4), comandos, límites completos, persistencia, serialización y verificación: [guía del servicio](docs/servicio_ejecucion.md). W1 está completo (cierre con divisor de paneles, enlaces a vistas y auditoría de estados del estudio; ver [web/README.md](web/README.md#cierre-de-w1-divisor-de-paneles-y-enlaces-a-vistas)). La documentación final del lenguaje y el tutorial están publicados (ver más abajo). Siguen pendientes las sugerencias semánticas (W4) y la evaluación con usuarios; el constructor visual sigue fuera de alcance. No se modificaron las cifras C5.
+
+### Documentación final y tutorial
+
+[docs/tutorial.md](docs/tutorial.md) lleva de `demo/joins_pedidos.csv` (incluido, sin preparación) a
+`demo/out/gasto_por_cliente.csv` con `demo/tutorial.etl`: contrato, filtro, columna derivada, agregación, un error real
+y su corrección, compilación, ejecución desde el estudio y con `--run`, y el archivo de salida. Se publica en `/docs/tutorial`.
+`tests/test_tutorial.py` ejecuta sus comandos y compara las salidas mostradas, también a través del servicio privado.
+[docs/lenguaje.md](docs/lenguaje.md) y [docs/backend_polars.md](docs/backend_polars.md) describen la implementación vigente
+(gramática, diez operaciones, NULL, contratos, C2, cinco pases, conectores y runtime). Verificación: **180 pruebas Python**
+(también en Docker, 2 omitidas allí), **52 web** y recorridos `playwright-cli` del tutorial en Vite, FastAPI y Docker.
