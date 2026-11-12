@@ -12,14 +12,14 @@ import { navigate, usePath } from "./lib/router";
 const ExamplesPage = lazy(() => import("./pages/ExamplesPage"));
 const DocsPage = lazy(() => import("./pages/DocsPage"));
 const StudioPage = lazy(() => import("./pages/StudioPage"));
-// Si el chunk de evaluación no llega (red/caché), se informa sin inventar datos ni afectar al estudio.
+// Si el chunk de evaluación no llega (red/caché), se informa sin inventar datos ni afectar a Studio.
 const EvaluationPage = lazy(() =>
   import("./pages/EvaluationPage").catch(() => ({
     default: () => (
       <main className="content-page not-found" id="contenido">
         <h1>No se pudo cargar la evaluación</h1>
         <p role="alert">
-          Falló la descarga de la página. Tu documento del estudio no se ha modificado.
+          Falló la descarga de la página. Tu documento dStudio no se ha modificado.
         </p>
         <button type="button" className="btn" onClick={() => location.reload()}>
           Reintentar
@@ -30,10 +30,15 @@ const EvaluationPage = lazy(() =>
 );
 
 export default function App() {
-  const path = usePath();
+  const rawPath = usePath();
+  const path = rawPath === "/estudio" || rawPath === "/studio/" ? "/studio" : rawPath;
+  useEffect(() => {
+    if (rawPath === "/estudio" || rawPath === "/studio/")
+      history.replaceState(history.state, "", "/studio" + location.search + location.hash);
+  }, [rawPath]);
   useEffect(() => {
     if (path === "/") {
-      document.title = "Cauce · Pipelines que se leen";
+      document.title = "Stream · Pipelines que se leen";
       return startReveal();
     }
   }, [path]);
@@ -56,7 +61,7 @@ export default function App() {
         if (!anchor || anchor.target || anchor.hasAttribute("download")) return;
         const url = new URL(anchor.href);
         // Misma ruta y misma consulta: solo cambia el ancla y la resuelve el navegador.
-        // Misma ruta con otra consulta (p. ej. /estudio?vista=ir) no debe recargar la página.
+        // Misma ruta con otra consulta (p. ej. /studio?vista=ir) no debe recargar la página.
         if (
           url.origin !== location.origin ||
           (url.pathname === location.pathname && url.search === location.search)
@@ -68,11 +73,11 @@ export default function App() {
     >
       <a
         className="skip"
-        href={path === "/" || path === "/estudio" ? "#estudio" : "#contenido"}
+        href={path === "/" || path === "/studio" ? "#estudio" : "#contenido"}
       >
         Ir al contenido
       </a>
-      <Nav inStudio={path === "/estudio"} />
+      <Nav inStudio={path === "/studio"} />
       {path === "/" ? (
         <>
           <main>
@@ -87,11 +92,11 @@ export default function App() {
           </main>
           <Footer />
         </>
-      ) : path === "/estudio" ? (
+      ) : path === "/studio" ? (
         <Suspense
           fallback={
             <main className="workspace">
-              <p role="status">Abriendo el estudio…</p>
+              <p role="status">Abriendo Studio…</p>
             </main>
           }
         >
@@ -126,10 +131,10 @@ export default function App() {
           <h1>Página no encontrada</h1>
           <p>
             Esta ruta no existe. Puedes volver al inicio o recuperar tu
-            documento en el estudio.
+            documento en Studio.
           </p>
-          <a className="btn" href="/estudio">
-            Abrir el estudio
+          <a className="btn" href="/studio">
+            Abrir Studio
           </a>
           <a href="/">Volver al inicio</a>
         </main>

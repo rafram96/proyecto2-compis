@@ -39,7 +39,7 @@ async (page) => {
   await page
     .getByRole("link", { name: "Continuar en el estudio", exact: true })
     .click();
-  await page.waitForURL((u) => u.pathname === "/estudio");
+  await page.waitForURL((u) => u.pathname === "/studio");
   await waitLive();
   if ((await page.getByLabel("Pases de optimización").inputValue()) !== "O0")
     throw new Error("No se transfirieron los pases de la demo");
@@ -66,7 +66,7 @@ async (page) => {
     };
   });
   const before = await editorState();
-  for (const name of ["AST", "Tokens", "Árbol", "IR", "Resultado"])
+  for (const name of ["AST", "Tokens", "Parse tree", "IR", "Resultado"])
     await page.getByRole("button", { name, exact: true }).click();
   await page.waitForTimeout(400);
   const after = await editorState();
@@ -83,7 +83,7 @@ async (page) => {
   )
     throw new Error("Se recreó el editor");
   await replaceCode(fixed);
-  await page.getByRole("button", { name: "Compilar", exact: true }).click();
+  await page.getByRole("button", { name: "Compile", exact: true }).click();
   await waitLive();
   if (await page.locator(".diagnostic-link").count())
     throw new Error("Persisten diagnósticos después de corregir");
@@ -168,7 +168,7 @@ async (page) => {
     .click();
   await page.waitForURL(origin + "/");
   await page.goBack();
-  await page.waitForURL((u) => u.pathname === "/estudio");
+  await page.waitForURL((u) => u.pathname === "/studio");
   if (
     (await page.getByLabel("Nombre del documento").inputValue()) !==
     "importado.etl"
@@ -180,9 +180,9 @@ async (page) => {
   await page.getByRole("heading", { name: "Página no encontrada" }).waitFor();
   await page
     .getByRole("main")
-    .getByRole("link", { name: "Abrir el estudio" })
+    .getByRole("link", { name: "Abrir Studio" })
     .click();
-  await page.waitForURL((u) => u.pathname === "/estudio");
+  await page.waitForURL((u) => u.pathname === "/studio");
 
   // Fallo real de descarga inicial de Pyodide en el worker, seguido de recuperación.
   await page
@@ -190,7 +190,7 @@ async (page) => {
     .route("**/pyodide/v314.0.7/full/pyodide.mjs", (route) =>
       route.abort("failed"),
     );
-  await page.getByRole("button", { name: "Compilar", exact: true }).click();
+  await page.getByRole("button", { name: "Compile", exact: true }).click();
   await page
     .locator('.studio-status[data-status="error"]')
     .waitFor({ timeout: 20000 });
@@ -203,7 +203,7 @@ async (page) => {
   await page
     .getByRole("button", { name: "Reiniciar compilador", exact: true })
     .click();
-  await page.getByRole("button", { name: "Compilar", exact: true }).click();
+  await page.getByRole("button", { name: "Compile", exact: true }).click();
   // Cambios de ejemplo durante la carga y ediciones rápidas: termina con la última revisión.
   await page.getByLabel("Abrir ejemplo").selectOption("credit_risk.etl");
   await page.getByLabel("Abrir ejemplo").selectOption("ventas.etl");

@@ -211,7 +211,7 @@ async (page) => {
   await page.evaluate(() => document.documentElement.setAttribute("data-theme", "light"));
 
   // 8. Evaluación ↔ estudio ↔ docs/ejemplos sin perder documento ni pases personalizados.
-  await page.goto(origin + "/estudio");
+  await page.goto(origin + "/studio");
   await page.locator(".cm-content").waitFor();
   await page.locator(".cm-content").click();
   await page.keyboard.press("ControlOrMeta+End");
@@ -227,12 +227,12 @@ async (page) => {
   await page.getByRole("button", { name: /Sin mejora clara/ }).click();
   await page.getByRole("radio", { name: "final_flags_none" }).check();
   const filtered = page.url();
-  await page.getByRole("link", { name: "Abrir el estudio" }).click();
-  await page.waitForURL((u) => u.pathname === "/estudio");
+  await page.getByRole("link", { name: "Abrir Studio" }).click();
+  await page.waitForURL((u) => u.pathname === "/studio");
   await page.locator(".cm-content").waitFor();
   if (!(await page.locator(".cm-content").innerText()).includes("borrador evaluación ñ")) fail("Se perdió el documento");
   if ((await page.getByLabel("Pases de optimización").inputValue()) !== "custom") fail("Se perdieron los pases");
-  await page.getByRole("link", { name: "Documentación", exact: true }).click();
+  await page.getByRole("link", { name: "Docs", exact: true }).click();
   await page.waitForURL("**/docs");
   await page.getByRole("link", { name: "Ejemplos", exact: true }).click();
   await page.waitForURL("**/ejemplos");

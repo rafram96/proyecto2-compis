@@ -53,13 +53,13 @@ test("?vista: nombres estables en español para los ocho inspectores y la ejecuc
   for (const [inspector] of INSPECTORS) {
     const view = inspectorView(inspector);
     assert.deepEqual(parseView(serializeView(view)), { view, ignored: [] });
-    assert.equal(viewHref(view), `/estudio?vista=${VIEW_SLUGS[inspector]}`);
+    assert.equal(viewHref(view), `/studio?vista=${VIEW_SLUGS[inspector]}`);
   }
   assert.deepEqual(parseView(`?vista=${EXECUTION_SLUG}`).view, {
     kind: "execution",
   });
   assert.equal(viewLabel({ kind: "execution" }), "Resultados de ejecución");
-  assert.equal(viewLabel(inspectorView("tree")), "Árbol");
+  assert.equal(viewLabel(inspectorView("tree")), "Parse tree");
   assert.deepEqual(parseView(""), { view: null, ignored: [] });
 });
 
@@ -87,7 +87,7 @@ test("la serialización solo contiene la vista", () => {
     const view = parseView(`?vista=${slug}`).view;
     const url = new URL(viewHref(view), "http://cauce.local");
     assert.deepEqual([...url.searchParams.keys()], ["vista"]);
-    assert.equal(url.pathname, "/estudio");
+    assert.equal(url.pathname, "/studio");
   }
 });
 

@@ -1,5 +1,5 @@
 async (page) => {
-  // Cierre de W1: divisor editor/inspector, persistencia de la disposición y enlaces /estudio?vista=….
+  // Cierre de W1: divisor editor/inspector, persistencia de la disposición y enlaces /studio?vista=….
   // Funciona en Vite y en el build servido (sin imports de /src/); necesita la API para el trabajo en memoria.
   const origin = new URL(page.url()).origin;
   const errors = [];
@@ -29,7 +29,7 @@ async (page) => {
     });
   const live = () => page.locator('.studio-out[data-origin="en vivo"]').waitFor({ timeout: 65000 });
   const clean = async () => {
-    await page.goto(origin + "/estudio");
+    await page.goto(origin + "/studio");
     await page.evaluate(([a, b]) => {
       localStorage.removeItem(a);
       localStorage.removeItem(b);
@@ -69,7 +69,7 @@ async (page) => {
   if (Math.abs(even.code - even.inspector) > 2) fail("El 50 % inicial no reparte el ancho");
 
   // 2. Estado del editor que el ajuste no debe tocar: texto largo, selección, scroll e historial.
-  await page.getByRole("button", { name: "Compilar", exact: true }).click();
+  await page.getByRole("button", { name: "Compile", exact: true }).click();
   await live();
   await page.locator(".cm-content").click();
   await page.keyboard.press("ControlOrMeta+End");
@@ -198,16 +198,16 @@ async (page) => {
   const views = [
     ["resultado", "Resultado"],
     ["tokens", "Tokens"],
-    ["arbol", "Árbol"],
+    ["arbol", "Parse tree"],
     ["ast", "AST"],
     ["flow", "FLOW"],
     ["ir", "IR"],
-    ["esquemas", "Esquemas"],
+    ["esquemas", "Schemas"],
     ["python", "Python"],
   ];
   const doc0 = await active();
   for (const [slug, label] of views) {
-    await page.goto(origin + "/estudio?vista=" + slug);
+    await page.goto(origin + "/studio?vista=" + slug);
     await page.locator(".cm-content").waitFor();
     if (!(await isPressed(label))) fail(`?vista=${slug} no seleccionó ${label}`);
     const doc = await active();
@@ -215,7 +215,7 @@ async (page) => {
       fail(`?vista=${slug} modificó el documento`);
     if (search() !== "?vista=" + slug) fail("La URL válida cambió");
   }
-  await page.goto(origin + "/estudio?vista=ejecucion");
+  await page.goto(origin + "/studio?vista=ejecucion");
   await page.locator("#results-title").waitFor();
   await page.waitForFunction(() => document.activeElement?.id === "results-title");
   if (!(await isPressed("Python"))) fail("?vista=ejecucion cambió el inspector");
@@ -223,14 +223,14 @@ async (page) => {
     fail("?vista=ejecucion no llevó a Resultados");
 
   // 7. Valor inválido: aviso visible, vista del documento y URL limpia.
-  await page.goto(origin + "/estudio?vista=bloques&doc=123");
+  await page.goto(origin + "/studio?vista=bloques&doc=123");
   const notice = page.locator(".view-notice");
   await notice.waitFor();
   const noticeText = await notice.innerText();
   if (!noticeText.includes("vista=bloques") || !noticeText.includes("doc") || !noticeText.includes("Python"))
     fail("Aviso de vista inválida incompleto: " + noticeText);
   if (search() !== "" || !(await isPressed("Python"))) fail("Fallback de vista inválida incorrecto");
-  await page.goto(origin + "/estudio?vista=ir&doc=abc");
+  await page.goto(origin + "/studio?vista=ir&doc=abc");
   await notice.waitFor();
   if (search() !== "?vista=ir" || !(await isPressed("IR"))) fail("Se perdió la vista válida con parámetros extra");
 
@@ -245,31 +245,31 @@ async (page) => {
   await page.evaluate(() => {
     window.__noReloadS = true;
     const a = document.createElement("a");
-    a.href = "/estudio?vista=esquemas";
+    a.href = "/studio?vista=esquemas";
     a.textContent = "enlace interno de prueba";
     a.id = "s-link";
     document.querySelector(".app-page").append(a);
   });
   await page.locator("#s-link").click();
   await page.waitForURL((u) => u.search === "?vista=esquemas");
-  if (!(await isPressed("Esquemas")) || !(await page.evaluate(() => window.__noReloadS === true)))
+  if (!(await isPressed("Schemas")) || !(await page.evaluate(() => window.__noReloadS === true)))
     fail("Enlace con la misma ruta recargó o no aplicó la vista");
   await page.goBack();
   await page.waitForURL((u) => u.search === "?vista=flow");
   if (!(await isPressed("FLOW"))) fail("Atrás dentro del estudio no recuperó la vista");
   await page.goForward();
   await page.waitForURL((u) => u.search === "?vista=esquemas");
-  if (!(await isPressed("Esquemas"))) fail("Adelante dentro del estudio no recuperó la vista");
+  if (!(await isPressed("Schemas"))) fail("Adelante dentro del estudio no recuperó la vista");
 
   // 9. Preparar trabajo real: pases personalizados y ejecución en memoria.
-  await page.getByRole("button", { name: "Compilar", exact: true }).click();
+  await page.getByRole("button", { name: "Compile", exact: true }).click();
   await page.getByLabel("Pases de optimización").selectOption("custom");
   for (const pass of ["joins", "muertos", "filtros"]) await page.getByRole("checkbox", { name: pass, exact: true }).uncheck();
   await page.getByRole("button", { name: "Subir rangos", exact: true }).click();
   await live();
   await page.getByText("Servicio conectado · demo privada", { exact: true }).waitFor();
   await page.getByLabel("Dataset para ventas.pedidos", { exact: true }).selectOption("orders@1");
-  await page.getByRole("button", { name: "Ejecutar", exact: true }).click();
+  await page.getByRole("button", { name: "Run", exact: true }).click();
   await page.locator('.execution-job[data-state="succeeded"]').waitFor({ timeout: 20000 });
   await page.locator(".execution-results tbody").first().waitFor();
   const runId = await page.locator(".execution-job").getAttribute("data-run-id");
@@ -281,10 +281,10 @@ async (page) => {
 
   // Atrás/adelante desde otras páginas recupera la vista.
   await pressed("Python").click();
-  await page.getByRole("link", { name: "Documentación", exact: true }).click();
+  await page.getByRole("link", { name: "Docs", exact: true }).click();
   await page.waitForURL("**/docs");
   await page.goBack();
-  await page.waitForURL((u) => u.pathname === "/estudio" && u.search === "?vista=python");
+  await page.waitForURL((u) => u.pathname === "/studio" && u.search === "?vista=python");
   if (!(await isPressed("Python"))) fail("Atrás desde docs no recuperó la vista");
 
   // 10. Recorridos docs → enlace → estudio y evaluación → enlace → estudio.
@@ -295,11 +295,11 @@ async (page) => {
     await page.locator(`.execution-job[data-run-id="${runId}"][data-state="succeeded"]`).waitFor();
     if (!(await page.evaluate(() => window.__noReloadS === true))) fail(`${label}: hubo recarga completa`);
   };
-  await page.getByRole("link", { name: "Documentación", exact: true }).click();
+  await page.getByRole("link", { name: "Docs", exact: true }).click();
   await page.locator(".docs-nav").getByRole("link", { name: "PIPELINE, STEP y FLOW", exact: true }).click();
   await page.waitForURL("**/docs/estructura");
   await page.getByRole("link", { name: "Ver el FLOW de tu documento en el estudio" }).click();
-  await page.waitForURL((u) => u.pathname === "/estudio" && u.search === "?vista=flow");
+  await page.waitForURL((u) => u.pathname === "/studio" && u.search === "?vista=flow");
   await page.locator(".cm-content").waitFor();
   if (!(await isPressed("FLOW"))) fail("El enlace de docs no abrió FLOW");
   await kept("docs → estudio");
@@ -314,7 +314,7 @@ async (page) => {
   const evalLink = page.getByRole("link", { name: "Abrir la vista IR del estudio" });
   await evalLink.scrollIntoViewIfNeeded();
   await evalLink.click();
-  await page.waitForURL((u) => u.pathname === "/estudio" && u.search === "?vista=ir");
+  await page.waitForURL((u) => u.pathname === "/studio" && u.search === "?vista=ir");
   await page.locator(".cm-content").waitFor();
   if (!(await isPressed("IR"))) fail("El enlace de la evaluación no abrió IR");
   await kept("evaluación → estudio");
@@ -353,19 +353,19 @@ async (page) => {
   for (const theme of ["light", "dark"]) {
     await page.emulateMedia({ reducedMotion: "reduce", colorScheme: theme });
     await page.setViewportSize({ width: 1440, height: 1000 });
-    await page.goto(origin + "/estudio?vista=ir");
+    await page.goto(origin + "/studio?vista=ir");
     await page.evaluate((t) => document.documentElement.setAttribute("data-theme", t), theme);
     await page.locator(".cm-content").waitFor();
     await sep().focus();
     await page.keyboard.press("Shift+ArrowLeft");
     await page.screenshot({ path: `.playwright-cli/s-desktop-${theme}.png`, animations: "disabled" });
     await page.keyboard.press("Enter");
-    await page.goto(origin + "/estudio?vista=bloques");
+    await page.goto(origin + "/studio?vista=bloques");
     await page.evaluate((t) => document.documentElement.setAttribute("data-theme", t), theme);
     await page.locator(".view-notice").waitFor();
     await page.screenshot({ path: `.playwright-cli/s-desktop-${theme}-aviso.png`, animations: "disabled" });
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(origin + "/estudio?vista=ir");
+    await page.goto(origin + "/studio?vista=ir");
     await page.evaluate((t) => document.documentElement.setAttribute("data-theme", t), theme);
     await page.locator(".workspace-panels[data-pane='inspector']").waitFor();
     if (await sep().isVisible()) fail("El divisor aparece en móvil");

@@ -77,7 +77,7 @@ export function serializeView(view: StudioView) {
 }
 
 export function viewHref(view: StudioView) {
-  return `/estudio${serializeView(view)}`;
+  return `/studio${serializeView(view)}`;
 }
 
 export const inspectorView = (inspector: Inspector): StudioView => ({

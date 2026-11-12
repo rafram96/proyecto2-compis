@@ -95,9 +95,9 @@ test("tutorial publicado: bloques con lenguaje conocido, programa válido y enla
   for (const block of blocks.filter((b) => b.kind === "code" && b.language === "text"))
     assert.ok(example.code.includes(block.text) || block.text.includes("importes"));
   const links = [...article.body.matchAll(/\]\(([^)]+)\)/g)].map((m) => m[1]);
-  assert.ok(links.includes("/estudio?vista=ejecucion"));
+  assert.ok(links.includes("/studio?vista=ejecucion"));
   for (const link of links)
-    assert.match(link, /^(\/docs\/|\/ejemplos\/|\/estudio\?vista=[a-z]+$)/);
+    assert.match(link, /^(\/docs\/|\/ejemplos\/|\/studio\?vista=[a-z]+$)/);
   const guide = content.articles.find((a) => a.slug === "primer-programa");
   assert.ok(guide.body.includes("(/docs/tutorial)"));
 });

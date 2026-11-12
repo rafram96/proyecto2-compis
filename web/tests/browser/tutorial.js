@@ -68,7 +68,7 @@ async (page) => {
     if (!(await focusVisible(command))) fail("Bloque de comando sin foco visible");
     const caret = await page.locator(".reading figure").filter({ hasText: "E_COLUMN: Columna inexistente" }).innerText();
     if (!caret.includes("WHERE importes > 0;") || !caret.includes("^")) fail("Salida del error incompleta");
-    for (const href of ["/estudio?vista=ejecucion", "/estudio?vista=flow", "/ejemplos/gasto-por-cliente", "/docs/primer-programa"])
+    for (const href of ["/studio?vista=ejecucion", "/studio?vista=flow", "/ejemplos/gasto-por-cliente", "/docs/primer-programa"])
       if (!(await page.locator(`.reading a[href="${href}"]`).count())) fail("Falta enlace " + href);
     if (await page.locator('.reading a[href$=".md"], .reading a[href$=".etl"]').count()) fail("Enlace a archivo no publicado");
     if (await overflow()) fail(`Desbordamiento en el tutorial ${size} ${theme}`);
@@ -101,17 +101,17 @@ async (page) => {
     if (!(await page.locator('a[rel="next"][href="/docs/estructura"]').count())) fail("Paginación siguiente");
     // Copia del programa canónico, con teclado y foco visible.
     const program = await page.locator('.reading pre[aria-label="Código del programa, desplazable"]').innerText();
-    const open = page.getByRole("button", { name: "Abrir una copia en el estudio" });
+    const open = page.getByRole("button", { name: "Abrir una copia en Studio" });
     await open.focus();
     if (!(await focusVisible(open))) fail("Abrir copia sin foco visible");
     await page.keyboard.press("Enter");
-    await page.waitForURL((u) => u.pathname === "/estudio");
+    await page.waitForURL((u) => u.pathname === "/studio");
     await page.locator(".cm-content").waitFor({ state: "attached" });
     let state = await workspace();
     if (state.active.name !== "tutorial.etl" || state.active.source.trimEnd() !== program.trimEnd())
       fail("La copia no es el programa del tutorial");
     const source = state.active.source;
-    await page.getByRole("button", { name: "Compilar", exact: true }).click();
+    await page.getByRole("button", { name: "Compile", exact: true }).click();
     await live();
     await show("Inspector");
     if (await page.locator(".diagnostic-link").count()) fail("El tutorial no compila");
@@ -137,22 +137,22 @@ async (page) => {
     await show("Inspector");
     if (await page.locator(".diagnostic-link").count()) fail("El diagnóstico persiste tras corregir");
     // Paso 5: enlace a vista desde el tutorial, sin cambiar el documento.
-    await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Documentación" }).click();
+    await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Docs" }).click();
     await page.getByRole("heading", { name: "Aprende Cauce" }).waitFor();
     await page.getByRole("link", { name: "De un CSV a un resultado" }).first().click();
     await page.getByRole("heading", { name: "De un CSV a un resultado", level: 1 }).waitFor();
-    await page.locator('.reading a[href="/estudio?vista=flow"]').click();
-    await page.waitForURL((u) => u.pathname === "/estudio");
+    await page.locator('.reading a[href="/studio?vista=flow"]').click();
+    await page.waitForURL((u) => u.pathname === "/studio");
     if ((await workspace()).active.source !== source) fail("El enlace a FLOW cambió el documento");
-    await page.getByRole("button", { name: "Compilar", exact: true }).click();
+    await page.getByRole("button", { name: "Compile", exact: true }).click();
     await live();
     if ((await workspace()).active.inspector !== "flow") fail("La vista FLOW no se aplicó");
     // Paso 6: Resultados desde el enlace del tutorial y ejecución real.
     await page.goBack();
     await page.getByRole("heading", { name: "De un CSV a un resultado", level: 1 }).waitFor();
-    await page.locator('.reading a[href="/estudio?vista=ejecucion"]').click();
-    await page.waitForURL((u) => u.pathname === "/estudio");
-    await page.getByRole("button", { name: "Compilar", exact: true }).click();
+    await page.locator('.reading a[href="/studio?vista=ejecucion"]').click();
+    await page.waitForURL((u) => u.pathname === "/studio");
+    await page.getByRole("button", { name: "Compile", exact: true }).click();
     await live();
     await page.getByText("Servicio conectado · demo privada", { exact: true }).waitFor();
     await page.getByLabel("Pipeline a ejecutar").selectOption("gasto_por_cliente");
@@ -161,7 +161,7 @@ async (page) => {
     if ((await option.innerText()) !== "JOIN · pedidos · join-orders@1" || (await option.isDisabled()))
       fail("Dataset del tutorial no disponible con el texto documentado");
     await dataset.selectOption("join-orders@1");
-    const run = page.getByRole("button", { name: "Ejecutar", exact: true });
+    const run = page.getByRole("button", { name: "Run", exact: true });
     await run.focus();
     if (!(await focusVisible(run))) fail("Ejecutar sin foco visible");
     const [response] = await Promise.all([

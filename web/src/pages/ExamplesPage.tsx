@@ -7,7 +7,7 @@ export default function ExamplesPage({ slug }: { slug?: string }) {
   const example = slug ? findExample(slug) : undefined;
   const heading = useContentFocus(slug);
   useEffect(() => {
-    document.title = `${slug ? (example?.title ?? "Ejemplo no encontrado") : "Ejemplos"} · Cauce`;
+    document.title = `${slug ? (example?.title ?? "Ejemplo no encontrado") : "Ejemplos"} · Stream`;
   }, [example, slug]);
   if (slug && !example)
     return <ContentMissing kind="Ejemplo" href="/ejemplos" />;
@@ -62,8 +62,8 @@ export default function ExamplesPage({ slug }: { slug?: string }) {
               <h2>Al ejecutar localmente</h2>
               <p>{example.runtime}</p>
               <p className="content-note">
-                Compilar no lee datasets ni certifica sus valores. Para
-                ejecutar, usa Resultados en el estudio con el servicio privado
+                Compile no lee datasets ni certifica sus valores. Para
+                ejecutar, usa Resultados en Studio con el servicio privado
                 conectado.
               </p>
               <OpenExample example={example} />
@@ -124,8 +124,8 @@ export default function ExamplesPage({ slug }: { slug?: string }) {
           </div>
           <p className="content-next">
             ¿Primera visita?{" "}
-            <a href="/docs/primer-programa">Recorre el estudio paso a paso</a> o{" "}
-            <a href="/estudio">vuelve a tu documento</a>.
+            <a href="/docs/primer-programa">Recorre Studio paso a paso</a> o{" "}
+            <a href="/studio">vuelve a tu documento</a>.
           </p>
         </>
       )}

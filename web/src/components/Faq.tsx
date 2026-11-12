@@ -30,7 +30,7 @@ const QA: [string, ReactNode][] = [
   ],
   [
     "¿Dónde se procesan mis datos?",
-    "En tu máquina. El código generado usa Polars en modo perezoso y lee los archivos locales que indiques en SOURCE. El estudio de esta página solo compila: no lee ni envía datos a ningún servidor.",
+    "Compile analiza el código en tu navegador y no lee datasets. Run envía el programa al servicio privado y procesa los datasets autorizados con Polars. También puedes descargar Python y ejecutarlo en tu equipo.",
   ],
   [
     "¿Puedo ver lo que hace el optimizador?",
@@ -51,7 +51,7 @@ const QA: [string, ReactNode][] = [
     </>,
   ],
   [
-    "¿Cómo compila el estudio sin servidor?",
+    "¿Cómo compila Studio sin servidor?",
     "Descarga Python compilado a WebAssembly (Pyodide), instala lark y corre el mismo paquete etl_dsl que usarías en la terminal. La primera vez tarda unos segundos; después compila al instante.",
   ],
   [
@@ -84,7 +84,7 @@ export function Faq() {
 export function Footer() {
   return (
     <footer className="foot">
-      <span className="foot-what">Cauce, un lenguaje ETL que compila a Polars.</span>
+      <span className="foot-what">Stream, un lenguaje ETL que compila a Polars.</span>
       <nav className="foot-links" aria-label="Pie de página">
         <a href="https://github.com/rafram96/proyecto2-compis" target="_blank" rel="noreferrer">
           Código en GitHub

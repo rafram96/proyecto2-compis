@@ -49,7 +49,7 @@ function Row({ state, onFix, onUndo }: { state: "error" | "hover" | "ok"; onFix?
           <button type="button" className="ui-btn primary" onClick={onFix}>
             Cambiar a IS NULL
           </button>
-          <span>o ábrelo en el estudio</span>
+          <span>o ábrelo en Studio</span>
           <svg className="pointer" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M5 3l13 8.2-5.6 1.2 3.4 6.4-2.6 1.4-3.4-6.4L5 18z" />
           </svg>

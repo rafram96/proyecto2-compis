@@ -27,9 +27,9 @@ async (page) => {
   };
   const openCopy = async () => {
     await page
-      .getByRole("button", { name: "Abrir una copia en el estudio" })
+      .getByRole("button", { name: "Abrir una copia en Studio" })
       .click();
-    await page.waitForURL((u) => u.pathname === "/estudio");
+    await page.waitForURL((u) => u.pathname === "/studio");
     await page.locator(".cm-content").waitFor();
   };
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -56,11 +56,11 @@ async (page) => {
     .waitFor();
   const ventas = await page.locator(".example-source").innerText();
   await page
-    .getByRole("button", { name: "Abrir una copia en el estudio" })
+    .getByRole("button", { name: "Abrir una copia en Studio" })
     .focus();
   if (
     !(await page
-      .getByRole("button", { name: "Abrir una copia en el estudio" })
+      .getByRole("button", { name: "Abrir una copia en Studio" })
       .evaluate(
         (el) =>
           el.matches(":focus-visible") &&
@@ -69,14 +69,14 @@ async (page) => {
   )
     throw new Error("Acción sin foco visible");
   await page.keyboard.press("Enter");
-  await page.waitForURL((u) => u.pathname === "/estudio");
+  await page.waitForURL((u) => u.pathname === "/studio");
   await page.locator(".cm-content").waitFor();
   same(
     (await workspace()).active.source,
     ventas,
     "La copia no conserva el fuente",
   );
-  await page.getByRole("button", { name: "Compilar", exact: true }).click();
+  await page.getByRole("button", { name: "Compile", exact: true }).click();
   stage = "ventas abierta";
   await live();
   if (await page.locator(".diagnostic-link").count())
@@ -93,7 +93,7 @@ async (page) => {
   const beforeDocs = await workspace();
   await page
     .getByRole("navigation", { name: "Principal" })
-    .getByRole("link", { name: "Documentación" })
+    .getByRole("link", { name: "Docs" })
     .click();
   await page.getByRole("heading", { name: "Aprende Cauce" }).waitFor();
   await page
@@ -137,7 +137,7 @@ async (page) => {
   await page.goBack();
   await page.waitForURL("**/docs/operaciones#expresiones");
   await page.goForward();
-  await page.waitForURL((u) => u.pathname === "/estudio");
+  await page.waitForURL((u) => u.pathname === "/studio");
   same(
     (await workspace()).active,
     beforeDocs.active,
@@ -155,7 +155,7 @@ async (page) => {
     .click();
   const invalid = await page.locator(".example-source").innerText();
   await openCopy();
-  await page.getByRole("button", { name: "Compilar", exact: true }).click();
+  await page.getByRole("button", { name: "Compile", exact: true }).click();
   stage = "ejercicio inválido";
   await live();
   const diagnostic = page.getByRole("button", { name: /E_NULL_COMPARISON/ });
@@ -248,7 +248,7 @@ async (page) => {
   );
   await page.reload();
   await page
-    .getByRole("button", { name: "Abrir una copia en el estudio" })
+    .getByRole("button", { name: "Abrir una copia en Studio" })
     .click();
   await page.getByRole("alert").filter({ hasText: "8 borradores" }).waitFor();
   same(await workspace(), limited, "Límite expulsó un borrador");
@@ -297,7 +297,7 @@ async (page) => {
     .waitFor();
   await page
     .getByRole("navigation", { name: "Principal" })
-    .getByRole("link", { name: "Documentación" })
+    .getByRole("link", { name: "Docs" })
     .click();
 
   // Capturas en lote: ambas superficies e índices, escritorio/móvil y ambos temas.
@@ -337,7 +337,7 @@ async (page) => {
           animations: "disabled",
         });
         if (size === "mobile") {
-          for (const name of ["Ejemplos", "Documentación"]) {
+          for (const name of ["Ejemplos", "Docs"]) {
             const link = page
               .getByRole("navigation", { name: "Principal" })
               .getByRole("link", { name, exact: true });

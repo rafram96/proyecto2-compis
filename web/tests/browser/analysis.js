@@ -2,7 +2,7 @@ async (page) => {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.reload();
-  await page.getByRole("button", { name: "Compilar", exact: true }).click();
+  await page.getByRole("button", { name: "Compile", exact: true }).click();
   await page.locator(".studio-status[data-status=ready], .studio-status[data-status=error]").waitFor({ timeout: 65000 });
   if (await page.locator(".studio-status[data-status=error]").count()) throw new Error(await page.locator(".studio-status").innerText());
   await page.locator('.studio-out[data-origin="en vivo"]').waitFor();

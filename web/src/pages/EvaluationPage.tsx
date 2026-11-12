@@ -104,7 +104,7 @@ export default function EvaluationPage() {
   const [state, setState] = useState(readUrl);
   const selection = state.selection;
   useEffect(() => {
-    document.title = "Evaluación · Cauce";
+    document.title = "Evaluación · Stream";
     // Atrás/adelante entre selecciones guardadas con pushState.
     const restore = () => location.pathname === "/evaluacion" && setState(readUrl());
     window.addEventListener("popstate", restore);
@@ -163,7 +163,7 @@ export default function EvaluationPage() {
           <p className="content-note eval-banner" role="note">
             <strong>Campaña histórica, no una medición en vivo.</strong> Se midió el {lima.format(new Date(campaign.started_utc))}{" "}
             (hora de Lima) sobre la revisión <code>{campaign.revision.slice(0, 7)}</code>. <SourceMatch /> La máquina, el entorno y
-            la fecha son los de la campaña; no mide el programa abierto en el estudio y consultarla no ejecuta nada.
+            la fecha son los de la campaña; no mide el programa abierto en Studio y consultarla no ejecuta nada.
           </p>
 
           <section aria-labelledby="proposito" className="eval-section">
@@ -527,7 +527,7 @@ export default function EvaluationPage() {
               <li>Una diferencia pequeña frente a la dispersión no demuestra una mejora ni una regresión; no se calcula significancia.</li>
               <li>Una variación de tiempo en una configuración que no transforma la IR no se atribuye al pase.</li>
               <li>Las optimizaciones del motor pueden absorber las de los pases; caches del sistema, GC y ruido térmico siguen activos.</li>
-              <li>Compilar con pases cuesta más análisis; ese coste no se amortiza dentro del tiempo de ejecución.</li>
+              <li>Compile con pases cuesta más análisis; ese coste no se amortiza dentro del tiempo de ejecución.</li>
             </ul>
           </section>
 
@@ -666,7 +666,7 @@ function StructuralProofs({ entry, selection }: { entry: Structure; selection: S
         </article>
       )}
       <p className="eval-studio-link">
-        <a href="/estudio?vista=ir">Abrir la vista IR del estudio</a> para consultar la evidencia O1/O3 que el
+        <a href="/studio?vista=ir">Abrir la vista IR dStudio</a> para consultar la evidencia O1/O3 que el
         compilador emite para el documento que tengas abierto. No carga este programa de la campaña: tu documento se
         conserva y solo cambia la vista elegida.
       </p>

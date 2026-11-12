@@ -1,6 +1,6 @@
 {
-  "name": "Cauce",
-  "short_name": "Cauce",
+  "name": "Stream",
+  "short_name": "Stream",
   "description": "Un lenguaje para pipelines de datos que compila a Python con Polars.",
   "lang": "es",
   "start_url": "/",

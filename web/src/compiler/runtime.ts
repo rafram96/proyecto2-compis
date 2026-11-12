@@ -146,7 +146,7 @@ export class CompilerRuntime {
     this.fail(new Error("Compilador reiniciado. El documento se conserva."));
     this.set({
       status: "idle",
-      detail: "Compilador reiniciado. Pulsa Compilar para cargar Python.",
+      detail: "Compilador reiniciado. Pulsa Compile para cargar Python.",
     });
   };
   private connect() {

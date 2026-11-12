@@ -76,7 +76,7 @@ export default function StudioPage() {
     history.replaceState(
       history.state,
       "",
-      "/estudio" + serializeView(view) + location.hash,
+      "/studio" + serializeView(view) + location.hash,
     );
   // Seleccionar una vista solo cambia el campo inspector: no crea revisión ni recompila.
   const applyView = useCallback(({ view, ignored }: ParsedView) => {
@@ -95,17 +95,17 @@ export default function StudioPage() {
     history.replaceState(
       history.state,
       "",
-      "/estudio" + (view ? serializeView(view) : "") + location.hash,
+      "/studio" + (view ? serializeView(view) : "") + location.hash,
     );
   }, []);
   useEffect(() => {
-    document.title = "Estudio · Cauce";
+    document.title = "Studio · Stream";
     if (initialView.view?.kind !== "execution")
       heading.current?.focus({ preventScroll: true });
     applyView(initialView);
     // Atrás/adelante y enlaces internos con la misma ruta y otra vista.
     const restore = () => {
-      if (location.pathname === "/estudio") applyView(parseView(location.search));
+      if (location.pathname === "/studio") applyView(parseView(location.search));
     };
     window.addEventListener("popstate", restore);
     return () => window.removeEventListener("popstate", restore);
@@ -198,7 +198,7 @@ export default function StudioPage() {
       <div className="workspace-heading">
         <div>
           <h1 ref={heading} tabIndex={-1}>
-            Estudio
+            Studio
           </h1>
           <p>
             Escribe, compila e inspecciona. Todo el análisis ocurre en tu
@@ -230,7 +230,7 @@ export default function StudioPage() {
           <div className="document-actions">
             <a
               className="tool-button"
-              href={`/estudio?vista=${EXECUTION_SLUG}`}
+              href={`/studio?vista=${EXECUTION_SLUG}`}
               onClick={(event) => {
                 event.preventDefault();
                 replaceView({ kind: "execution" });
@@ -238,7 +238,7 @@ export default function StudioPage() {
                 setReveal((n) => n + 1);
               }}
             >
-              Ejecutar y resultados
+              Run · resultados
             </a>
             <button
               className="tool-button"
@@ -292,7 +292,7 @@ export default function StudioPage() {
                 ? runtime.status === "loading"
                   ? "Cargando…"
                   : "Compilando…"
-                : "Compilar"}
+                : "Compile"}
             </button>
           </div>
         </div>
@@ -389,7 +389,7 @@ export default function StudioPage() {
             aria-label="Inspector de compilación"
           >
             <div className="studio-out-bar">
-              <div className="studio-formats" aria-label="Vistas del estudio">
+              <div className="studio-formats" aria-label="Vistas dStudio">
                 {INSPECTORS.map(([f, label]) => (
                   <button
                     key={f}
@@ -434,7 +434,7 @@ export default function StudioPage() {
                 </Suspense>
               ) : (
                 <p className="empty-output">
-                  Pulsa Compilar para cargar Python y obtener las fases de este
+                  Pulsa Compile para cargar Python y obtener las fases de este
                   documento.
                 </p>
               )}

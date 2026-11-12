@@ -14,7 +14,7 @@ const lazy = pyBody(programs["ventas.etl"].default.python.out)
   .map((l) => l.trim())
   .join("\n");
 
-/** El menú de autocompletado del estudio, tal como aparece al escribir «F» después de «=». */
+/** El menú de autocompletado dStudio, tal como aparece al escribir «F» después de «=». */
 function Completion() {
   const items: [string, string][] = [
     ["FILTER", "operación"],

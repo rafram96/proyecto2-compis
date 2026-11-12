@@ -15,7 +15,7 @@
       "orders.csv con customer_id, amount numérico y status. Sin contrato SOURCE, el análisis conserva información parcial.",
       "Servicio privado: python -m service.prepare prepara orders@1 con el generador canónico. En Resultados enlaza ventas.pedidos → orders@1. La API informa si está disponible."
     ],
-    "runtime": "El servicio valida los datos con Polars y escribe gasto_por_cliente.parquet en un directorio por trabajo. Compilar no crea archivos.",
+    "runtime": "El servicio valida los datos con Polars y escribe gasto_por_cliente.parquet en un directorio por trabajo. Compile no crea archivos.",
     "expectation": {
       "ok": true,
       "pipelines": 1

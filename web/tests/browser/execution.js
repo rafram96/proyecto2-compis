@@ -7,11 +7,11 @@ async (page) => {
   page.on('request', r => { if (r.url().includes('/api/v1/runs') && r.method() === 'POST' && !r.url().endsWith('/cancel')) apiRequests.push(r.postDataJSON()); });
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto(origin + '/estudio');
+  await page.goto(origin + '/studio');
   await page.evaluate(() => localStorage.removeItem('cauce-workspace-v1'));
   await page.reload();
   await page.locator('.cm-content').waitFor();
-  await page.getByRole('button', { name: 'Compilar', exact: true }).click();
+  await page.getByRole('button', { name: 'Compile', exact: true }).click();
   const live = () => page.locator('.studio-out[data-origin="en vivo"]').waitFor({ timeout: 65000 });
   await live();
   await page.getByText('Servicio conectado · demo privada', { exact: true }).waitFor();
@@ -196,11 +196,11 @@ async (page) => {
   await live();
   const beforeNav = await active();
   const stateBeforeNav = await page.locator('.execution-job').getAttribute('data-run-id');
-  await page.getByRole('link', { name: 'Documentación', exact: true }).first().click();
+  await page.getByRole('link', { name: 'Docs', exact: true }).first().click();
   await page.getByRole('heading', { name: 'Aprende Cauce', exact: true }).waitFor();
   await page.getByRole('link', { name: 'Ejemplos', exact: true }).first().click();
   await page.getByRole('heading', { name: 'Elige un problema', exact: true }).waitFor();
-  await page.getByRole('link', { name: 'Abrir el estudio', exact: true }).first().click();
+  await page.getByRole('link', { name: 'Abrir Studio', exact: true }).first().click();
   await page.locator('.cm-content').waitFor();
   if (JSON.stringify(await active()) !== JSON.stringify(beforeNav)) throw new Error('Navegación perdió documento/pases');
   if (await page.locator('.execution-job').getAttribute('data-run-id') !== stateBeforeNav) throw new Error('Se perdió trabajo al volver');

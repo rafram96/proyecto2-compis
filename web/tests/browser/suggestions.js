@@ -72,7 +72,7 @@ async (page) => {
   const openExample = async (name) => {
     await page.getByLabel("Abrir ejemplo").selectOption(name);
     await page.locator(".cm-content").waitFor();
-    await page.getByRole("button", { name: "Compilar", exact: true }).click();
+    await page.getByRole("button", { name: "Compile", exact: true }).click();
     await live();
     if (await page.locator(".diagnostic-link").count()) fail(`${name} no compila`);
   };
@@ -92,7 +92,7 @@ async (page) => {
   async function journey({ width, height, theme, size, full }) {
     await page.setViewportSize({ width, height });
     await page.emulateMedia({ reducedMotion: "reduce", colorScheme: theme });
-    await page.goto(origin + "/estudio");
+    await page.goto(origin + "/studio");
     await page.evaluate(() => localStorage.removeItem("cauce-workspace-v1"));
     await page.reload();
     await setTheme(theme);

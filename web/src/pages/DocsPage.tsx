@@ -5,22 +5,22 @@ import { ArticleBody } from "../components/ArticleBody";
 import { Code } from "../components/Code";
 import { OpenExample } from "../components/OpenExample";
 import { ContentMissing, useContentFocus } from "./contentNavigation";
-/** Artículos donde una vista del estudio continúa la lectura con el documento propio. */
+/** Artículos donde una vista dStudio continúa la lectura con el documento propio. */
 const STUDIO_VIEWS: Record<string, { href: string; text: string }> = {
   "null-contratos": {
-    href: "/estudio?vista=resultado",
-    text: "Revisar los diagnósticos de tu documento en el estudio",
+    href: "/studio?vista=resultado",
+    text: "Revisar los diagnósticos de tu documento en Studio",
   },
   estructura: {
-    href: "/estudio?vista=flow",
-    text: "Ver el FLOW de tu documento en el estudio",
+    href: "/studio?vista=flow",
+    text: "Ver el FLOW de tu documento en Studio",
   },
 };
 export default function DocsPage({ slug }: { slug?: string }) {
   const article = slug ? findArticle(slug) : undefined;
   const heading = useContentFocus(slug);
   useEffect(() => {
-    document.title = `${slug ? (article?.title ?? "Artículo no encontrado") : "Documentación"} · Cauce`;
+    document.title = `${slug ? (article?.title ?? "Artículo no encontrado") : "Documentación"} · Stream`;
   }, [article, slug]);
   if (slug && !article) return <ContentMissing kind="Artículo" href="/docs" />;
   const blocks = article ? markdown(article.body) : [];
@@ -42,12 +42,12 @@ export default function DocsPage({ slug }: { slug?: string }) {
               {item.title}
             </a>
           ))}
-          <a href="/estudio">Volver a tu documento</a>
+          <a href="/studio">Volver a tu documento</a>
         </nav>
         <div className="docs-main">
           <header className="content-heading">
             <h1 ref={heading} tabIndex={-1}>
-              {article?.title ?? "Aprende Cauce"}
+              {article?.title ?? "Aprende Stream"}
             </h1>
             <p>
               {article?.summary ??
@@ -139,7 +139,7 @@ export default function DocsPage({ slug }: { slug?: string }) {
                 ))}
               </ol>
               <p className="content-note">
-                Compilar analiza el programa sin leer datasets. En el estudio,
+                Compile analiza el programa sin leer datasets. En Studio,
                 Ejecutar envía el programa al servicio privado Python y muestra
                 sus resultados reales cuando los datasets están preparados.
               </p>

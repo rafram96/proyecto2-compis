@@ -26,12 +26,12 @@ export function ContentMissing({ kind, href }: { kind: string; href: string }) {
       </h1>
       <p>
         Este enlace no corresponde al contenido publicado. Tu documento sigue
-        disponible en el estudio.
+        disponible en Studio.
       </p>
       <a className="btn" href={href}>
         Volver al catálogo
       </a>
-      <a href="/estudio">Volver al estudio</a>
+      <a href="/studio">Volver a Studio</a>
     </main>
   );
 }

@@ -83,7 +83,7 @@ Cambia `importe` por `importes` en el filtro, como si fuera un error de escritur
         WHERE importes > 0;
 ```
 
-En el estudio, al compilar aparece el diagnóstico `E_COLUMN` con el mensaje «Columna inexistente: importes.». Púlsalo: el editor selecciona exactamente `importes`, en la línea 10, columna 15. Corrige la palabra y vuelve a compilar; el diagnóstico desaparece.
+En Studio, al compilar aparece el diagnóstico `E_COLUMN` con el mensaje «Columna inexistente: importes.». Púlsalo: el editor selecciona exactamente `importes`, en la línea 10, columna 15. Corrige la palabra y vuelve a compilar; el diagnóstico desaparece.
 
 En la terminal ocurre lo mismo. Desde la carpeta del proyecto, con el entorno activado (macOS/Linux: `source .venv/bin/activate`; Windows: `.venv\Scripts\activate`):
 
@@ -100,11 +100,11 @@ demo/tutorial.etl: 1 error(es) de validación.
 
 El error se detecta **antes de leer datos**, porque el contrato de `SOURCE` dice qué columnas existen. Sin contrato, el mismo error aparecería recién al ejecutar. Vuelve a escribir `importe` antes de seguir.
 
-## 5. Compilar e inspeccionar
+## 5. Compile e inspeccionar
 
-**En el estudio.** Abre el ejemplo [Gasto por cliente desde un CSV](/ejemplos/gasto-por-cliente) y pulsa «Abrir una copia en el estudio». Tu documento anterior queda en Borradores anteriores. Pulsa Compilar o Ctrl/⌘ + Enter; la primera vez se descarga Python en el navegador y tarda un poco más. Compilar no lee el CSV.
+**En Studio.** Abre el ejemplo [Gasto por cliente desde un CSV](/ejemplos/gasto-por-cliente) y pulsa «Abrir una copia en Studio». Tu documento anterior queda en Borradores anteriores. Pulsa Compile o Ctrl/⌘ + Enter; la primera vez se descarga Python en el navegador y tarda un poco más. Compile no lee el CSV.
 
-Con el programa compilado, revisa las vistas del inspector: FLOW dibuja la cadena de pasos, Esquemas muestra las columnas y tipos que el análisis conoce en cada paso, IR enseña el programa antes y después de las optimizaciones, y Python, el código generado. Estos accesos abren esas vistas del documento que tengas activo, no necesariamente este programa: [FLOW](/estudio?vista=flow), [Esquemas](/estudio?vista=esquemas), [IR](/estudio?vista=ir) y [Python](/estudio?vista=python).
+Con el programa compilado, revisa las vistas del inspector: FLOW dibuja la cadena de pasos, Esquemas muestra las columnas y tipos que el análisis conoce en cada paso, IR enseña el programa antes y después de las optimizaciones, y Python, el código generado. Estos accesos abren esas vistas del documento que tengas activo, no necesariamente este programa: [FLOW](/studio?vista=flow), [Esquemas](/studio?vista=esquemas), [IR](/studio?vista=ir) y [Python](/studio?vista=python).
 
 **En la terminal.**
 
@@ -120,7 +120,7 @@ OK: demo/tutorial.etl: 1 pipeline(s); sintaxis y estructura válidas.
 
 ## 6. Ejecutar
 
-**Desde el estudio.** Ejecutar requiere el servicio privado de Cauce en marcha; cómo iniciarlo está en la [guía del servicio de ejecución](servicio_ejecucion.md). Para este programa no hace falta prepararlo con datos adicionales. Ve a la vista [Resultados](/estudio?vista=ejecucion) y elige el pipeline `gasto_por_cliente`. En `gasto_por_cliente.pedidos` elige «JOIN · pedidos · join-orders@1» y pulsa Ejecutar. Si el estudio avisa de que hay datasets sin preparar, ese aviso se refiere a otros ejemplos: este dataset está disponible igualmente. El trabajo pasa por En cola y Ejecutando hasta Completado. El servicio vuelve a compilar el programa y lo ejecuta con Polars sobre una copia del dataset autorizado.
+**Desde Studio.** Ejecutar requiere el servicio privado de Stream en marcha; cómo iniciarlo está en la [guía del servicio de ejecución](servicio_ejecucion.md). Para este programa no hace falta prepararlo con datos adicionales. Ve a la vista [Resultados](/studio?vista=ejecucion) y elige el pipeline `gasto_por_cliente`. En `gasto_por_cliente.pedidos` elige «JOIN · pedidos · join-orders@1» y pulsa Ejecutar. Si Studio avisa de que hay datasets sin preparar, ese aviso se refiere a otros ejemplos: este dataset está disponible igualmente. El trabajo pasa por En cola y Ejecutando hasta Completado. El servicio vuelve a compilar el programa y lo ejecuta con Polars sobre una copia del dataset autorizado.
 
 **Desde la terminal.**
 
@@ -147,7 +147,7 @@ SINK: …/demo/out/gasto_por_cliente.csv
 
 ## 7. El archivo de salida
 
-En el estudio, Completado muestra la tabla con dos filas y el botón «Descargar gasto_por_cliente.csv». En la terminal, el archivo queda en `demo/out/gasto_por_cliente.csv`. En ambos casos el contenido es el mismo:
+En Studio, Completado muestra la tabla con dos filas y el botón «Descargar gasto_por_cliente.csv». En la terminal, el archivo queda en `demo/out/gasto_por_cliente.csv`. En ambos casos el contenido es el mismo:
 
 ```csv
 cliente,pedidos,total,total_con_igv
@@ -155,11 +155,11 @@ cliente,pedidos,total,total_con_igv
 1,1,10,11.80
 ```
 
-El cliente 2 tiene dos pedidos (30 + 40 = 70) y el cliente 1, uno. `total_con_igv` conserva exactamente dos decimales porque `1.18` se trata como decimal exacto, no como número aproximado. Si vuelves a ejecutar, el archivo se reemplaza. En el estudio, la descarga caduca en el servidor a los 60 minutos.
+El cliente 2 tiene dos pedidos (30 + 40 = 70) y el cliente 1, uno. `total_con_igv` conserva exactamente dos decimales porque `1.18` se trata como decimal exacto, no como número aproximado. Si vuelves a ejecutar, el archivo se reemplaza. En Studio, la descarga caduca en el servidor a los 60 minutos.
 
 ## Qué sigue
 
-- [Tu primer programa](/docs/primer-programa) explica cómo conservar y recuperar tus documentos en el estudio.
+- [Tu primer programa](/docs/primer-programa) explica cómo conservar y recuperar tus documentos en Studio.
 - [Operaciones y expresiones](/docs/operaciones) describe las diez operaciones y las funciones disponibles.
 - [NULL, contratos y diagnósticos](/docs/null-contratos) explica columnas con `?`, valores vacíos y otros errores.
 - [Conectores y compilación local](/docs/conectores) detalla las opciones de CSV, Parquet, SQLite y DuckDB.

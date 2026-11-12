@@ -12,7 +12,7 @@ import re
 ROOT = Path(__file__).resolve().parents[2]
 WEB = ROOT / "web"
 DEST = WEB / "src/content/generated.json"
-STUDIO_LINK = re.compile(r"/estudio(?:\?vista=(?:resultado|tokens|arbol|ast|flow|ir|esquemas|python|ejecucion))?")
+STUDIO_LINK = re.compile(r"/(?:studio|estudio)(?:\?vista=(?:resultado|tokens|arbol|ast|flow|ir|esquemas|python|ejecucion))?")
 
 
 def manifest(name):
@@ -54,7 +54,7 @@ def build_content():
                  "../demo/joins.etl": "/ejemplos/join-verificado", "../demo/tutorial.etl": "/ejemplos/gasto-por-cliente"}
         def link(match):
             label, url = match.groups()
-            if url.startswith("/estudio"):
+            if url.startswith(("/studio", "/estudio")):
                 # Solo vistas publicadas (web/src/workspace/view.ts); un enlace roto falla aquí.
                 if not STUDIO_LINK.fullmatch(url):
                     raise ValueError(f"Enlace al estudio no publicado: {url}")

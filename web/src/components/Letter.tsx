@@ -63,21 +63,21 @@ export function Letter() {
   return (
     <section className="origin" id="origen" aria-labelledby="origen-t">
       <h2 id="origen-t" className="sr">
-        Por qué se llama Cauce
+        Por qué se llama Stream
       </h2>
       <div className="letter" data-reveal>
         <Mark className="letter-mark" />
-        <p>Hola. Somos el equipo detrás de Cauce, el proyecto 2 del curso de Compiladores de UTEC, en Lima.</p>
+        <p>Hola. Somos el equipo detrás de Stream, el proyecto 2 del curso de Compiladores de UTEC, en Lima.</p>
         <p>
           Empezamos con una pregunta: ¿cómo escribe un pipeline de datos alguien que no programa? Nuestra respuesta es un archivo que
           se lee de arriba abajo: de dónde salen los datos, qué pasos siguen y a dónde llegan.
         </p>
         <p>
-          El nombre viene del agua. En Cumbemayo, mucho antes de los incas, se talló en la roca un canal en zigzag para llevar el agua
+          Stream significa «corriente»: datos que recorren un camino. En Cumbemayo, mucho antes de los incas, se talló en la roca un canal en zigzag para llevar el agua
           lejos sin que se desbordara. Un cauce no inventa el agua; le da un camino. Eso queremos hacer con tus datos.
         </p>
         <p>
-          Por dentro es un compilador completo: gramática LALR con Lark, un árbol sintáctico inmutable, un plan en forma de grafo, tres
+          Por dentro es un compilador completo: gramática LALR con Lark, un árbol sintáctico inmutable, un plan en forma de grafo, cinco
           pases de optimización y un generador de Python con Polars. Lo sostienen {stats.tests} pruebas, y {stats.errorCodes} códigos de
           error explican en español lo que falla.
         </p>
@@ -85,7 +85,7 @@ export function Letter() {
           Todo lo que ves en esta página es <mark>salida real del compilador</mark>. Al final puedes compilar tú mismo, sin instalar
           nada.
         </p>
-        <p className="sign">El equipo de Cauce</p>
+        <p className="sign">El equipo de Stream</p>
         <p className="role">Proyecto 2 · Compiladores · UTEC 2026-2</p>
       </div>
 

@@ -12,18 +12,18 @@ export function OpenExample({ example }: { example: Example }) {
         onClick={() => {
           try {
             openDocument(createDocument(example.name, example.code));
-            navigate("/estudio");
+            navigate("/studio");
           } catch (error) {
             setError(error instanceof Error ? error.message : String(error));
           }
         }}
       >
-        Abrir una copia en el estudio
+        Abrir una copia en Studio
       </button>
       <p>Tu documento anterior queda en Borradores anteriores.</p>
       {error && (
         <p className="workspace-message" role="alert">
-          {error} <a href="/estudio">Gestionar borradores en el estudio</a>
+          {error} <a href="/studio">Gestionar borradores en Studio</a>
         </p>
       )}
     </div>

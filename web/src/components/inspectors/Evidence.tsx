@@ -164,7 +164,7 @@ export default function Evidence({
       <h4>JOIN · declaración y obligación</h4>
       <p>
         VERIFY MANY_TO_ONE exige comprobaciones al ejecutar, incluso con O0.
-        Compilar no comprueba integridad de datos. Ambas entradas conservan sus
+        Compile no comprueba integridad de datos. Ambas entradas conservan sus
         contratos y dependencias.
       </p>
       {declared.map((n, i) => {

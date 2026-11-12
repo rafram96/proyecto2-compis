@@ -4,7 +4,7 @@ async (page) => {
   const origin = new URL(page.url()).origin;
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto(origin + "/estudio");
+  await page.goto(origin + "/studio");
   await page.evaluate(() => localStorage.removeItem("cauce-workspace-v1"));
   await page.reload();
   if (await page.getByRole("button", { name: "Cambiar a tema claro" }).count())
@@ -47,7 +47,7 @@ async (page) => {
     }
     await target.waitFor();
   };
-  await tab("Compilar");
+  await tab("Compile");
   await live();
   await page.evaluate(() => {
     window.__postsC = 0;
@@ -73,15 +73,15 @@ async (page) => {
   await page.keyboard.press("Enter");
   if (!(await selection()).startsWith("STEP pagados = FILTER"))
     throw new Error("AST ventas no seleccionó el STEP original");
-  await tab("FLOW");
+  await tab("Flow");
   await page.getByLabel("Pipeline de FLOW").waitFor();
-  await tab("Lista accesible");
+  await tab("Lista de pasos");
   await tab("Grafo");
   await tab("IR");
   await page.getByLabel("Pipeline de IR").waitFor();
   await tab("Evidencia O1/O3");
   await tab("Comparación");
-  await tab("Esquemas");
+  await tab("Schemas");
   await page.getByLabel("Pipeline de esquemas").waitFor();
   if (
     !(await page.locator(".structured-inspector").innerText()).includes(
@@ -104,7 +104,7 @@ async (page) => {
   )
     throw new Error("Explorar recompiló o desmontó CodeMirror");
   await open("credit_risk.etl");
-  await tab("FLOW");
+  await tab("Flow");
   await page.getByLabel("Pipeline de FLOW").selectOption("order_report");
   if (
     (await page.getByLabel("Pipeline de FLOW").locator("option").count()) !== 3
@@ -137,7 +137,7 @@ async (page) => {
   });
 
   await open("joins.etl");
-  await tab("FLOW");
+  await tab("Flow");
   for (const name of [
     "pedidos → unidos.left",
     "clientes → unidos.right",
@@ -242,12 +242,12 @@ async (page) => {
     await page.getByRole("checkbox", { name: pass, exact: true }).uncheck();
   await page.getByRole("button", { name: "Subir rangos", exact: true }).click();
   const saved = await active();
-  await page.getByRole("link", { name: "Documentación", exact: true }).click();
+  await page.getByRole("link", { name: "Docs", exact: true }).click();
   await page.waitForURL("**/docs");
   await page.getByRole("link", { name: "Ejemplos", exact: true }).click();
   await page.waitForURL("**/ejemplos");
   await page
-    .getByRole("link", { name: "Abrir el estudio", exact: true })
+    .getByRole("link", { name: "Abrir Studio", exact: true })
     .first()
     .click();
   if (JSON.stringify(await active()) !== JSON.stringify(saved))
@@ -256,7 +256,7 @@ async (page) => {
   await page.locator(".cm-content").waitFor();
   if (JSON.stringify((await active()).passes) !== '["rangos","constantes"]')
     throw new Error("No restauró personalizados");
-  await tab("Compilar");
+  await tab("Compile");
   await live();
   if (
     !(await page.locator(".structured-inspector").innerText()).includes(
@@ -353,7 +353,7 @@ async (page) => {
     fullPage: true,
     animations: "disabled",
   });
-  await tab("FLOW");
+  await tab("Flow");
   await page
     .getByRole("button", { name: "ventas → grandes", exact: true })
     .focus();
@@ -376,7 +376,7 @@ async (page) => {
     fullPage: true,
     animations: "disabled",
   });
-  await tab("Lista accesible");
+  await tab("Lista de pasos");
   await resetOutput();
   await page.screenshot({
     path: ".playwright-cli/c-list-mobile-light.png",

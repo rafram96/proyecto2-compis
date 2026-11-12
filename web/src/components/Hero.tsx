@@ -83,7 +83,7 @@ export function Hero() {
         <div className="hero-foot">
           <p>Un lenguaje para mover y limpiar datos que se escribe como una receta. Compila a Python con Polars.</p>
           <a className="btn" href="#estudio">
-            Compilar en el navegador
+            Compile en el navegador
           </a>
         </div>
       </div>

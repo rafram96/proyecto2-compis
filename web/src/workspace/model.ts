@@ -6,11 +6,11 @@ export type Inspector = Format | "flow" | "schemas";
 export const INSPECTORS: [Inspector, string][] = [
   ["check", "Resultado"],
   ["tokens", "Tokens"],
-  ["tree", "Árbol"],
+  ["tree", "Parse tree"],
   ["ast", "AST"],
-  ["flow", "FLOW"],
+  ["flow", "Flow"],
   ["ir", "IR"],
-  ["schemas", "Esquemas"],
+  ["schemas", "Schemas"],
   ["python", "Python"],
 ];
 export const PASSES = ["constantes", "rangos", "filtros", "joins", "muertos"];

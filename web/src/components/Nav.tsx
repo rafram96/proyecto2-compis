@@ -71,8 +71,8 @@ export function Nav({ inStudio = false }: { inStudio?: boolean }) {
   const path = usePath();
   return (
     <nav className="nav" aria-label="Principal">
-      <a className="wordmark" href="/#top" aria-label="Cauce, inicio">
-        <Mark /> Cauce
+      <a className="wordmark" href="/#top" aria-label="Stream, inicio">
+        <Mark /> Stream
       </a>
       {path === "/" && (
         <div className="nav-links">
@@ -93,18 +93,18 @@ export function Nav({ inStudio = false }: { inStudio?: boolean }) {
           href="/docs"
           aria-current={path.startsWith("/docs") ? "page" : undefined}
         >
-          Documentación
+          Docs
         </a>
         <a
           href="/evaluacion"
           aria-current={path.startsWith("/evaluacion") ? "page" : undefined}
         >
-          Evaluación
+          Benchmarks
         </a>
       </div>
       <ThemeToggle />
-      <a className="btn sm nav-cta" href={inStudio ? "/" : "/estudio"}>
-        {inStudio ? "Volver al inicio" : "Abrir el estudio"}
+      <a className="btn sm nav-cta" href={inStudio ? "/" : "/studio"}>
+        {inStudio ? "Volver al inicio" : "Abrir Studio"}
       </a>
     </nav>
   );

@@ -41,7 +41,7 @@ const valueText = (split: number) =>
 
 /**
  * Divisor de escritorio entre editor e inspector. Durante el arrastre solo cambia
- * variables CSS del contenedor: React no vuelve a renderizar el estudio ni
+ * variables CSS del contenedor: React no vuelve a renderizar Studio ni
  * CodeMirror, y no se recompila nada.
  */
 export default function PanelSplitter({

@@ -6,13 +6,15 @@ async function json(path: string, init: RequestInit = {}) {
     const response = await fetch(`/api/v1${path}`, { ...init, signal: init.signal ?? AbortSignal.timeout(8000),
       headers: { "Content-Type": "application/json", ...init.headers } });
     if (!response.ok) {
+      if (response.status >= 500)
+        throw new Error(`Servicio de ejecución no disponible (HTTP ${response.status}). Puedes usar Compile y los inspectores; pulsa Reconectar para volver a consultar.`);
       const error = await response.json().catch(() => null);
       const detail = record(error) && typeof error.detail === "string" ? error.detail : "La solicitud no es válida para el servicio.";
       throw new Error(`HTTP ${response.status}: ${detail}`);
     }
     return await response.json() as unknown;
   } catch (e) {
-    if (e instanceof Error && e.message.startsWith("HTTP ")) throw e;
+    if (e instanceof Error && (e.message.startsWith("HTTP ") || e.message.startsWith("Servicio de ejecución"))) throw e;
     throw new Error("Servicio desconectado o sin respuesta. Puedes seguir editando y compilando localmente. Pulsa Reconectar para consultar de nuevo.");
   }
 }

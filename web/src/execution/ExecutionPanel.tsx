@@ -30,7 +30,7 @@ export default function ExecutionPanel({ doc, analysis, current, reveal = 0 }: {
       .catch((e: unknown) => { if (live) { setCaps(null); setConnection(e instanceof Error ? e.message : String(e)); } });
     return () => { live = false; };
   }, [attempt]);
-  // Al salir del estudio el trabajo continúa. Al volver se consulta de nuevo desde su ID en memoria.
+  // Al salir dStudio el trabajo continúa. Al volver se consulta de nuevo desde su ID en memoria.
   const run = state.run;
   useEffect(() => {
     if (!run || !activeRun(run)) return;
@@ -88,7 +88,7 @@ export default function ExecutionPanel({ doc, analysis, current, reveal = 0 }: {
   }
   return <section className="execution-panel" id="resultados" aria-labelledby="results-title" data-ui>
     <div className="execution-heading"><div><h2 id="results-title" ref={title} tabIndex={-1}>Resultados</h2>
-      <p>Ejecutar envía este programa y sus opciones al servicio Python. Los datasets autorizados ya están en el servidor; compilar sigue siendo local.</p></div>
+      <p>Run envía este programa y sus opciones al servicio Python. Los datasets autorizados ya están en el servidor; compilar sigue siendo local.</p></div>
       <button className="tool-button" onClick={() => setAttempt((n) => n + 1)}>Reconectar</button>
     </div>
     <p className="execution-connection" role="status">{connection}</p>
@@ -107,7 +107,7 @@ export default function ExecutionPanel({ doc, analysis, current, reveal = 0 }: {
     </div>
     {caps?.datasets.some((d) => !d.available) && <p>Hay datasets sin preparar. En el servidor: <code>python -m service.prepare</code>; después reinicia el servicio y pulsa Reconectar. JOIN incluido está disponible sin preparación.</p>}
     <div className="execution-toolbar">
-      <button className="btn sm" disabled={!canRun} onClick={() => void execute()}>{state.pending ? "Enviando…" : "Ejecutar"}</button>
+      <button className="btn sm" disabled={!canRun} onClick={() => void execute()}>{state.pending ? "Enviando…" : "Run"}</button>
       {activeRun(run) && <button className="tool-button" disabled={cancelling} onClick={() => void cancel()}>{cancelling ? "Cancelando…" : "Cancelar ejecución"}</button>}
       {caps && <span>Plazo {caps.limits.timeout_seconds} s · límite RSS muestreado {Math.round(caps.limits.memory_bytes / 1024**2)} MiB RSS · caducidad {caps.limits.ttl_seconds / 60} min</span>}
     </div>
@@ -123,7 +123,7 @@ export default function ExecutionPanel({ doc, analysis, current, reveal = 0 }: {
       {run.metrics?.worker_seconds != null && <p>Proceso: {run.metrics.worker_seconds.toFixed(3)} s desde su arranque hasta detectar su término, incluye recompilación, IO y materialización; excluye cola/HTTP. Pico RSS observado: {Math.round((run.metrics.peak_rss_bytes ?? 0) / 1024**2)} MiB (muestras cada 50 ms).</p>}
       {run.state === "succeeded" && <Results key={run.id} run={run} />}
     </div>}
-    {!run && <p className="empty-output">Elige los datos y pulsa Ejecutar para obtener filas y archivos reales. Editar y cambiar de vista no inicia trabajos.</p>}
+    {!run && <p className="empty-output">Elige los datos y pulsa Run para obtener filas y archivos reales. Editar y cambiar de vista no inicia trabajos.</p>}
     <p className="execution-footnote">Al navegar, el trabajo continúa y se recupera al volver en esta pestaña. Recargar pierde su referencia local; el servidor conserva los archivos hasta que caduquen. Sin cuentas ni datasets propios.</p>
   </section>;
 }

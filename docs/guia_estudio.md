@@ -1,14 +1,14 @@
-# Primer programa y recorrido del estudio
+# Primer programa y recorrido dStudio
 
 ## Elegir y abrir una copia
 
-Si es tu primera vez, el tutorial [De un CSV a un resultado](/docs/tutorial) recorre un programa completo, desde el archivo de datos hasta el archivo de salida, con un CSV incluido que no requiere preparación. Para practicar con el estudio, comienza por [Ventas por cliente](/ejemplos/ventas). Lee el problema, el código y los requisitos. Abrir una copia en el estudio crea un documento independiente con nombre, revisión 1, inspector Resultado y pases predeterminados. El documento anterior queda en Borradores anteriores. Navegar por ejemplos o documentación no modifica tu documento.
+Si es tu primera vez, el tutorial [De un CSV a un resultado](/docs/tutorial) recorre un programa completo, desde el archivo de datos hasta el archivo de salida, con un CSV incluido que no requiere preparación. Para practicar con Studio, comienza por [Ventas por cliente](/ejemplos/ventas). Lee el problema, el código y los requisitos. Abrir una copia en Studio crea un documento independiente con nombre, revisión 1, inspector Resultado y pases predeterminados. El documento anterior queda en Borradores anteriores. Navegar por ejemplos o documentación no modifica tu documento.
 
-## Compilar e inspeccionar
+## Compile e inspeccionar
 
-Pulsa Compilar o Ctrl/⌘ + Enter. La primera vez se descarga Python mediante Pyodide en un worker; necesitas conexión para esa carga. Después, las ediciones se analizan tras una pausa breve. Resultado, Tokens, Árbol, AST, IR y Python muestran fases textuales del mismo análisis. Cambiar de inspector no solicita otra compilación.
+Pulsa Compile o Ctrl/⌘ + Enter. La primera vez se descarga Python mediante Pyodide en un worker; necesitas conexión para esa carga. Después, las ediciones se analizan tras una pausa breve. Resultado, Tokens, Árbol, AST, IR y Python muestran fases textuales del mismo análisis. Cambiar de inspector no solicita otra compilación.
 
-Compilar no lee datasets ni certifica sus valores. El análisis sigue siendo local aunque el servicio esté desconectado. Ejecutar es una acción explícita distinta: envía el fuente y las opciones al servicio privado Python, que vuelve a compilar y valida datos reales con Polars. El Python descargado también puede ejecutarse con etl_dsl y Polars instalados. Sus rutas SOURCE/SINK pertenecen a ese entorno; el servicio web las resuelve mediante bindings autorizados y archivos propios del trabajo.
+Compile no lee datasets ni certifica sus valores. El análisis sigue siendo local aunque el servicio esté desconectado. Ejecutar es una acción explícita distinta: envía el fuente y las opciones al servicio privado Python, que vuelve a compilar y valida datos reales con Polars. El Python descargado también puede ejecutarse con etl_dsl y Polars instalados. Sus rutas SOURCE/SINK pertenecen a ese entorno; el servicio web las resuelve mediante bindings autorizados y archivos propios del trabajo.
 
 ## Sugerencias mientras escribes
 
@@ -38,7 +38,7 @@ Predeterminados usa `constantes,rangos,filtros,joins,muertos`; Sin pases (O0) co
 
 ## Conservar y recuperar
 
-Puedes consultar estas guías y volver con Estudio o con Atrás. Texto, nombre, revisión, pases e inspector permanecen en el documento. Los resultados se vinculan a su revisión; al volver puede ser necesario compilar de nuevo. No se guardan resultados, cursor ni historial de deshacer.
+Puedes consultar estas guías y volver con Studio o con Atrás. Texto, nombre, revisión, pases e inspector permanecen en el documento. Los resultados se vinculan a su revisión; al volver puede ser necesario compilar de nuevo. No se guardan resultados, cursor ni historial de deshacer.
 
 Borradores anteriores permite recuperar, descargar o eliminar un documento. El límite es de ocho anteriores, 128 KiB por documento y 512 KiB totales. Al llegar a ocho, abrir otra copia se bloquea hasta que elimines uno; no se expulsa ninguno automáticamente.
 

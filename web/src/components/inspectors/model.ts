@@ -40,8 +40,8 @@ export function unavailable(artifact?: Artifact): string {
   return artifact?.status === "blocked"
     ? "Artefacto bloqueado por un error en esta fase o una anterior. Puedes inspeccionar las fases disponibles y corregir el código."
     : artifact?.status === "not_requested"
-      ? "Este artefacto no se solicitó. Compila desde el estudio para solicitar todas las fases."
-      : "Pulsa Compilar para obtener este artefacto.";
+      ? "Este artefacto no se solicitó. Compila desde Studio para solicitar todas las fases."
+      : "Pulsa Compile para obtener este artefacto.";
 }
 export function pipelines(ast: unknown): RecordValue[] {
   return record(ast) ? objects(ast.pipelines) : [];

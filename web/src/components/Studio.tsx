@@ -136,7 +136,7 @@ export function Studio() {
       <div className="cta-copy" data-reveal>
         <h2 id="cta-t">Tu primer cauce.</h2>
         <p>
-          Edita el ejemplo y pulsa Compilar. Corre el mismo etl_dsl de la
+          Edita el ejemplo y pulsa Compile. Corre el mismo etl_dsl de la
           terminal, dentro de tu navegador; tus datos no salen de tu equipo.
         </p>
       </div>
@@ -229,7 +229,7 @@ export function Studio() {
             <Output fmt={fmt} result={shown} />
           ) : (
             <pre className="studio-pre muted">
-              Pulsa Compilar para ver la salida de tu versión.
+              Pulsa Compile para ver la salida de tu versión.
             </pre>
           )}
         </div>
@@ -254,20 +254,20 @@ export function Studio() {
             disabled={busy}
             aria-keyshortcuts="Control+Enter Meta+Enter"
           >
-            {busy && runtime.status === "loading" ? "Cargando…" : "Compilar"}
+            {busy && runtime.status === "loading" ? "Cargando…" : "Compile"}
           </button>
         </div>
       </div>
       <div className="demo-open">
         <a
           className="btn"
-          href="/estudio"
+          href="/studio"
           onClick={(e) => {
             if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
             e.preventDefault();
             try {
               openDocument(createDocument(name, source, optimize ? null : []));
-              navigate("/estudio");
+              navigate("/studio");
             } catch (error) {
               setMessage(
                 error instanceof Error ? error.message : String(error),
@@ -275,7 +275,7 @@ export function Studio() {
             }
           }}
         >
-          Continuar en el estudio
+          Continuar en Studio
         </a>
         {message && <p role="status">{message}</p>}
       </div>
