@@ -35,5 +35,36 @@ services:
     cpus: 2
     init: true
 
+  dev-api:
+    profiles: [dev]
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    working_dir: /app
+    command: ["sh", "-c", "python -m service.prepare && exec python -m uvicorn service.app:app --host 0.0.0.0 --port 8000 --reload --reload-dir etl_dsl --reload-dir service --no-access-log"]
+    volumes:
+      - .:/app
+      - dev-data:/app/data
+    init: true
+
+  dev-web:
+    profiles: [dev]
+    image: node:24-slim
+    working_dir: /app/web
+    command: ["sh", "-c", "npm ci && exec npm run dev -- --host 0.0.0.0 --strictPort"]
+    environment:
+      CAUCE_API_TARGET: http://dev-api:8000
+      CHOKIDAR_USEPOLLING: "true"
+    depends_on:
+      - dev-api
+    ports:
+      - "127.0.0.1:5173:5173"
+    volumes:
+      - .:/app
+      - dev-node-modules:/app/web/node_modules
+    init: true
+
 volumes:
+  dev-data:
+  dev-node-modules:
   cauce-data:

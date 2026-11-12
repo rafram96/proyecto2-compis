@@ -4,8 +4,7 @@ Stream es la interfaz web del compilador ETL-DSL. Esta guía ayuda a levantar el
 
 ## Requisitos
 
-- Git y Node.js 24 con npm (se recomienda usar la misma versión para todo el equipo).
-- Python 3.11 o superior para el servicio y los scripts del proyecto.
+- Git y Docker Desktop con Docker Compose en ejecución. No necesitas instalar Node ni Python en tu equipo para usar Compose.
 - Conexión a internet: el navegador descarga Pyodide la primera vez que se compila en Studio.
 
 Clona el repositorio y cambia a la rama de trabajo que te hayan compartido:
@@ -18,30 +17,32 @@ git switch --track origin/feature/web
 
 Si utilizas HTTPS, cambia la URL de clonación por la que muestra GitHub. Los comandos siguientes parten de la raíz del repositorio, salvo que se indique lo contrario.
 
-## Iniciar la interfaz
+## Iniciar el entorno de desarrollo
+
+Desde la raíz del proyecto, con Docker Desktop abierto:
 
 ```sh
-cd web
-npm ci
-npm run dev
+docker compose --profile dev up --build -d dev-web
 ```
 
-Abre la dirección que muestra Vite (normalmente <http://localhost:5173>). La página principal, el catálogo, la documentación y Studio funcionan sin iniciar la API. En Studio, **Compile** analiza el programa en el navegador; no lee datasets ni ejecuta el pipeline.
-
-## Activar la ejecución de pipelines
-
-Para usar **Run** en Studio necesitas también el servicio Python. En otra terminal, desde la raíz:
+Abre <http://localhost:5173>. Compose inicia Vite y el servicio Python, instala las dependencias de la web y prepara los datasets. La primera ejecución puede tardar mientras descarga las imágenes y dependencias. Para consultar el estado o los mensajes:
 
 ```sh
-python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements-service.txt
-.venv/bin/python -m service.prepare
-.venv/bin/python -m uvicorn service.app:app --host 127.0.0.1 --port 8000 --workers 1 --no-access-log
+docker compose --profile dev ps
+docker compose --profile dev logs -f dev-web dev-api
 ```
 
-En Windows usa `.venv\Scripts\python.exe` en lugar de `.venv/bin/python`. Mantén Vite y el servicio en terminales separadas. Vite redirige `/api` al puerto 8000; si usas otro, inicia Vite con `CAUCE_API_TARGET=http://127.0.0.1:PUERTO`. El servicio es para uso privado local; consulta sus condiciones en [servicio de ejecución](servicio_ejecucion.md) antes de exponerlo.
+Los cambios en `web/` se reflejan mediante Vite y los cambios en `service/` o `etl_dsl/` reinician el servicio. La primera compilación en Studio descarga Pyodide en el navegador. **Compile** analiza el programa; **Run** lo ejecuta mediante el servicio. El servicio es privado y la web solo escucha en este equipo.
 
-Para probar el recorrido completo, abre `/ejemplos/gasto-por-cliente`, crea una copia en Studio, compila y, en Resultados, elige el pipeline `gasto_por_cliente` y el dataset `join-orders@1`. Pulsa **Run**. Ese CSV está incluido; `service.prepare` prepara los datasets adicionales de otros ejemplos.
+Para comprobar el recorrido completo, abre `/ejemplos/gasto-por-cliente`, crea una copia en Studio, compila y, en Resultados, elige el pipeline `gasto_por_cliente` y el dataset `join-orders@1`. Pulsa **Run**.
+
+Para detener el entorno sin borrar los datos preparados:
+
+```sh
+docker compose --profile dev stop dev-web dev-api
+```
+
+Para volver a iniciarlo usa el comando `up` anterior. Si cambian `requirements.txt` o `requirements-service.txt`, conserva `--build` para reconstruir la imagen Python. Si el puerto 5173 está ocupado, detén el proceso que lo usa antes de iniciar Compose. Los datos del servicio y las dependencias de Node se guardan en volúmenes Docker locales.
 
 ## Dónde hacer cambios
 
@@ -55,35 +56,45 @@ Para probar el recorrido completo, abre `/ejemplos/gasto-por-cliente`, crea una 
 | `service/` | API y ejecución privada de pipelines. |
 | `web/public/` | Recursos públicos, incluida la evidencia publicada y la rueda de Lark. |
 
-Al cambiar contenido publicado, edita sus fuentes y regenera los archivos correspondientes; no edites a mano los JSON generados. Desde la raíz, con el entorno Python preparado:
+Al cambiar contenido publicado, edita sus fuentes y regenera los archivos correspondientes; no edites a mano los JSON generados. Desde la raíz, con Compose iniciado:
 
 ```sh
-.venv/bin/python web/scripts/gen_content.py
-.venv/bin/python web/scripts/gen_compiled.py
-.venv/bin/python web/scripts/gen_evaluation.py
-.venv/bin/python web/scripts/gen_http.py
+docker compose --profile dev exec dev-api python web/scripts/gen_content.py
+docker compose --profile dev exec dev-api python web/scripts/gen_compiled.py
+docker compose --profile dev exec dev-api python web/scripts/gen_evaluation.py
+docker compose --profile dev exec dev-api python web/scripts/gen_http.py
 ```
 
 Ejecuta solo los generadores afectados; revisa sus opciones y dependencias en el [README técnico](../web/README.md). Los archivos generados versionados deben acompañar a sus fuentes cuando cambien.
 
 ## Comprobar antes de compartir
 
-Desde `web/`:
+Desde la raíz, con Compose iniciado:
 
 ```sh
+docker compose --profile dev exec dev-web npm run build
+```
+
+Las pruebas web también invocan el compilador Python mediante `.venv/bin/python`. Para ejecutarlas, instala Node 24 y Python 3.11 o superior en tu equipo, prepara el entorno e instala las dependencias desde la raíz:
+
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-service.txt
+cd web
+npm ci
 npm test
-npm run build
+cd ..
 ```
 
-Desde la raíz, si cambiaste contenido o contratos, comprueba los generadores correspondientes:
+En Windows usa `.venv\Scripts\python.exe` en lugar de `.venv/bin/python`. Desde la raíz, si cambiaste contenido o contratos, comprueba los generadores correspondientes:
 
 ```sh
-.venv/bin/python web/scripts/gen_content.py --check
-.venv/bin/python web/scripts/gen_evaluation.py --check
-.venv/bin/python web/scripts/gen_http.py --check
+docker compose --profile dev exec dev-api python web/scripts/gen_content.py --check
+docker compose --profile dev exec dev-api python web/scripts/gen_evaluation.py --check
+docker compose --profile dev exec dev-api python web/scripts/gen_http.py --check
 ```
 
-Para cambios en el compilador o el servicio ejecuta además `.venv/bin/python -m unittest discover`. Prueba manualmente las páginas afectadas y, si cambiaste la ejecución, el recorrido Compile → Run. El build produce `web/dist/`, que es generado y no se sube a Git.
+Para cambios en el compilador o el servicio ejecuta además `docker compose --profile dev exec dev-api python -m unittest discover`. Prueba manualmente las páginas afectadas y, si cambiaste la ejecución, el recorrido Compile → Run. El build produce `web/dist/`, que es generado y no se sube a Git.
 
 ## Flujo de colaboración
 
