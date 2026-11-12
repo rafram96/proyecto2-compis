@@ -1,4 +1,4 @@
-"""Prueba C1–C4 y el estudio W1/W4 con playwright-cli contra Vite iniciado.
+"""Prueba C1–C4, el estudio W1 y las sugerencias W4 con playwright-cli contra Vite iniciado.
 
 Desde la raíz: python web/scripts/verify_browser.py --url http://127.0.0.1:5173/
 Los artefactos del navegador quedan en web/.playwright-cli/ (ignorado por Git).
@@ -41,6 +41,8 @@ def main():
                         help="Divisor, disposición y enlaces /estudio?vista=…; también en producción (requiere la API)")
     parser.add_argument("--tutorial-only", action="store_true",
                         help="Tutorial CSV → resultado: artículo, enlaces, copia, error, ejecución y descarga (requiere la API)")
+    parser.add_argument("--suggestions-only", action="store_true",
+                        help="Sugerencias del editor y ¿quisiste decir? de E_COLUMN; también en producción, sin ejecutar trabajos")
     parser.add_argument("--url", default="http://127.0.0.1:5173/")
     args = parser.parse_args()
     if args.execution_only and not args.timeout_api:
@@ -59,7 +61,8 @@ def main():
                   ("inspectors.js", ('"inspectors":true', '"noRecompileOnExplore":true')),
                   ("evaluation.js", ('"evaluation":true', '"downloads":8', '"apiWhileReading":0')),
                   ("studio.js", ('"studio":true', '"noRecompileOnResize":true', '"viewLinks":9', '"linkJourneys":true')),
-                  ("tutorial.js", ('"tutorial":true', '"journeys":2', '"execution":true', '"downloads":2'))]
+                  ("tutorial.js", ('"tutorial":true', '"journeys":2', '"execution":true', '"downloads":2')),
+                  ("suggestions.js", ('"suggestions":true', '"journeys":2', '"zeroCompilesOnSuggest":true', '"quickFix":true'))]
         if args.execution_only:
             suites = [("execution.js", ('"execution":true', '"timeout":true', '"download":true'))]
         if args.content_only:
@@ -72,6 +75,8 @@ def main():
             suites = suites[5:6]
         if args.tutorial_only:
             suites = suites[6:7]
+        if args.suggestions_only:
+            suites = suites[7:8]
         for script, required in suites:
             code = (web / "tests/browser" / script).read_text(encoding="utf-8").strip().removesuffix(";")
             code = code.replace("__CAUCE_TIMEOUT_API__", args.timeout_api)
@@ -86,10 +91,10 @@ def main():
                 subprocess.run([*command, "snapshot"], cwd=web, timeout=15)
                 raise SystemExit(f"Falló {script}; revisar la salida de playwright-cli.")
         sys.path[:0] = [str(web.parent), str(web / "src/compiler")]
-        if args.studio_only:
+        if args.studio_only or args.suggestions_only:
             return
         if args.tutorial_only or not (args.content_only or args.inspectors_only or args.execution_only
-                                      or args.evaluation_only):
+                                      or args.evaluation_only or args.suggestions_only):
             verify_tutorial_downloads(web)
             if args.tutorial_only:
                 return

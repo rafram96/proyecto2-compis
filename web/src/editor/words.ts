@@ -19,3 +19,58 @@ export const TYPES = ["TABLE", "INT", "DECIMAL", "STRING", "BOOL", "DATE", "DATE
 export const CONNECTORS = ["CSV", "PARQUET", "SQLITE", "DUCKDB"];
 export const FUNCS = ["COUNT", "SUM", "AVG", "MIN", "MAX", "COALESCE", "NULLIF", "SAFE_DIVIDE", "LOWER", "UPPER", "TRIM"];
 
+
+/**
+ * Aridad que exige etl_dsl/validation.py (E_ARITY). `max: null` = sin límite superior.
+ * tests/suggestions.test.mjs la contrasta con el compilador real.
+ */
+export type Arity = { min: number; max: number | null };
+export const SCALAR_ARITY: Record<string, Arity> = {
+  COALESCE: { min: 2, max: null },
+  NULLIF: { min: 2, max: 2 },
+  SAFE_DIVIDE: { min: 2, max: 2 },
+  LOWER: { min: 1, max: 1 },
+  UPPER: { min: 1, max: 1 },
+  TRIM: { min: 1, max: 1 },
+};
+export const AGGREGATE_ARITY: Record<string, Arity> = {
+  COUNT: { min: 0, max: 1 },
+  SUM: { min: 1, max: 1 },
+  AVG: { min: 1, max: 1 },
+  MIN: { min: 1, max: 1 },
+  MAX: { min: 1, max: 1 },
+};
+
+/**
+ * Conectores y opciones que acepta el backend (`_connector` en etl_dsl/backend.py): valores de cadena salvo
+ * `header` (TRUE/FALSE). SQLITE solo lee; `mode` de DUCKDB solo existe en SINK. Contrastado en tests/suggestions.test.mjs.
+ */
+export type ConnectorOption = { name: string; required: boolean; value: string; sinkOnly?: boolean };
+export const CONNECTOR_SPECS: Record<string, { sink: boolean; options: ConnectorOption[] }> = {
+  CSV: {
+    sink: true,
+    options: [
+      { name: "file", required: true, value: "ruta de archivo" },
+      { name: "header", required: false, value: "TRUE o FALSE" },
+      { name: "delimiter", required: false, value: "un carácter" },
+      { name: "nullstr", required: false, value: "texto que representa NULL" },
+    ],
+  },
+  PARQUET: { sink: true, options: [{ name: "file", required: true, value: "ruta de archivo" }] },
+  DUCKDB: {
+    sink: true,
+    options: [
+      { name: "file", required: true, value: "ruta de archivo" },
+      { name: "table", required: true, value: "nombre de tabla" },
+      { name: "schema", required: false, value: "esquema de la base" },
+      { name: "mode", required: false, value: '"error", "replace" o "append"', sinkOnly: true },
+    ],
+  },
+  SQLITE: {
+    sink: false,
+    options: [
+      { name: "file", required: true, value: "ruta de archivo" },
+      { name: "table", required: true, value: "nombre de tabla" },
+    ],
+  },
+};

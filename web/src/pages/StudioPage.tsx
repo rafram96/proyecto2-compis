@@ -1,4 +1,12 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { restartCompiler } from "../compiler/client";
 import { examples } from "../content";
 import PassSelector from "../components/inspectors/PassSelector";
@@ -35,6 +43,8 @@ import PanelSplitter, {
 } from "../components/PanelSplitter";
 import { useCompilation } from "../workspace/useCompilation";
 import type { Diagnostic, Span } from "../compiler/types";
+import { columnFix } from "../editor/suggestions";
+import type { EditorEdit } from "../editor/Editor";
 const ExecutionPanel = lazy(() => import("../execution/ExecutionPanel"));
 const Editor = lazy(() => import("../editor/Editor"));
 const Inspector = lazy(() => import("../components/inspectors/Inspector"));
@@ -42,7 +52,8 @@ const Inspector = lazy(() => import("../components/inspectors/Inspector"));
 export default function StudioPage() {
   const { workspace, notice, saved } = useWorkspace();
   const doc = workspace.active;
-  const { result, current, runtime, busy, error, run } = useCompilation(doc);
+  const { result, current, runtime, busy, error, run, basis } =
+    useCompilation(doc);
   // La vista llega en la URL; el documento y su revisión nunca.
   const [initialView] = useState(() => parseView(location.search));
   const [pane, setPane] = useState<"code" | "inspector">(
@@ -53,6 +64,7 @@ export default function StudioPage() {
   const [reveal, setReveal] = useState(0);
   const [split, commitSplit] = usePanelSplit();
   const panels = useRef<HTMLDivElement>(null);
+  const [edit, setEdit] = useState<EditorEdit>();
   const [focusRange, setFocusRange] = useState<{
     from: number;
     to: number;
@@ -112,7 +124,15 @@ export default function StudioPage() {
     setViewNotice("");
   }
   const analysis = result?.result.analysis;
-  const diagnostics = current ? (analysis?.diagnostics ?? []) : [];
+  const diagnostics = useMemo(
+    () => (current ? (analysis?.diagnostics ?? []) : []),
+    [current, analysis],
+  );
+  // «¿Quisiste decir …?» para E_COLUMN: columnas del último análisis válido, sin cambiar el diagnóstico.
+  const fixes = useMemo(
+    () => diagnostics.map((d) => columnFix(doc.source, d, basis)),
+    [diagnostics, doc.source, basis],
+  );
   const python = pythonDownload(doc, result);
   const fmt = doc.inspector;
   const origin = result
@@ -348,6 +368,9 @@ export default function StudioPage() {
                   onChange={(source) => updateDocument({ source })}
                   onRun={run}
                   diagnostics={diagnostics}
+                  fixes={fixes}
+                  basis={basis}
+                  edit={edit}
                   focusRange={focusRange}
                   label="Código ETL del documento"
                 />
@@ -434,6 +457,31 @@ export default function StudioPage() {
                       {d.span.line}:{d.span.column} · {d.phase}
                     </span>
                   </button>
+                  {fixes[i] && (
+                    <p className="diagnostic-fix">
+                      <span>¿Quisiste decir?</span>
+                      {fixes[i]!.replacements.map((insert) => (
+                        <button
+                          key={insert}
+                          className="tool-button"
+                          aria-label={`Cambiar ${fixes[i]!.expected} por ${insert} (${d.span.line}:${d.span.column})`}
+                          onClick={() => {
+                            const fix = fixes[i]!;
+                            setPane("code");
+                            setEdit((previous) => ({
+                              from: fix.from,
+                              to: fix.to,
+                              expected: fix.expected,
+                              insert,
+                              token: (previous?.token ?? 0) + 1,
+                            }));
+                          }}
+                        >
+                          <code>{insert}</code>
+                        </button>
+                      ))}
+                    </p>
+                  )}
                 </li>
               ))}
             </ul>

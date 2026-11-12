@@ -21,18 +21,46 @@ import {
   closeBracketsKeymap,
   completionKeymap,
 } from "@codemirror/autocomplete";
-import { setDiagnostics } from "@codemirror/lint";
-import { etlCompletion, etlHighlight, etlLanguage, etlTheme } from "./etl";
+import { setDiagnostics, type Diagnostic as LintDiagnostic } from "@codemirror/lint";
+import {
+  etlCompletion,
+  etlHighlight,
+  etlInfoPosition,
+  etlLanguage,
+  etlTheme,
+  setSuggestionBasis,
+} from "./etl";
 import type { Diagnostic } from "../compiler/types";
 import { editorDiagnostics } from "../compiler/diagnostics";
+import type { ColumnFix, SuggestionBasis } from "./suggestions";
+
+/** Reemplazo pedido desde fuera (corrección de un diagnóstico); `token` distingue pedidos iguales. */
+export type EditorEdit = { from: number; to: number; expected: string; insert: string; token: number };
+
+/** Sustituye el intervalo exacto solo si aún contiene el texto diagnosticado; queda en el historial de deshacer. */
+function replaceExact(view: EditorView, from: number, to: number, expected: string, insert: string) {
+  if (to > view.state.doc.length || view.state.sliceDoc(from, to) !== expected) return false;
+  view.dispatch({
+    changes: { from, to, insert },
+    selection: { anchor: from + insert.length },
+    userEvent: "input.replace",
+    scrollIntoView: true,
+  });
+  return true;
+}
 
 type Props = {
   value: string;
   onChange(v: string): void;
   onRun?(): void;
   diagnostics?: Diagnostic[];
+  /** Correcciones alineadas con `diagnostics` (null si no hay). */
+  fixes?: (ColumnFix | null)[];
   label: string;
   focusRange?: { from: number; to: number; token: number };
+  /** Último análisis válido del documento para las sugerencias; nunca provoca una compilación. */
+  basis?: SuggestionBasis | null;
+  edit?: EditorEdit;
 };
 
 /** CodeMirror 6 con el lenguaje ETL-DSL. Tab indenta; Esc y luego Tab salen del editor. */
@@ -41,8 +69,11 @@ export function Editor({
   onChange,
   onRun,
   diagnostics = [],
+  fixes,
   label,
   focusRange,
+  basis = null,
+  edit,
 }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
@@ -65,7 +96,7 @@ export function Editor({
           indentOnInput(),
           bracketMatching(),
           closeBrackets(),
-          autocompletion({ icons: false }),
+          autocompletion({ icons: false, positionInfo: etlInfoPosition }),
           etlLanguage,
           etlCompletion,
           etlHighlight,
@@ -114,14 +145,36 @@ export function Editor({
 
   useEffect(() => {
     const v = view.current;
-    if (v)
-      v.dispatch(
-        setDiagnostics(
-          v.state,
-          editorDiagnostics(v.state.doc.toString(), diagnostics),
-        ),
-      );
-  }, [diagnostics]);
+    if (!v) return;
+    const text = v.state.doc.toString();
+    const marks: LintDiagnostic[] = diagnostics.flatMap((d, i) =>
+      editorDiagnostics(text, [d]).map((mark) => {
+        const fix = fixes?.[i];
+        return fix
+          ? {
+              ...mark,
+              actions: fix.replacements.map((insert) => ({
+                name: `¿Quisiste decir ${insert}?`,
+                apply: (view: EditorView, from: number, to: number) => {
+                  replaceExact(view, from, to, fix.expected, insert);
+                },
+              })),
+            }
+          : mark;
+      }),
+    );
+    v.dispatch(setDiagnostics(v.state, marks));
+  }, [diagnostics, fixes]);
+
+  useEffect(() => {
+    view.current?.dispatch({ effects: setSuggestionBasis.of(basis) });
+  }, [basis]);
+
+  useEffect(() => {
+    const v = view.current;
+    if (!v || !edit) return;
+    if (replaceExact(v, edit.from, edit.to, edit.expected, edit.insert)) v.focus();
+  }, [edit]);
 
   useEffect(() => {
     const v = view.current;

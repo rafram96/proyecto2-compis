@@ -2,10 +2,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { compile, SupersededError, useRuntime } from "../compiler/client";
 import { acceptResult, isCurrent } from "./model";
 import type { Document, DocumentResult } from "./model";
+import { nextBasis, type SuggestionBasis } from "../editor/suggestions";
 
 export function useCompilation(document: Document) {
   const runtime = useRuntime();
   const [result, setResult] = useState<DocumentResult | null>(null);
+  // Base de las sugerencias: último análisis vigente al llegar con esquemas disponibles (ver editor/suggestions.ts).
+  const [basis, setBasis] = useState<SuggestionBasis | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const latest = useRef(document);
@@ -32,15 +35,27 @@ export function useCompilation(document: Document) {
         fmt: "check",
         allArtifacts: true,
       });
-      if (mounted.current && request === ticket.current)
+      if (mounted.current && request === ticket.current) {
+        const incoming = {
+          documentId: doc.id,
+          revision: doc.revision,
+          passes: doc.passes,
+          result: compiled,
+        };
         setResult((previous) =>
-          acceptResult(latest.current, previous, {
-            documentId: doc.id,
-            revision: doc.revision,
-            passes: doc.passes,
-            result: compiled,
-          }),
+          acceptResult(latest.current, previous, incoming),
         );
+        // Mismo criterio que el resultado: solo una respuesta vigente para el documento actual.
+        if (isCurrent(latest.current, incoming) && compiled.analysis)
+          setBasis((previous) =>
+            nextBasis(previous, {
+              documentId: doc.id,
+              revision: doc.revision,
+              source: doc.source,
+              analysis: compiled.analysis!,
+            }),
+          );
+      }
     } catch (error) {
       if (
         mounted.current &&
@@ -62,6 +77,7 @@ export function useCompilation(document: Document) {
   return {
     runtime,
     result: result?.documentId === document.id ? result : null,
+    basis: basis?.documentId === document.id ? basis : null,
     current,
     busy,
     error,
