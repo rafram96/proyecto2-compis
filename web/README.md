@@ -7,7 +7,7 @@ Cumbemayo y Nazca.
 ```bash
 cd web && npm install && npm run dev            # http://localhost:5173
 npm run build                                    # tsc + vite build
-npm test                                         # 51 pruebas de contenido, inspectores, evaluación, documentos, vistas, disposición, ejecución y worker; Node >= 22.18
+npm test                                         # 64 pruebas de contenido, inspectores, evaluación, documentos, vistas, disposición, ejecución, worker y sugerencias; Node >= 22.18
 .venv/bin/python web/scripts/gen_content.py      # (raíz del repo) genera src/content/generated.json
 .venv/bin/python web/scripts/gen_content.py --check # detecta contenido desactualizado
 .venv/bin/python web/scripts/gen_evaluation.py   # (raíz) valida la evidencia C5 publicada y genera src/evaluation/generated.json; --check
@@ -20,7 +20,8 @@ bash web/scripts/gen_icons.sh                    # regenera iconos PNG/ICO y og.
 
 - **Stack:** Vite + React 19 + TypeScript + Tailwind v4. Tokens en `src/styles/brand.css`, estilos en `src/index.css`.
 - **Editor de código: CodeMirror 6** (`src/editor/`), no Monaco. Lenguaje `etl-dsl` con `StreamLanguage` (vocabulario en
-  `src/editor/words.ts`, sacado de `etl_dsl/grammar.lark`), autocompletado, diagnósticos con `@codemirror/lint` alimentados por los
+  `src/editor/words.ts`, sacado de `etl_dsl/grammar.lark`), autocompletado (vocabulario y sugerencias del último análisis válido,
+  ver «Sugerencias del editor (W4)»), diagnósticos con `@codemirror/lint` alimentados por los
   diagnósticos estructurados del compilador y colores `--syn-*` de `brand.css` (el tema cambia sin recrear el editor).
   Los rangos completos se convierten de caracteres Unicode de Python a UTF-16, conservando emoji y expresiones multilínea.
   Se carga en diferido: la página no lo espera para pintarse. `src/components/highlight.tsx` es solo para fragmentos estáticos.
@@ -162,10 +163,13 @@ Carga: **60 s** máximos desde el inicio, sin extender el plazo por mensajes de 
 Un fallo o reinicio termina el worker y rechaza todas las promesas; la interfaz sale del estado ocupado. **Reiniciar compilador** conserva
 el documento y requiere pulsar Compilar para descargar/cargar Python otra vez. No hay fallback a un servicio remoto.
 
+Las sugerencias del editor usan la misma regla de aceptación: solo un resultado vigente del documento actual puede convertirse en su
+base, y solo si trae `ast`, `ir_before` y `schemas`. Un resultado con errores no la sustituye; abrir otro documento la descarta.
+
 ## Verificación reproducible
 
-Desde la raíz: `.venv/bin/python -m unittest discover` (**174 pruebas**) y `.venv/bin/python web/scripts/gen_compiled.py`.
-Desde `web`: `npm test` (**51 pruebas**) y `npm run build`. El worker se prueba con canales/temporizadores simulados para fallos y plazos.
+Desde la raíz: `.venv/bin/python -m unittest discover` (**180 pruebas**) y `.venv/bin/python web/scripts/gen_compiled.py`.
+Desde `web`: `npm test` (**64 pruebas**) y `npm run build`. El worker se prueba con canales/temporizadores simulados para fallos y plazos.
 
 Con Vite iniciado en un puerto libre (no detener procesos ajenos):
 
@@ -199,7 +203,7 @@ Esta opción no sustituye la suite completa de desarrollo; añade verificación 
 
 ## Pendiente
 
-W1 queda **completo según sus criterios** (pasos A, B, E y cierre con divisor y `?vista`). W4 esencial implementado; las sugerencias semánticas siguen pendientes.
+W1 queda **completo según sus criterios** (pasos A, B, E y cierre con divisor y `?vista`). W4 completo: robustez del worker y sugerencias semánticas del editor.
 La documentación final (tutorial y referencias vigentes) está publicada; ver «Documentación final y tutorial». Pendientes fuera de W1: evaluación con usuarios,
 verificación del fallback en el alojamiento que se elija y mapa Python → DSL (no decidido).
 Paso C/W2 implementa AST/FLOW y comparación de IR. W3 (servicio HTTP, bindings y ejecución Polars con datos) se implementa en el paso D descrito al final.
@@ -394,3 +398,67 @@ tabla y descarga el CSV, que el script compara byte a byte con el runtime local.
 API sin preparar), en el build servido por FastAPI (8041, 8044) y en el contenedor Docker (8043), junto con contenido, estudio y
 D; la suite histórica completa, con las 32 comparaciones, pasó en Vite. **180 pruebas Python** (Docker: 180, 2 omitidas) y
 **52 web**. Detalle y correcciones en [docs/plan_desarrollo.md](../docs/plan_desarrollo.md).
+
+## Sugerencias del editor (W4)
+
+`src/editor/suggestions.ts` (puro, probado con Node) separa dos cosas:
+
+- **Dónde está el cursor**, reconocido léxicamente sobre el texto actual: pipeline, `STEP` y su operación, cláusula
+  (`WHERE`, `COLUMNS`, `BY`, `GROUP_BY`, lado derecho de `=`, `ON`), paréntesis, `FLOW` (inicio de conexión o tras `->`),
+  `USE`, conector tras `SOURCE/SINK … =` y posición de opción dentro de sus paréntesis. No decide validez ni tipos.
+  Dentro de cadenas y comentarios no hay sugerencias.
+- **Qué se ofrece**, solo desde el análisis (contrato 4). Cada sugerencia indica su procedencia:
+
+| Sugerencia | Contexto | De dónde sale |
+|---|---|---|
+| Columnas de la entrada | Expresiones y listas de cada STEP; `left.`/`right.` dentro de `ON` | Entradas del nodo en `ir_before` → `schemas[pipeline][productor][puerto]` (IR original): nombre, tipos posibles, nulabilidad y si el esquema es completo |
+| Calificadores `left.` / `right.` | Solo al empezar un lado de `ON` en JOIN | Gramática (`join_condition`); al aceptarlos se abre la lista de ese lado |
+| Productores y destinos | `FLOW`: inicio de conexión / tras `->` | Declaraciones del `ast` del pipeline; JOIN `.left/.right`; INPUT/OUTPUT del pipeline que usa cada USE |
+| Puertos tras `nombre.` | `FLOW` | Igual: OUTPUT del USE como productor, INPUT del USE o lados del JOIN como destino |
+| Pipelines | Tras `USE` | Pipelines del `ast`, salvo el propio, con sus INPUT/OUTPUT |
+| Conectores y opciones | Tras `SOURCE/SINK nombre =` y dentro de `CONECTOR(` | Vocabulario del backend en `words.ts`: CSV `file, header, delimiter, nullstr`; PARQUET `file`; DUCKDB `file, table, schema` y `mode` solo en SINK; SQLITE `file, table`, solo SOURCE |
+| Funciones y agregaciones con aridad | Expresiones; inicio de una línea de AGGREGATE | Vocabulario de `validation.py` en `words.ts` (COALESCE ≥ 2; NULLIF, SAFE_DIVIDE 2; LOWER/UPPER/TRIM 1; COUNT 0–1; SUM/AVG/MIN/MAX 1) |
+
+Conectores, opciones y aridad no viajan en el contrato 4: `tests/suggestions.test.mjs` compila con el núcleo real cada
+opción y aridad sugeridas (deben pasar) y las no sugeridas (deben dar `E_CONNECTOR`/`E_ARITY`). El vocabulario de siempre
+sigue disponible fuera de los contextos exclusivos (FLOW, `ON`, `USE`, conectores y opciones).
+
+**Revisión y obsolescencia (decisión).** La base es el último resultado **vigente** del documento con `ast`, `ir_before` y
+`schemas` disponibles (sin errores sintácticos, estructurales ni semánticos), junto con el texto exacto que analizó
+(`useCompilation`). Mientras se escribe, el texto casi nunca compila (falta un `;`), así que la base no se descarta al editar:
+se ofrece y la lista lo dice en su encabezado. «Análisis vigente · revisión N» si analizó exactamente el texto actual (un
+archivo CRLF sin editar cuenta como el mismo texto); «Último análisis válido · revisión N; el texto cambió después» en otro
+caso. Los nombres se buscan por pipeline/STEP: un STEP nuevo o renombrado no recibe columnas supuestas y la lista explica que
+no está en el último análisis válido. Abrir otro documento descarta la base (nunca se mezclan documentos). Los pases no
+influyen: `schemas` es de la IR original. Con esquema parcial solo se listan las columnas conocidas (sección «esquema parcial»
+y nota en la información); si no se conoce ninguna, el encabezado del vocabulario lo explica y no se inventa nada.
+
+**Sin compilaciones extra.** La base vive en un `StateField` de CodeMirror que se actualiza con un efecto: el editor no se
+recrea. La fuente de autocompletado solo lee el estado; no importa el cliente del compilador ni envía mensajes al worker.
+Aceptar una sugerencia es una edición normal (revisión nueva y compilación tras la pausa de 320 ms), como teclearla.
+
+**«¿Quisiste decir …?» (`E_COLUMN`).** Si el intervalo del diagnóstico es exactamente el identificador (o `left./right.` +
+identificador), el cliente busca en las columnas de esa entrada (último análisis válido, mismo lado del JOIN) las más cercanas
+por distancia de edición (hasta un tercio de la longitud; diferencia solo de mayúsculas primero; máximo tres empates).
+Se ofrece como acción del diagnóstico en CodeMirror (al pasar el puntero) y como botón bajo el diagnóstico en el panel, accesible
+con teclado. Ambos sustituyen solo ese intervalo, comprobando antes que aún contiene el nombre diagnosticado; se puede deshacer.
+El mensaje y el código del diagnóstico no cambian. El landing usa el mismo editor sin base: allí solo hay vocabulario,
+conectores, opciones y aridad.
+
+**Presentación.** Secciones con título y procedencia; orden del análisis (posición de columna, orden de declaración), no
+alfabético; detalle con tipos posibles y NULL. El panel de información queda junto a la lista si cabe y, en móvil, entero
+encima o debajo (el modo estrecho de CodeMirror tapaba las opciones y el encabezado). Se corrigió que el tema recortara ese
+panel (`overflow: hidden` en `.cm-tooltip`), lo que ya ocultaba la ayuda de las operaciones.
+
+**Verificación.** `tests/suggestions.test.mjs` (12 pruebas) construye las sugerencias desde análisis reales del puente
+`src/compiler/studio.py` (tutorial con esquema completo, riesgo crediticio con SOURCE sin contrato, JOIN, USE y FLOW, DuckDB,
+errores de columna, de JOIN y de sintaxis, STEP nuevo) y comprueba la base obsoleta, la corrección sobre el intervalo exacto (el
+resultado compila) y que el editor no importa el cliente del compilador. `tests/browser/suggestions.js`
+(`verify_browser.py --suggestions-only`, también dentro de la suite completa; no ejecuta trabajos ni usa datasets) escribe en el editor
+real con teclado: lista que se abre sola al escribir y con Ctrl+Espacio, encabezado vigente/anterior, recorrido con flechas,
+información visible sin tapar la lista, aceptación, `left.` → columnas, FLOW, USE, opciones de CSV, esquema parcial, cero mensajes
+al worker al pedir/recorrer/cerrar, mismo elemento CodeMirror, una compilación por la corrección, deshacer/rehacer, acción del
+diagnóstico con el puntero y botón «¿Quisiste decir?» con foco visible; escritorio/claro y móvil/oscuro, con capturas `w-*.png`
+de la lista en las cuatro combinaciones. Ejecutada en Vite (5231, dentro de la suite histórica completa con las 32
+comparaciones), en el build servido por FastAPI (8051) y en el contenedor Docker (8053), junto con contenido, estudio, tutorial
+y D; **180 pruebas Python** (Docker: 180, 2 omitidas) y **64 web**. Las capturas se revisaron; no es una evaluación de usabilidad.

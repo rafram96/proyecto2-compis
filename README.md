@@ -252,11 +252,12 @@ y del publicado) permite generar la página y sus descargas desde un checkout li
 .venv/bin/python web/scripts/gen_evaluation.py --check  # falla si algo diverge
 ```
 
-### Web Cauce (W1 completo, C/W2, D/W3, E y W4 esencial)
+### Web Cauce (W1 completo, C/W2, D/W3, E y W4)
 
 La web Vite/React conserva el landing en `/`, ofrece `/ejemplos`, `/ejemplos/:slug`, `/docs`, `/docs/:slug`,
 la evidencia experimental C5 en `/evaluacion` y el espacio de trabajo en `/estudio`:
-editor CodeMirror, compilación local real con Pyodide, inspectores estructurados y diagnósticos seleccionables.
+editor CodeMirror con sugerencias según el contexto (columnas, declaraciones y puertos, pipelines, conectores y aridad,
+tomadas del último análisis válido), compilación local real con Pyodide, inspectores estructurados y diagnósticos seleccionables.
 Permite importar/exportar `.etl`, descargar Python vigente y recuperar borradores versionados
 tras recargar. En escritorio, un divisor accesible ajusta el ancho de editor e inspector (recordado solo en
 este navegador, `cauce-studio-layout-v1`); `/estudio?vista=resultado|tokens|arbol|ast|flow|ir|esquemas|python|ejecucion`
@@ -323,7 +324,7 @@ La API `/api/v1` acepta fuente ETL, recompila en un proceso hijo y mantiene queu
 
 Límites privados: un activo/cuatro posiciones adicionales, 30 s, RSS muestreado de 512 MiB, archivos acotados y caducidad de una hora. Cancelar termina el hijo; reiniciar limpia huérfanos sin reanudación. Los contratos dinámicos y las obligaciones JOIN permanecen con O0 y optimización. No hay transacción global ni sandbox público. Docker: `docker compose --profile web up --build cauce`, accesible solo en loopback.
 
-Contrato HTTP 1 (distinto del análisis JSON 4), comandos, límites completos, persistencia, serialización y verificación: [guía del servicio](docs/servicio_ejecucion.md). W1 está completo (cierre con divisor de paneles, enlaces a vistas y auditoría de estados del estudio; ver [web/README.md](web/README.md#cierre-de-w1-divisor-de-paneles-y-enlaces-a-vistas)). La documentación final del lenguaje y el tutorial están publicados (ver más abajo). Siguen pendientes las sugerencias semánticas (W4) y la evaluación con usuarios; el constructor visual sigue fuera de alcance. No se modificaron las cifras C5.
+Contrato HTTP 1 (distinto del análisis JSON 4), comandos, límites completos, persistencia, serialización y verificación: [guía del servicio](docs/servicio_ejecucion.md). W1 está completo (cierre con divisor de paneles, enlaces a vistas y auditoría de estados del estudio; ver [web/README.md](web/README.md#cierre-de-w1-divisor-de-paneles-y-enlaces-a-vistas)). La documentación final del lenguaje y el tutorial están publicados (ver más abajo). Las sugerencias semánticas (W4) están implementadas (ver «Sugerencias del editor» más abajo). Sigue pendiente la evaluación con usuarios; el constructor visual sigue fuera de alcance. No se modificaron las cifras C5.
 
 ### Documentación final y tutorial
 
@@ -334,3 +335,15 @@ y su corrección, compilación, ejecución desde el estudio y con `--run`, y el 
 [docs/lenguaje.md](docs/lenguaje.md) y [docs/backend_polars.md](docs/backend_polars.md) describen la implementación vigente
 (gramática, diez operaciones, NULL, contratos, C2, cinco pases, conectores y runtime). Verificación: **180 pruebas Python**
 (también en Docker, 2 omitidas allí), **52 web** y recorridos `playwright-cli` del tutorial en Vite, FastAPI y Docker.
+
+### Sugerencias del editor (W4)
+
+El editor del estudio sugiere lo que cabe donde está el cursor: columnas de la entrada de cada STEP (desde el artefacto
+`schemas` de la IR original y las entradas de `ir_before`), declaraciones y puertos en FLOW (JOIN `.left/.right` y los
+INPUT/OUTPUT de cada USE), `left.`/`right.` solo en `ON`, pipelines tras `USE`, conectores y opciones reales según
+SOURCE/SINK, y funciones/agregaciones con su aridad. El contenido sale del último análisis del documento con esos
+artefactos (contrato 4, sin una segunda semántica en TypeScript); si el texto cambió desde entonces, la lista lo rotula
+como «Último análisis válido · revisión N». Un esquema parcial solo ofrece las columnas conocidas y lo indica. En `E_COLUMN`,
+«¿quisiste decir …?» corrige el intervalo exacto sin cambiar el diagnóstico. Pedir sugerencias no compila. Detalle en
+[web/README.md](web/README.md#sugerencias-del-editor-w4); verificación: **180 pruebas Python**, **64 web** y
+`verify_browser.py --suggestions-only` en Vite, FastAPI y Docker.

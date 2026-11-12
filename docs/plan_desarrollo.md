@@ -2,7 +2,7 @@
 
 Fecha de revisión: **12 de noviembre de 2026**.
 
-Este plan parte del código actual de `etl_dsl/`, `tests/` y `web/`, y lo contrasta con [el enunciado](Enunciado_DSL.md). Cubre el compilador y la continuación de la web. C1, C2, C3, C4 y C5 están implementados. La continuación web entrega W1 (pasos A/B, paso E y su cierre con divisor de paneles y enlaces `/estudio?vista=…`), paso C/W2, la robustez esencial de W4 y D/W3 con ejecución privada real. W1 está completo según sus criterios. La documentación final del lenguaje (`lenguaje.md`, `backend_polars.md` y el tutorial «De un CSV a un resultado» publicado en `/docs/tutorial`) está entregada; la continuación web no está completa (sugerencias semánticas de W4, evaluación con usuarios y constructor por bloques siguen pendientes o fuera de alcance).
+Este plan parte del código actual de `etl_dsl/`, `tests/` y `web/`, y lo contrasta con [el enunciado](Enunciado_DSL.md). Cubre el compilador y la continuación de la web. C1, C2, C3, C4 y C5 están implementados. La continuación web entrega W1 (pasos A/B, paso E y su cierre con divisor de paneles y enlaces `/estudio?vista=…`), paso C/W2, W4 (robustez del worker y sugerencias semánticas del editor) y D/W3 con ejecución privada real. W1 está completo según sus criterios. La documentación final del lenguaje (`lenguaje.md`, `backend_polars.md` y el tutorial «De un CSV a un resultado» publicado en `/docs/tutorial`) está entregada; la continuación web no está completa (evaluación con usuarios pendiente; constructor por bloques fuera de alcance).
 
 Ampliación del plan: arquitectura de conexión, páginas adicionales y evaluación de edición visual, tomando como referencia el proyecto local `csharp-x86-compi/`. Se mantiene la libertad de adaptar sus ideas al dominio ETL. La ruta `/estudio` implementa los pasos A, C y D y el cierre de W1. `/ejemplos` y `/docs` implementan el paso B y `/evaluacion` el paso E; el editor por bloques sigue pendiente.
 
@@ -17,7 +17,7 @@ La [definición de arquitectura de la aplicación](arquitectura_aplicacion.md) c
 | Análisis léxico y sintáctico | ✅ | Gramática ETL-DSL v0.2, Lark LALR, scanner y posiciones: `etl_dsl/grammar.lark`, `scanner.py`, `parser.py`, `token.py`. |
 | AST | ✅ | Nodos inmutables, intervalos de origen, construcción desde Lark y recorridos: `ast.py`, `visitor.py`. |
 | Validación estructural | ✅ | Duplicados, enlaces y puertos, entradas requeridas, ciclos de `FLOW` y `USE`, aridad, uso de `NULL` y condiciones de JOIN: `validation.py`. |
-| Diagnósticos | 🟡 | Código, mensaje, fase, severidad, archivo e intervalo completo; se transportan como objetos hasta CodeMirror. Queda mejorar sugerencias. |
+| Diagnósticos | ✅ | Código, mensaje, fase, severidad, archivo e intervalo completo; se transportan como objetos hasta CodeMirror. `E_COLUMN` ofrece «¿quisiste decir …?» calculado en el cliente con las columnas del último análisis válido, sin cambiar mensaje ni código; los demás códigos no proponen correcciones. |
 | API de análisis compartida (C1) | ✅ | `etl_dsl.analyze` recibe texto sin archivos temporales y entrega artefactos seleccionables, errores parciales y contrato JSON versionado; CLI, puente web y demos la consumen. |
 | Tipos (C2) | ✅ | Inferencia conservadora de esquemas, tipos y nulabilidad en las diez operaciones; contratos OUTPUT/USE. Se mantienen chequeos de datos en ejecución. |
 | IR | ✅ | DAG por pipeline, orden topológico, puertos resueltos, origen de los nodos y formato textual: `ir.py`. Las expresiones reutilizan el AST. |
@@ -42,7 +42,7 @@ La web conserva la demo breve del landing y amplía el estudio en `/estudio`. Se
 |---|---|---|
 | Landing Cauce | ✅ | Secciones de producto, errores, optimizador, lenguaje, historia, tecnologías y preguntas: `web/src/App.tsx` y `components/`. |
 | Marca y temas | ✅ | Tokens, tipografía y cambio claro/oscuro implementados en `styles/brand.css`, `index.css` y `lib/theme.ts`. |
-| Editor | ✅ | CodeMirror 6, resaltado, sugerencias de vocabulario, diagnósticos y atajo para compilar: `src/editor/`. |
+| Editor | ✅ | CodeMirror 6, resaltado, diagnósticos, atajo para compilar y sugerencias según el contexto (columnas de la entrada de cada STEP, declaraciones y puertos en FLOW, `left.`/`right.` en ON, pipelines en USE, conectores/opciones, aridad) desde el último análisis válido: `src/editor/`. |
 | Compilación real en navegador | ✅ | El mismo paquete Python corre con Pyodide y Lark dentro de un Web Worker: `src/compiler/worker.ts`. |
 | Resultados iniciales | ✅ | Salidas precalculadas por el compilador real; puente compartido con el navegador: `studio.py`, `scripts/gen_compiled.py`. |
 | Inspección de fases | ✅ | Resultado, tokens, árbol, AST, FLOW, IR (antes/después), esquemas y Python; vistas estructuradas del paso C con alternativa textual. |
@@ -209,19 +209,21 @@ elija y el constructor por bloques (F). Evidencia al final del documento.
 
 **Criterio de cierre:** ejecutar un ejemplo genera filas y un archivo real; un archivo ausente o un contrato inválido produce un error comprensible; la interfaz sigue respondiendo durante la ejecución.
 
-### W4. Robustez del editor y worker — P1/P2 — 🟡 esencial implementado
+### W4. Robustez del editor y worker — P1/P2 — ✅ completo (esencial y sugerencias semánticas)
 
 - [x] Ignorar resultados de solicitudes antiguas al cambiar texto, formato o pases; agrupar trabajo pendiente para no compilar todas las versiones intermedias.
 - [x] Manejar `worker.onerror` y errores de mensajes, rechazar promesas pendientes y permitir reiniciar el worker.
 - [x] Incorporar tiempo máximo y reinicio para solicitudes bloqueadas; el identificador de solicitud debe llegar hasta la actualización de la vista.
 - [x] Probar pérdida de red al cargar Python, recuperación, ediciones rápidas y cambios de ejemplo durante la carga.
-- [ ] Mejorar después las sugerencias con columnas, pasos y puertos disponibles a partir del análisis semántico.
+- [x] Mejorar después las sugerencias con columnas, pasos y puertos disponibles a partir del análisis semántico (evidencia al final: «Entrega W4 — sugerencias semánticas del editor»).
 
 **Esencial cerrado:** resultado asociado a documento/revisión/pases; una solicitud en curso y una pendiente sustituible, promesas terminadas
 al fallar/reiniciar y callbacks de workers reemplazados ignorados. Mensajes validados con contrato 4 y serialización JSON Python para conservar
 `null`. Tiempo máximo de carga 60 s y compilación 12 s. Reinicio explícito conserva el documento y deja la descarga bajo acción Compilar.
 Pruebas con temporizadores/canales simulados y fallo real de descarga Pyodide/recuperación, cambios durante carga y ediciones rápidas en navegador.
-Las sugerencias semánticas siguen pendientes; W4 no implica cerrar W2 ni W3.
+**Sugerencias:** contexto léxico del cursor sobre el texto actual; contenido solo del contrato 4 (`schemas`, entradas de `ir_before`,
+declaraciones del `ast`) del último análisis del documento con esos tres artefactos. Si el texto cambió, se ofrece igual y se rotula
+«Último análisis válido · revisión N». Pedir, recorrer o cerrar la lista no envía mensajes al worker ni recrea CodeMirror.
 
 ## 6. Orden recomendado y entregas verificables
 
@@ -239,7 +241,7 @@ El contrato del servicio y un primer recorrido con un dataset incluido pueden de
 ## 7. Pruebas y documentación para cerrar el proyecto
 
 - [x] Suite actual: `.venv/bin/python -m unittest discover` — **180 pruebas, OK** (17 de evidencia C5 publicada, 4 de correspondencia de fuentes, 5 del tutorial).
-- [x] Diagnósticos, revisiones, persistencia, worker, evaluación, vistas, disposición y tutorial publicado: `cd web && npm test` — **52 pruebas, OK**.
+- [x] Diagnósticos, revisiones, persistencia, worker, evaluación, vistas, disposición, tutorial publicado y sugerencias del editor: `cd web && npm test` — **64 pruebas, OK** (12 de sugerencias con análisis reales del puente `studio.py`).
 - [x] Evidencia C5 publicada: `gen_evaluation.py --check` y recorrido `/evaluacion` con `playwright-cli` en Vite, FastAPI y Docker.
 - [x] C1/C2/C3/C4 en navegador: `.venv/bin/python web/scripts/verify_browser.py` — **32 comparaciones CPython/Pyodide, dos casos C2, prueba O1, eliminación O3 con obligaciones, abstenciones y recorrido de corrección, OK**.
 - [x] Build actual: `cd web && npm run build` — **OK**.
@@ -250,6 +252,7 @@ El contrato del servicio y un primer recorrido con un dataset incluido pueden de
 - [x] Ejecutar ejemplos desde la web hasta preview y descarga (W3/paso D).
 - [x] Verificar `/estudio` en móvil y escritorio, teclado, foco, ambos temas y movimiento reducido.
 - [x] Recorrido del tutorial en navegador (`verify_browser.py --tutorial-only`): artículo, enlaces, copia, error, ejecución y descarga en Vite, FastAPI y Docker.
+- [x] Sugerencias del editor con teclado (`verify_browser.py --suggestions-only`, también en la suite completa): apertura, recorrido, aceptación, cero compilaciones al pedirlas y «¿quisiste decir?» en Vite, FastAPI y Docker.
 - [x] Paridad CPython/Pyodide (32 presentaciones), diagnósticos y O1/O3 conservados; demos regeneradas con 157 pruebas.
 - [x] Actualizar `docs/lenguaje.md` y `docs/backend_polars.md`; escribir un tutorial desde un CSV hasta un resultado ([tutorial.md](tutorial.md), `/docs/tutorial`; evidencia al final).
 - [ ] Preparar reporte LaTeX de 6–10 páginas con evaluación, limitaciones, referencias y declaración de uso de IA.
@@ -738,3 +741,55 @@ revisaron. No es una evaluación de usabilidad.
 **Pendiente:** sugerencias semánticas de W4, evaluación con usuarios, reporte LaTeX, demo técnica, verificación del fallback en
 el alojamiento que se elija y, si se decide, mapa Python → DSL. Constructor por bloques, cuentas, datasets propios,
 colaboración, persistencia remota y despliegue público siguen fuera de alcance.
+
+
+## Entrega W4 — sugerencias semánticas del editor
+
+**Qué se sugiere y de dónde sale.** `web/src/editor/suggestions.ts` reconoce léxicamente dónde está el cursor (pipeline,
+STEP y operación, cláusula, paréntesis, FLOW, USE, conector y opción) y toma el contenido solo del contrato 4: columnas de la
+entrada de cada STEP desde las entradas del nodo en `ir_before` y `schemas` (IR original), con tipos posibles, nulabilidad y
+conocimiento completo/parcial; `left.`/`right.` solo al empezar un lado de `ON` y, tras ellos, las columnas de ese lado; en FLOW,
+productores (SOURCE/INPUT/STEP, OUTPUT de cada USE) al iniciar una conexión y destinos (STEP/SINK/OUTPUT, JOIN `.left/.right`,
+INPUT de cada USE) tras `->`, desde las declaraciones del `ast`; pipelines tras `USE` (sin el propio). Conectores, opciones
+(CSV `file, header, delimiter, nullstr`; PARQUET `file`; DUCKDB `file, table, schema` y `mode` solo en SINK; SQLITE `file, table`,
+solo SOURCE) y aridad de funciones y agregaciones no viajan en el contrato: están en `words.ts` y una prueba los compila con el
+núcleo real (deben pasar los sugeridos y fallar con `E_CONNECTOR`/`E_ARITY` los demás). No hay semántica nueva en TypeScript.
+
+**Revisiones obsoletas (decisión).** La base es el último resultado vigente del documento con `ast`, `ir_before` y `schemas`
+disponibles, junto con el texto analizado. Un resultado con errores no la sustituye y abrir otro documento la descarta. Se ofrece
+aunque el texto haya cambiado (al escribir casi nunca compila), y el encabezado de cada sección lo dice: «Análisis vigente ·
+revisión N» o «Último análisis válido · revisión N; el texto cambió después». Un STEP nuevo o renombrado no recibe columnas
+supuestas; con esquema parcial solo se listan las conocidas, y si no hay ninguna lo explica el encabezado. La base vive en un
+`StateField` (CodeMirror no se recrea) y la fuente de autocompletado no importa el cliente del compilador: pedir, recorrer o cerrar
+la lista no envía mensajes al worker.
+
+**«¿Quisiste decir …?».** Para `E_COLUMN` cuyo intervalo es exactamente el identificador (con `left.`/`right.` si lo lleva), el
+cliente propone las columnas conocidas más cercanas de esa entrada como acción del diagnóstico en CodeMirror y como botón bajo
+el diagnóstico en el panel. Sustituye solo ese intervalo tras comprobar que aún contiene el nombre; queda en el historial. Mensaje
+y código no cambian.
+
+**UI.** Ajuste acotado sobre la identidad existente: encabezados de sección con título y procedencia, orden del análisis,
+panel de información visible (el tema lo recortaba con `overflow: hidden`, también la ayuda de operaciones previa) y apilado
+encima/debajo de la lista en móvil, acción ámbar del diagnóstico y botón de 44 px bajo el diagnóstico. `impeccable detect` sobre
+los archivos cambiados no marca nada nuevo (sus dos avisos son líneas anteriores) y el lint de `design-taste-frontend` conserva
+sus recuentos previos. Guía `/docs/primer-programa` ampliada con «Sugerencias mientras escribes» y contenido regenerado.
+
+**Verificación (12 de noviembre de 2026).** **180 pruebas Python** (también en Docker: 180, 2 omitidas), **64 web** (12 nuevas en
+`tests/suggestions.test.mjs`: esquema completo, parcial, JOIN, USE, FLOW, conectores/aridad contra el núcleo, base obsoleta y con
+errores, corrección `E_COLUMN` que vuelve a compilar y ausencia de compilaciones), `gen_content`/`gen_http`/`gen_evaluation --check`
+(37/37 fuentes C5 coinciden: no se tocaron `etl_dsl/` ni `benchmarks/`), build web e imágenes Docker `compiler`/`service`. El
+número de pruebas Python no cambió, así que las demos no se regeneraron. `playwright-cli`, sin detener procesos ajenos: suite
+histórica completa con la nueva `suggestions.js` en Vite 5231 (API 8051): 32 comparaciones CPython/Pyodide, workspace, contenido,
+inspectores, evaluación, estudio, tutorial y sugerencias; D con la instancia de timeout real (8052) en Vite; contenido, estudio,
+tutorial, sugerencias y D en el build servido por FastAPI (8051) y en el contenedor Docker (8053), sin imports de `/src/`. Una
+primera ejecución completa en Vite falló en `workspace.js` porque edité `src/` durante la prueba (recarga HMR registrada por
+Vite); la repetición íntegra, sin ediciones, pasó. `suggestions.js` escribe en el editor real con teclado en escritorio/claro y
+móvil/oscuro: lista al escribir y con Ctrl+Espacio, encabezado vigente/anterior, flechas, información visible sin tapar la lista,
+aceptación, `left.` → columnas, FLOW, USE, opciones de CSV, esquema parcial, cero mensajes al worker, mismo elemento CodeMirror,
+una compilación por corrección, deshacer/rehacer, acción con el puntero y botón con foco visible; capturas de la lista en las
+cuatro combinaciones, revisadas. No es una evaluación de usabilidad.
+
+**Pendiente:** evaluación con usuarios, reporte LaTeX, demo técnica, verificación del fallback en el alojamiento que se elija y,
+si se decide, mapa Python → DSL. Sugerencias para otros códigos de diagnóstico no se implementaron. Constructor por bloques,
+LSP, cuentas, datasets propios, colaboración, persistencia remota y despliegue público siguen fuera de alcance.
+
