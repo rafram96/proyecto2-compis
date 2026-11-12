@@ -5,7 +5,7 @@ Landing (`/`), catálogo (`/ejemplos`), documentación (`/docs`), evaluación C5
 ```bash
 cd web && npm install && npm run dev            # http://localhost:5173
 npm run build                                    # tsc + vite build
-npm test                                         # 71 pruebas de contenido, inspectores, evaluación, documentos, vistas, disposición, ejecución, worker y sugerencias; Node >= 22.18
+npm test                                         # 72 pruebas de contenido, inspectores, evaluación, documentos, vistas, disposición, ejecución, worker y sugerencias; Node >= 22.18
 .venv/bin/python web/scripts/gen_content.py      # (raíz del repo) genera src/content/generated.json
 .venv/bin/python web/scripts/gen_content.py --check # detecta contenido desactualizado
 .venv/bin/python web/scripts/gen_evaluation.py   # (raíz) valida la evidencia C5 publicada y genera src/evaluation/generated.json; --check
@@ -167,7 +167,7 @@ base, y solo si trae `ast`, `ir_before` y `schemas`. Un resultado con errores no
 ## Verificación reproducible
 
 Desde la raíz: `.venv/bin/python -m unittest discover` (**180 pruebas**) y `.venv/bin/python web/scripts/gen_compiled.py`.
-Desde `web`: `npm test` (**71 pruebas**) y `npm run build`. El worker se prueba con canales/temporizadores simulados para fallos y plazos.
+Desde `web`: `npm test` (**72 pruebas**) y `npm run build`. El worker se prueba con canales/temporizadores simulados para fallos y plazos.
 
 Con Vite iniciado en un puerto libre (no detener procesos ajenos):
 
@@ -489,3 +489,18 @@ npm install --prefix web/.playwright-cli/audit-tools --no-save axe-core@4.14.0
 ```
 
 Se ejecuta desde la raíz y cubre 24 combinaciones de superficie, tamaño y tema. Los resultados automáticos no son una certificación de accesibilidad.
+
+
+## Inicio y stack tecnológico
+
+La sección «Construido sobre» aparece después del hero y presenta 12 tecnologías con su función real: Python, Lark, Polars, DuckDB, Pyodide, CodeMirror, React, TypeScript, Vite, Tailwind CSS, D3 y FastAPI. Los logos están autoalojados en `public/brand/stack/`; `credits.json` registra sus fuentes oficiales y hashes, con variantes de Pyodide para ambos temas. El test de assets comprueba que todos los archivos existen y coinciden con su procedencia.
+
+La franja usa una animación CSS `transform`, lineal, de 72 s. Solo se reproduce mientras la sección está visible y la pestaña activa; admite pausa manual y pausa al pasar el cursor con mouse. «Ver todo el stack» abre una cuadrícula. Con `prefers-reduced-motion` se muestra directamente la cuadrícula y se ocultan los controles de movimiento. La copia visual del bucle está oculta a tecnologías de asistencia y no contiene controles interactivos.
+
+El hero enlaza a `/studio#blocks`, `/studio` y a la demo local. El hash abre Blocks incluso al recargar; alternar a Code lo retira sin cambiar el documento. En pantallas bajas el hero se desplaza con la página y conserva una muestra estática del código para evitar superposiciones. FAQ y conectores distinguen SQLite solo como SOURCE.
+
+```sh
+.venv/bin/python web/scripts/verify_browser.py --landing-only --url http://127.0.0.1:4173/
+```
+
+Comprueba los doce logos, pausa/reanudación, hover, movimiento reducido, cinco tamaños y navegación directa a Blocks. La animación se verificó en Chromium; la fluidez en teléfonos físicos necesita comprobación en esos dispositivos.

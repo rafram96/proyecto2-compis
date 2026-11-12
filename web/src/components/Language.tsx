@@ -49,7 +49,7 @@ const MODULES: { title: string; body: [string, string]; panel: ReactNode }[] = [
   {
     title: "Tus datos, donde ya están.",
     body: [
-      "CSV, Parquet, SQLite y DuckDB sirven como fuente o como destino. Las rutas se resuelven junto al archivo .etl.",
+      "Lee CSV, Parquet, SQLite y DuckDB; escribe CSV, Parquet o DuckDB. Las rutas se resuelven junto al archivo .etl.",
       "DuckDB solo lee y escribe: cada transformación la ejecuta Polars.",
     ],
     panel: (
@@ -90,7 +90,7 @@ const MODULES: { title: string; body: [string, string]; panel: ReactNode }[] = [
   {
     title: "Nada se calcula hasta el SINK.",
     body: [
-      "El Python generado encadena un LazyFrame de Polars. Los datos se leen una vez, al final.",
+      "El Python generado encadena un LazyFrame de Polars. El plan se materializa al llegar a una salida.",
       "Así Polars suma sus propias optimizaciones a las del compilador.",
     ],
     panel: <Code code={lazy} />,

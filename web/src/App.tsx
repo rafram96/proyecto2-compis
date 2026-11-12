@@ -5,7 +5,8 @@ import { Errors } from "./components/Errors";
 import { Optimizer } from "./components/Optimizer";
 import { Language } from "./components/Language";
 import { Letter } from "./components/Letter";
-import { BuiltOn, Faq, Footer } from "./components/Faq";
+import { Faq, Footer } from "./components/Faq";
+import TechnologyStack from "./components/TechnologyStack";
 import { Studio } from "./components/Studio";
 import { startReveal } from "./lib/reveal";
 import { navigate, usePath } from "./lib/router";
@@ -88,11 +89,11 @@ export default function App() {
         <>
           <main>
             <Hero />
+            <TechnologyStack />
             <Errors />
             <Optimizer />
             <Language />
             <Letter />
-            <BuiltOn />
             <Faq />
             <Studio />
           </main>

@@ -1,0 +1,97 @@
+{
+  "downloaded": "2026-11-12",
+  "note": "Logos originales de los sitios o repositorios de cada proyecto; sus marcas pertenecen a sus titulares. Archivos autoalojados, sin modificar su identidad.",
+  "assets": [
+    {
+      "project": "Python",
+      "file": "python.png",
+      "website": "https://www.python.org/community/logos/",
+      "source": "https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/community/logos/python-logo-only.png",
+      "sha256": "4008a934b415c152bfa513be3e9b05de4212ae41549a27f2c6c8d41b3a24a4da"
+    },
+    {
+      "project": "Lark",
+      "file": "lark.png",
+      "website": "https://github.com/lark-parser/lark",
+      "source": "https://raw.githubusercontent.com/lark-parser/lark/master/docs/ide/lark-logo.png",
+      "sha256": "b4002d85c124d7954154bac4604b0caf1c41d6e29c06b290cb269f5d6be02009"
+    },
+    {
+      "project": "DuckDB",
+      "file": "duckdb.svg",
+      "website": "https://duckdb.org/",
+      "source": "https://duckdb.org/images/favicon/safari-pinned-tab.svg",
+      "sha256": "3a526d80aa37e64854f981d94162c29642db71facbc6473b2f219035208f4e71"
+    },
+    {
+      "project": "CodeMirror",
+      "file": "codemirror.svg",
+      "website": "https://codemirror.net/",
+      "source": "https://codemirror.net/style/logo.svg",
+      "sha256": "e283efdd1f70cba56a6189f2c8beb0900f9e4551a6cd692c40d07c2032813c96"
+    },
+    {
+      "project": "Pyodide",
+      "file": "pyodide-light.svg",
+      "website": "https://pyodide.org/",
+      "source": "https://pyodide.org/en/stable/_static/pyodide-logo-light.svg",
+      "sha256": "92464daf1aa70fca61e1573ea75690288ae82b988f8c5920674a4e0b39505680"
+    },
+    {
+      "project": "Pyodide",
+      "file": "pyodide-dark.svg",
+      "website": "https://pyodide.org/",
+      "source": "https://pyodide.org/en/stable/_static/pyodide-logo-dark.svg",
+      "sha256": "69274f1d2b0eb988f514a035318ba9d0f5330009ba61eca78cb063a319f2e612"
+    },
+    {
+      "project": "React",
+      "file": "react.svg",
+      "website": "https://react.dev/",
+      "source": "https://react.dev/images/brand/logo_dark.svg",
+      "sha256": "e5278257e728c9527af74185f73f0715ffde03d713512aded478d832665e8f24"
+    },
+    {
+      "project": "TypeScript",
+      "file": "typescript.png",
+      "website": "https://www.typescriptlang.org/branding/",
+      "source": "https://www.typescriptlang.org/icons/icon-192x192.png",
+      "sha256": "f89c421a81d1c3db3677cb5b748b4ec04e99d1aa03ad627e567373d8f8f1a069"
+    },
+    {
+      "project": "Vite",
+      "file": "vite.svg",
+      "website": "https://vite.dev/",
+      "source": "https://vite.dev/logo.svg",
+      "sha256": "4494223d51e62bc6d14fb2399d12de4dae54740c6977ea66b7b6e914913d9367"
+    },
+    {
+      "project": "Tailwind CSS",
+      "file": "tailwind.png",
+      "website": "https://tailwindcss.com/",
+      "source": "https://tailwindcss.com/favicons/apple-touch-icon.png?v=4",
+      "sha256": "52cb49a1c86b83b3e00b588b2acb18a5da48a0cfbee631cc0f42053cc32d1749"
+    },
+    {
+      "project": "FastAPI",
+      "file": "fastapi.png",
+      "website": "https://fastapi.tiangolo.com/",
+      "source": "https://fastapi.tiangolo.com/img/favicon.png",
+      "sha256": "d16f72cf5a2773eba499cc7f3db1923c6f5f73de990f739e3a05806aafec15b7"
+    },
+    {
+      "project": "D3",
+      "file": "d3.svg",
+      "website": "https://d3js.org/",
+      "source": "https://d3js.org/logo.svg",
+      "sha256": "45f81f315768ce46dfc80a3373076f1b3a74d993260332f10ec38ab09d465e87"
+    },
+    {
+      "project": "Polars",
+      "file": "polars.svg",
+      "website": "https://pola.rs/",
+      "source": "https://pola.rs/favicon.svg",
+      "sha256": "a60fc778aa49fe75b793c57a4fbb1bb6e7abcf8188cf85ef17a995c29b398cb1"
+    }
+  ]
+}

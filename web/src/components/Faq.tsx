@@ -1,25 +1,10 @@
 import type { ReactNode } from "react";
 import { stats } from "../data";
 
-const BUILT_ON = ["Python", "Lark", "Polars", "DuckDB", "CodeMirror", "Pyodide"];
-
-export function BuiltOn() {
-  return (
-    <section className="built" aria-label="Tecnologías">
-      <p data-reveal>Construido sobre</p>
-      <ul data-reveal style={{ ["--d" as string]: 1 }}>
-        {BUILT_ON.map((n) => (
-          <li key={n}>{n}</li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
 const QA: [string, ReactNode][] = [
   [
     "¿Necesito saber programar?",
-    "No para escribir un pipeline: declaras fuentes, pasos y destinos con palabras como FILTER o SORT. El Python aparece solo como salida, por si quieres leerlo o llevarlo a otro proyecto.",
+    <>Puedes empezar con <a href="/studio#blocks">Blocks</a>: carga un ejemplo, edita sus transformaciones y genera el programa. En Code puedes escribir el DSL y revisar cada fase. El Python se genera como salida; no necesitas escribirlo.</>,
   ],
   [
     "¿Qué pasa si me equivoco?",
@@ -41,7 +26,7 @@ const QA: [string, ReactNode][] = [
   ],
   [
     "¿Qué formatos lee y escribe?",
-    "CSV, Parquet, SQLite y DuckDB, como SOURCE o como SINK. DuckDB se usa solo como conector; las transformaciones las ejecuta Polars.",
+    "CSV, Parquet y DuckDB sirven como SOURCE y SINK. SQLite está disponible como SOURCE. DuckDB se usa como conector; las transformaciones las ejecuta Polars.",
   ],
   [
     "¿Cómo lo instalo?",
@@ -52,7 +37,7 @@ const QA: [string, ReactNode][] = [
   ],
   [
     "¿Cómo compila Studio sin servidor?",
-    "Descarga Python compilado a WebAssembly (Pyodide), instala lark y corre el mismo paquete etl_dsl que usarías en la terminal. La primera vez tarda unos segundos; después compila al instante.",
+    "Descarga Python compilado a WebAssembly (Pyodide), instala Lark y corre el mismo paquete etl_dsl que usarías en la terminal. La primera carga necesita conexión; después analiza el código en un worker sin bloquear el editor.",
   ],
   [
     "¿Se puede reutilizar un pipeline?",

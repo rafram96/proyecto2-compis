@@ -70,8 +70,40 @@ export default function StudioPage() {
     from: number;
     to: number;
   } | null>(null);
-  const [editorMode, setEditorMode] = useState<"code" | "blocks">("code");
-  const [blocksVisited, setBlocksVisited] = useState(false);
+  const [editorMode, setEditorMode] = useState<"code" | "blocks">(() =>
+    location.hash === "#blocks" ? "blocks" : "code",
+  );
+  const [blocksVisited, setBlocksVisited] = useState(
+    () => location.hash === "#blocks",
+  );
+  function chooseEditorMode(mode: "code" | "blocks") {
+    if (mode === "blocks") setBlocksVisited(true);
+    setEditorMode(mode);
+    const hash =
+      mode === "blocks"
+        ? "#blocks"
+        : location.hash === "#blocks"
+          ? ""
+          : location.hash;
+    history.replaceState(
+      history.state,
+      "",
+      location.pathname + location.search + hash,
+    );
+  }
+  useEffect(() => {
+    const restoreMode = () => {
+      const mode = location.hash === "#blocks" ? "blocks" : "code";
+      if (mode === "blocks") setBlocksVisited(true);
+      setEditorMode(mode);
+    };
+    window.addEventListener("hashchange", restoreMode);
+    window.addEventListener("popstate", restoreMode);
+    return () => {
+      window.removeEventListener("hashchange", restoreMode);
+      window.removeEventListener("popstate", restoreMode);
+    };
+  }, []);
   const [focusRange, setFocusRange] = useState<{
     from: number;
     to: number;
@@ -241,17 +273,14 @@ export default function StudioPage() {
             <button
               className="tool-button"
               aria-pressed={editorMode === "code"}
-              onClick={() => setEditorMode("code")}
+              onClick={() => chooseEditorMode("code")}
             >
               Code
             </button>
             <button
               className="tool-button"
               aria-pressed={editorMode === "blocks"}
-              onClick={() => {
-                setBlocksVisited(true);
-                setEditorMode("blocks");
-              }}
+              onClick={() => chooseEditorMode("blocks")}
             >
               Blocks
             </button>
@@ -270,7 +299,7 @@ export default function StudioPage() {
             >
               <BlockBuilder
                 onOpen={() => {
-                  setEditorMode("code");
+                  chooseEditorMode("code");
                   setPane("code");
                   setMessage(
                     "Pipeline creado como copia. Pulsa Compile para analizarlo.",

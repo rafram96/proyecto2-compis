@@ -23,11 +23,12 @@ export function Hero() {
   useEffect(() => {
     let raf = 0;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+    const compact = matchMedia("(max-width: 860px) and (max-height: 760px)");
     const update = () => {
       raf = 0;
       const el = hero.current!;
       const total = el.offsetHeight - innerHeight;
-      const p = total > 0 ? Math.min(1, Math.max(0, -el.getBoundingClientRect().top / total)) : 0;
+      const p = !compact.matches && total > 0 ? Math.min(1, Math.max(0, -el.getBoundingClientRect().top / total)) : 0;
       const raw = p * (FRAMES.length - 1);
       const i = Math.min(FRAMES.length - 2, Math.floor(raw));
       const frac = Math.min(1, Math.max(0, (raw - i - 0.25) / 0.5));
@@ -42,10 +43,12 @@ export function Hero() {
     addEventListener("scroll", onScroll, { passive: true });
     addEventListener("resize", onScroll);
     reduced.addEventListener("change", onScroll);
+    compact.addEventListener("change", onScroll);
     return () => {
       removeEventListener("scroll", onScroll);
       removeEventListener("resize", onScroll);
       reduced.removeEventListener("change", onScroll);
+      compact.removeEventListener("change", onScroll);
       cancelAnimationFrame(raf);
     };
   }, []);
@@ -84,11 +87,11 @@ export function Hero() {
         </div>
 
         <div className="hero-foot">
-          <p>Un lenguaje para mover y limpiar datos que se escribe como una receta. Compila a Python con Polars.</p>
-          <a className="btn" href="#estudio">
-            Probar en el navegador
-          </a>
+          <p>Transforma datos con código o bloques visuales. Stream valida tu pipeline y genera Python con Polars.</p>
+          <div className="hero-actions"><a className="btn" href="/studio#blocks">Empezar con Blocks</a><a className="hero-code-link" href="/studio">Abrir Studio</a></div>
+          <a className="hero-demo-link" href="#estudio">Probar el editor aquí</a>
         </div>
+        <p className="hero-scroll-hint">Desplaza para recorrer código, tokens, IR y Python.</p>
       </div>
     </header>
   );

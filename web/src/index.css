@@ -5,6 +5,7 @@
 @import "./styles/brand.css";
 @import "./styles/inspectors.css";
 @import "./styles/blocks.css";
+@import "./styles/home.css";
 
 @theme inline {
   --font-display: "Montserrat Variable", system-ui, sans-serif;
@@ -282,10 +283,6 @@ code { font-size: 0.92em; }
 @media (hover: hover) { .photo-crop img { transition: transform 900ms var(--ease-out); } .photo.wide:hover img, .photo.small:hover img { transform: scale(1.04); } }
 
 /* ============ construido sobre ============ */
-.built { display: flex; align-items: center; gap: 48px; padding: 140px var(--margin); }
-.built p { font-size: var(--fs-m); color: var(--muted-foreground); white-space: nowrap; }
-.built ul { flex: 1; display: flex; justify-content: space-between; list-style: none; margin: 0; padding: 0; gap: 24px; }
-.built li { font: 600 var(--fs-m) var(--font-display); letter-spacing: -0.02em; }
 
 /* ============ preguntas: mosaico que se abre ============ */
 .faq { padding: 0 var(--margin); display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); align-items: start; }
@@ -371,7 +368,6 @@ code { font-size: 0.92em; }
   .studio { grid-column: 1 / -1; justify-self: stretch; width: 100%; margin-top: 40px; }
   .cta-copy { grid-column: 1 / -1; align-self: start; }
   .cta { align-content: start; }
-  .built { flex-wrap: wrap; }
 }
 
 /* ============ teléfono: su propia composición ============ */
@@ -426,8 +422,6 @@ code { font-size: 0.92em; }
   .photo.small.a { grid-column: 1 / span 6; }
   .photo.small.b { grid-column: 7 / span 6; }
 
-  .built { flex-direction: column; align-items: flex-start; gap: 20px; padding: 96px var(--margin); }
-  .built ul { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; width: 100%; }
 
   .faq { display: block; }
   .faq h2 { position: static; margin-bottom: 32px; max-width: none; }

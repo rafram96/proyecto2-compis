@@ -287,7 +287,7 @@ export default function BlockBuilder({ onOpen }: { onOpen(): void }) {
     }
   }
   return (
-    <section className="block-builder" aria-labelledby="blocks-title">
+    <section className="block-builder" id="blocks" aria-labelledby="blocks-title">
       <div className="blocks-heading">
         <div>
           <h2 id="blocks-title">Construye un pipeline por bloques</h2>
