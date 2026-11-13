@@ -1,0 +1,5 @@
+# Dependencias solo de los benchmarks (bench/), además de ../requirements.txt.
+# Pandas y pyarrow: línea base escrita a mano. Matplotlib: gráficos del reporte.
+pandas==2.2.3
+pyarrow==18.1.0
+matplotlib==3.9.2

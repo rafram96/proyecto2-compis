@@ -11,6 +11,11 @@ WORKDIR /app
 # Dependencias primero para reutilizar la capa si solo cambia el código.
 COPY requirements.txt .
 RUN pip install -r requirements.txt
+# Benchmarks: líneas base (Pandas) y gráficos; la extensión tpch de DuckDB para
+# bench/datos.py se instala en la imagen para no depender de la red.
+COPY bench/requirements.txt bench-requirements.txt
+RUN pip install -r bench-requirements.txt \
+    && python -c "import duckdb; duckdb.sql('INSTALL tpch')"
 
 COPY etl_dsl ./etl_dsl
 COPY scripts ./scripts

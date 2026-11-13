@@ -1,0 +1,26 @@
+// Inspirada en la consulta 3 de TPC-H, sin sus filtros de fecha ni LIMIT: ingreso de cada
+// pedido de los clientes del segmento BUILDING. Usa la forma de grafo porque tiene JOIN.
+PIPELINE ingreso_por_pedido {
+    SOURCE clientes = PARQUET(file: "customer.parquet");
+    SOURCE pedidos = PARQUET(file: "orders.parquet");
+    SOURCE lineas = PARQUET(file: "lineitem.parquet");
+
+    STEP construccion = FILTER { WHERE c_mktsegment == "BUILDING"; }
+    STEP con_pedidos = JOIN { TYPE INNER; ON left.c_custkey == right.o_custkey; }
+    STEP con_lineas = JOIN { TYPE INNER; ON left.o_orderkey == right.l_orderkey; }
+    STEP con_ingreso = DERIVE { ingreso = l_extendedprice * (1 - l_discount); }
+    STEP por_pedido = AGGREGATE {
+        GROUP_BY o_orderkey, o_orderdate, o_shippriority;
+        SUM(ingreso) AS total;
+    }
+    STEP ordenado = SORT { BY total DESC, o_orderdate; }
+    SINK salida = PARQUET(file: "salida/dsl/ingreso_por_pedido.parquet");
+
+    FLOW {
+        clientes -> construccion -> con_pedidos.left;
+        pedidos -> con_pedidos.right;
+        con_pedidos -> con_lineas.left;
+        lineas -> con_lineas.right;
+        con_lineas -> con_ingreso -> por_pedido -> ordenado -> salida;
+    }
+}

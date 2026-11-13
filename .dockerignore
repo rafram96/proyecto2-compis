@@ -16,3 +16,4 @@ input/*.db
 *.pdf
 Dockerfile
 docker-compose.yml
+bench/datos

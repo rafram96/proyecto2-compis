@@ -1,0 +1,13 @@
+// Inspirada en la consulta 6 de TPC-H, sin su filtro de fecha: ingreso que dejarían los
+// descuentos entre 0.05 y 0.07. Como en la consulta original, los límites se escriben
+// 0.06 - 0.01 y 0.06 + 0.01. Cada condición va en su propio FILTER, como en la forma
+// lineal; los pases "constantes" y "filtros" los simplifican y fusionan.
+PIPELINE ingreso_descuento {
+    FROM PARQUET(file: "lineitem.parquet");
+    FILTER { WHERE l_discount >= 0.06 - 0.01; }
+    FILTER { WHERE l_discount <= 0.06 + 0.01; }
+    FILTER { WHERE l_quantity < 24; }
+    DERIVE { ingreso = l_extendedprice * l_discount; }
+    AGGREGATE { SUM(ingreso) AS ingreso_total; }
+    TO PARQUET(file: "salida/dsl/ingreso_descuento.parquet");
+}
