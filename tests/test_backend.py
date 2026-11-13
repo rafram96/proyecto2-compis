@@ -28,9 +28,9 @@ def generated(source, base_dir="."):
 
 
 def single(operation, schema="id: INT, x: DECIMAL?, s: STRING?"):
-    return f"""PIPELINE p {{ INPUT data: TABLE[{schema}];
-    STEP step = {operation}
-    OUTPUT result: TABLE; FLOW {{ data -> step -> result; }} }}"""
+    return f"""PIPELINE p {{ FROM INPUT data: TABLE[{schema}];
+    {operation}
+    TO OUTPUT result: TABLE; }}"""
 
 
 def frame(rows, schema=None):
@@ -50,11 +50,11 @@ class BackendTests(unittest.TestCase):
         return module["PIPELINES"]["p"](self.rt, {"data": data})["result"]
 
     def test_filter_null_logic_math_and_scalar_functions(self):
-        source = '''PIPELINE p { INPUT data: TABLE[id: INT, x: DECIMAL?, s: STRING?];
- STEP f = FILTER { WHERE NOT id < 0 AND (x IS NULL OR x >= 0); }
- STEP d = DERIVE { ratio = SAFE_DIVIDE(x, id); cleaned = LOWER(TRIM(COALESCE(s, "NA")));
+        source = '''PIPELINE p { FROM INPUT data: TABLE[id: INT, x: DECIMAL?, s: STRING?];
+ FILTER { WHERE NOT id < 0 AND (x IS NULL OR x >= 0); }
+ DERIVE { ratio = SAFE_DIVIDE(x, id); cleaned = LOWER(TRIM(COALESCE(s, "NA")));
      z = NULLIF(id, 0); flag = x IS NULL; calc = (id + 2) * 3 - 1; }
- OUTPUT result: TABLE; FLOW { data -> f -> d -> result; } }'''
+ TO OUTPUT result: TABLE; }'''
         table = self.evaluate(source, frame([(0, 5.0, ' A '), (2, 6.0, None), (3, None, ''), (-1, 1.0, 'b')]))
         rows = self.rows(table, 'id')
         self.assertEqual([(r[0], *r[3:]) for r in rows],
@@ -64,14 +64,14 @@ class BackendTests(unittest.TestCase):
         self.assertEqual([r[0] for r in self.rows(filtered)], [3])
 
     def test_drop_fill_rename_distinct_select_and_sort(self):
-        source = '''PIPELINE p { INPUT data: TABLE[id: INT?, x: DECIMAL?, s: STRING?];
- STEP drop = DROP_NULLS { COLUMNS id; }
- STEP fill = FILL_NULL { x = 7; s = UPPER(COALESCE(s, "unknown")); }
- STEP rename = RENAME { id AS key; }
- STEP unique = DISTINCT { COLUMNS key, x, s; }
- STEP sort = SORT { BY key DESC; }
- STEP select = SELECT { COLUMNS key, x; }
- OUTPUT result: TABLE; FLOW { data -> drop -> fill -> rename -> unique -> sort -> select -> result; } }'''
+        source = '''PIPELINE p { FROM INPUT data: TABLE[id: INT?, x: DECIMAL?, s: STRING?];
+ DROP_NULLS { COLUMNS id; }
+ FILL_NULL { x = 7; s = UPPER(COALESCE(s, "unknown")); }
+ RENAME { id AS key; }
+ DISTINCT { COLUMNS key, x, s; }
+ SORT { BY key DESC; }
+ SELECT { COLUMNS key, x; }
+ TO OUTPUT result: TABLE; }'''
         table = self.evaluate(source, frame([(None, 1, None), (1, None, None), (2, 0, ''), (2, 0, '')],
                                             {"id": pl.Int64, "x": pl.Int64, "s": pl.String}))
         self.assertEqual(self.rt.columns(table), ('key', 'x'))
@@ -112,8 +112,8 @@ class BackendTests(unittest.TestCase):
         source = '''PIPELINE p { INPUT data: TABLE[id: INT]; USE clean AS a; USE clean AS b;
  OUTPUT result: TABLE; OUTPUT other: TABLE;
  FLOW { data -> a.i; data -> b.i; a.o -> result; b.o -> other; } }
- PIPELINE clean { INPUT i: TABLE[id: INT]; STEP d = DERIVE { y = id * 2; }
- OUTPUT o: TABLE[id: INT, y: INT]; FLOW { i -> d -> o; } }'''
+ PIPELINE clean { FROM INPUT i: TABLE[id: INT]; DERIVE { y = id * 2; }
+ TO OUTPUT o: TABLE[id: INT, y: INT]; }'''
         module = generated(source)
         data = frame([(3,)], {"id": pl.Int64})
         results = module['PIPELINES']['p'](self.rt, {'data': data})
@@ -141,7 +141,7 @@ class BackendTests(unittest.TestCase):
                 with self.assertRaises(CompileError):
                     generated(single(op))
                 untyped = single(op).replace('INPUT data: TABLE[id: INT, x: DECIMAL?, s: STRING?]',
-                                             'SOURCE data = CSV(file: "data.csv")')
+                                             'CSV(file: "data.csv")')
                 module = generated(untyped)
                 with tempfile.TemporaryDirectory() as temp, PolarsRuntime(temp) as rt:
                     pl.DataFrame({"id": [1], "x": [2.0], "s": ["a"]}).write_csv(Path(temp) / "data.csv")
@@ -182,7 +182,7 @@ class BackendTests(unittest.TestCase):
         self.assertEqual(self.rows(table)[0][-1], Decimal('0.3'))
 
     def test_connector_errors_are_compile_time_and_no_source_io(self):
-        source = 'PIPELINE p { SOURCE x = CSV(file: "does-not-exist.csv"); OUTPUT o: TABLE; FLOW { x -> o; } }'
+        source = 'PIPELINE p { FROM CSV(file: "does-not-exist.csv"); TO OUTPUT o: TABLE; }'
         compile_program(parse(source))
         for connector in ['UNKNOWN(file: "x")', 'CSV()', 'CSV(file: 2)',
                           'CSV(file: "x", header: "yes")', 'CSV(file: "x", delimiter: "::")',
@@ -257,7 +257,7 @@ class ConnectorTests(unittest.TestCase):
     def test_cli_reports_missing_source_without_traceback(self):
         with tempfile.TemporaryDirectory() as temp:
             source = Path(temp) / 'bad.etl'
-            source.write_text('PIPELINE p { SOURCE x = CSV(file: "missing.csv"); OUTPUT o: TABLE; FLOW { x -> o; } }', encoding='utf-8')
+            source.write_text('PIPELINE p { FROM CSV(file: "missing.csv"); TO OUTPUT o: TABLE; }', encoding='utf-8')
             stderr = StringIO()
             with redirect_stderr(stderr), redirect_stdout(StringIO()):
                 self.assertEqual(main([str(source), '-o', str(Path(temp) / 'out'), '--run']), 1)

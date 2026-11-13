@@ -1,4 +1,5 @@
-// Demo de los pases de O4. Comparar:
+// Demo de las optimizaciones (O4). Usa la forma de grafo porque el código muerto
+// necesita una rama que no llega al SINK, y la forma lineal no tiene ramas. Comparar:
 //   python -m etl_dsl demo/optimizaciones.etl --format ir
 //   python -m etl_dsl demo/optimizaciones.etl --format ir -O0
 PIPELINE optimizaciones {

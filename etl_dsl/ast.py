@@ -220,6 +220,8 @@ class Pipeline(Node):
     name: str
     declarations: tuple[Declaration, ...]
     flow: Flow
+    # True si se escribió en forma lineal (FROM ... TO); el FLOW se dedujo del orden.
+    linear: bool = False
 
 
 @dataclass(frozen=True, slots=True)

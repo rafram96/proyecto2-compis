@@ -14,7 +14,7 @@ const STORAGE_KEY = "etl-dsl.source";
 const COMPILE_DELAY_MS = 300;
 
 const LANGUAGE = {
-  keywords: ["PIPELINE", "INPUT", "OUTPUT", "SOURCE", "SINK", "STEP", "USE", "AS", "FLOW", "TABLE",
+  keywords: ["PIPELINE", "FROM", "TO", "INPUT", "OUTPUT", "SOURCE", "SINK", "STEP", "USE", "AS", "FLOW", "TABLE",
     "FILTER", "SELECT", "DERIVE", "AGGREGATE", "JOIN", "SORT", "DISTINCT", "RENAME", "FILL_NULL",
     "DROP_NULLS", "WHERE", "COLUMNS", "GROUP_BY", "TYPE", "ON", "BY", "AND", "OR", "NOT", "IS"],
   types: ["INT", "DECIMAL", "STRING", "BOOL", "DATE", "DATETIME"],

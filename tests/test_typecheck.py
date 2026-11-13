@@ -11,19 +11,16 @@ from etl_dsl.typecheck import check
 
 
 ROOT = Path(__file__).resolve().parents[1]
-INPUT = "INPUT data: TABLE[id: INT, x: DECIMAL?, s: STRING?, ok: BOOL, d: DATE?];"
+INPUT = "FROM INPUT data: TABLE[id: INT, x: DECIMAL?, s: STRING?, ok: BOOL, d: DATE?];"
 
 
 def analyze(source):
     return check(lower(parse(source)))
 
 
-def steps(*operations, output="OUTPUT result: TABLE;"):
-    """Pipeline lineal: data -> s0 -> s1 -> ... -> result."""
-    names = [f"s{i}" for i in range(len(operations))]
-    body = " ".join(f"STEP {name} = {op}" for name, op in zip(names, operations))
-    chain = " -> ".join(["data", *names, "result"])
-    return f"PIPELINE p {{ {INPUT} {body} {output} FLOW {{ {chain}; }} }}"
+def steps(*operations, output="TO OUTPUT result: TABLE;"):
+    """Pipeline lineal: FROM INPUT data, las operaciones en orden y TO OUTPUT result."""
+    return f"PIPELINE p {{ {INPUT} {' '.join(operations)} {output} }}"
 
 
 def schema(source, node="result", pipeline="p"):
@@ -72,14 +69,14 @@ class InferenceTests(unittest.TestCase):
     def test_use_outputs_and_typed_output(self):
         source = """PIPELINE p { INPUT data: TABLE[id: INT]; USE child AS c; OUTPUT o: TABLE;
               FLOW { data -> c.i; c.out -> o; } }
-            PIPELINE child { INPUT i: TABLE[id: INT]; STEP d = DERIVE { y = id * 2; }
-              OUTPUT out: TABLE[id: INT, y: DECIMAL]; FLOW { i -> d -> out; } }"""
+            PIPELINE child { FROM INPUT i: TABLE[id: INT]; DERIVE { y = id * 2; }
+              TO OUTPUT out: TABLE[id: INT, y: DECIMAL]; }"""
         self.assertEqual(schema(source, "o"), "[id: INT, y: DECIMAL]")
 
     def test_unknown_schemas_are_not_errors(self):
-        source = """PIPELINE p { SOURCE raw = CSV(file: "x.csv");
-            STEP f = FILTER { WHERE amount > 0; } STEP g = AGGREGATE { GROUP_BY k; COUNT() AS n; AVG(v) AS m; }
-            OUTPUT o: TABLE; FLOW { raw -> f -> g -> o; } }"""
+        source = """PIPELINE p { FROM CSV(file: "x.csv");
+            FILTER { WHERE amount > 0; } AGGREGATE { GROUP_BY k; COUNT() AS n; AVG(v) AS m; }
+            TO OUTPUT o: TABLE; }"""
         self.assertEqual(schema(source, "o"), "[k: ANY?, n: INT, m: DECIMAL?]")
         for name in ("credit_risk.etl", "duckdb.etl"):
             with self.subTest(name=name):
@@ -123,16 +120,16 @@ class ErrorTests(unittest.TestCase):
         self.assertEqual(codes(base.format(cond="left.s == right.k")), [])
 
     def test_contracts(self):
-        self.assertEqual(codes(steps("SELECT { COLUMNS id; }", output="OUTPUT result: TABLE[id: STRING];")),
+        self.assertEqual(codes(steps("SELECT { COLUMNS id; }", output="TO OUTPUT result: TABLE[id: STRING];")),
                          ["E_TYPE"])
-        self.assertEqual(codes(steps("SELECT { COLUMNS id, x; }", output="OUTPUT result: TABLE[id: INT];")),
+        self.assertEqual(codes(steps("SELECT { COLUMNS id, x; }", output="TO OUTPUT result: TABLE[id: INT];")),
                          ["E_SCHEMA"])
         # INT cumple DECIMAL; la nulabilidad se verifica en ejecución.
         self.assertEqual(codes(steps("SELECT { COLUMNS id, x; }",
-                                     output="OUTPUT result: TABLE[id: DECIMAL, x: DECIMAL];")), [])
+                                     output="TO OUTPUT result: TABLE[id: DECIMAL, x: DECIMAL];")), [])
         use = """PIPELINE p { INPUT data: TABLE[id: STRING]; USE child AS c; OUTPUT o: TABLE;
               FLOW { data -> c.i; c.out -> o; } }
-            PIPELINE child { INPUT i: TABLE[id: INT]; OUTPUT out: TABLE; FLOW { i -> out; } }"""
+            PIPELINE child { FROM INPUT i: TABLE[id: INT]; TO OUTPUT out: TABLE; }"""
         self.assertEqual(codes(use), ["E_TYPE"])
 
     def test_errors_are_reported_once_with_position(self):

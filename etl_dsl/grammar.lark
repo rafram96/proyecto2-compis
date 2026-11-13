@@ -1,10 +1,20 @@
-// ETL-DSL v0.2 — grammar for Lark (LALR parser)
-// Blocks are declared once. FLOW alone defines connections.
+// ETL-DSL v0.3 — grammar for Lark (LALR parser)
+// Graph form: blocks are declared once and FLOW alone defines connections.
+// Linear form: FROM (connector or INPUT), operations in order, ending in TO (connector or OUTPUT);
+// the order is the flow.
 // NULL semantics are enforced by the semantic analyzer, not by the parser.
 
 start: pipeline+
 
 pipeline: "PIPELINE" NAME "{" declaration+ flow "}"
+        | "PIPELINE" NAME "{" from_clause linear_item+ "}" -> linear_pipeline
+
+// Linear form: sugar for a chain SOURCE -> STEP ... -> SINK, desugared in the AST builder.
+from_clause: "FROM" connector ["AS" table_schema] ";"
+           | "FROM" "INPUT" NAME ":" table_schema ";" -> from_input
+to_clause: "TO" connector ";"
+         | "TO" "OUTPUT" NAME ":" table_type ";" -> to_output
+?linear_item: step_decl | operation | to_clause
 
 ?declaration: input_decl
             | output_decl

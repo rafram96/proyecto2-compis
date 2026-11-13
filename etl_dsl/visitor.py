@@ -1,7 +1,8 @@
 """Construcción y recorridos del AST mediante visitantes."""
-from dataclasses import fields
+from dataclasses import dataclass, fields
 from decimal import Decimal
 import json
+import re
 
 from lark import Transformer, v_args
 
@@ -42,6 +43,63 @@ def _span(meta) -> a.Span:
                   meta.start_pos, meta.end_pos)
 
 
+# Cláusulas de la forma lineal. Son intermedias: no llegan al AST.
+@dataclass(frozen=True, slots=True)
+class _From:
+    connector: a.Connector
+    schema: a.TableSchema | None
+    span: a.Span
+
+
+@dataclass(frozen=True, slots=True)
+class _To:
+    connector: a.Connector
+    span: a.Span
+
+
+def _operation_name(operation: a.Node) -> str:
+    """FillNull -> fill_null: nombre base de un paso lineal sin nombre."""
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", type(operation).__name__).lower()
+
+
+def desugar_linear(name: str, start: _From | a.Input, items: list, span: a.Span) -> a.Pipeline:
+    """Forma lineal -> pipeline equivalente con declaraciones y un FLOW en cadena.
+
+    FROM conector es un SOURCE y FROM INPUT un INPUT; TO conector es un SINK y
+    TO OUTPUT un OUTPUT. Cada operación recibe la salida de la anterior. Un TO
+    guarda la tabla actual sin cortar la cadena: lo que sigue continúa desde el
+    último paso. Las operaciones sin nombre se llaman como su operación
+    (filter, filter_2, ...); los nombres escritos por el usuario (STEP, INPUT,
+    OUTPUT) se respetan y un nombre generado nunca coincide con ellos.
+    """
+    used = {item.name for item in (start, *items) if isinstance(item, (a.Step, a.Input, a.Output))}
+
+    def fresh(base: str) -> str:
+        candidate, number = base, 1
+        while candidate in used:
+            number += 1
+            candidate = f"{base}_{number}"
+        used.add(candidate)
+        return candidate
+
+    current = start if isinstance(start, a.Input) else \
+        a.Source(fresh("origen"), start.schema, start.connector, span=start.span)
+    declarations, connections = [current], []
+    for item in items:
+        if isinstance(item, _To):
+            decl = a.Sink(fresh("destino"), item.connector, span=item.span)
+        elif isinstance(item, (a.Step, a.Output)):
+            decl = item
+        else:
+            decl = a.Step(fresh(_operation_name(item)), item, span=item.span)
+        declarations.append(decl)
+        endpoints = (a.Endpoint(current.name, span=current.span), a.Endpoint(decl.name, span=decl.span))
+        connections.append(a.Connection(endpoints, span=decl.span))
+        if isinstance(decl, a.Step):
+            current = decl
+    return a.Pipeline(name, tuple(declarations), a.Flow(tuple(connections), span=span), linear=True, span=span)
+
+
 @v_args(meta=True)
 class ASTBuilder(Transformer):
     def start(self, meta, children):
@@ -49,6 +107,21 @@ class ASTBuilder(Transformer):
 
     def pipeline(self, meta, children):
         return a.Pipeline(str(children[0]), tuple(children[1:-1]), children[-1], span=_span(meta))
+
+    def linear_pipeline(self, meta, children):
+        return desugar_linear(str(children[0]), children[1], children[2:], _span(meta))
+
+    def from_clause(self, meta, children):
+        return _From(children[0], children[1] if len(children) == 2 else None, _span(meta))
+
+    def from_input(self, meta, children):
+        return a.Input(str(children[0]), children[1], span=_span(meta))
+
+    def to_clause(self, meta, children):
+        return _To(children[0], _span(meta))
+
+    def to_output(self, meta, children):
+        return a.Output(str(children[0]), children[1], span=_span(meta))
 
     def scalar_type(self, meta, children):
         return a.ScalarType(str(children[0]))

@@ -2,8 +2,9 @@
 
 Compilador implementado en Python con Lark y motor de ejecución **Polars**.
 Genera Python legible con expresiones de Polars (`LazyFrame`). Usa la sintaxis
-ETL-DSL v0.2: bloques `PIPELINE`, operaciones declaradas con
-`STEP` y conexiones explícitas en `FLOW`.
+ETL-DSL v0.3: bloques `PIPELINE` en dos formas, una **lineal** (`FROM`,
+operaciones en orden y `TO`) para cadenas simples y otra de **grafo**, con
+operaciones declaradas con `STEP` y conexiones explícitas en `FLOW`.
 
 El destino es **Python + Polars**, como en [la propuesta inicial](docs/Propuesta_DSL.md);
 la sintaxis implementada corresponde a las
@@ -135,6 +136,24 @@ fase posterior falle. Monaco se carga desde jsDelivr, así que el navegador
 necesita conexión a internet.
 
 ## Ejemplo
+
+Forma lineal: cada línea recibe el resultado de la anterior.
+
+```text
+PIPELINE ventas {
+    FROM DUCKDB(file: "ventas.duckdb", table: "ventas")
+        AS TABLE[cliente_id: INT, monto: DECIMAL?];
+    FILL_NULL { monto = 0; }
+    AGGREGATE {
+        GROUP_BY cliente_id;
+        SUM(monto) AS total;
+        COUNT() AS cantidad;
+    }
+    TO PARQUET(file: "out/resumen.parquet");
+}
+```
+
+El mismo pipeline en forma de grafo, necesaria para `JOIN`, `INPUT`/`OUTPUT` y `USE`:
 
 ```text
 PIPELINE ventas {

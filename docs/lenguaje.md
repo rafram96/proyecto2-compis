@@ -2,10 +2,58 @@
 
 ## Programa y declaraciones
 
-Un archivo contiene uno o más `PIPELINE nombre { ... }`. Cada pipeline contiene
-una o más declaraciones y exactamente un `FLOW`, colocado al final. Los nombres
+Un archivo contiene uno o más `PIPELINE nombre { ... }`. Cada pipeline se escribe
+en una de dos formas: la **lineal**, para cadenas simples (sección siguiente), o la
+de **grafo**, con una o más declaraciones y exactamente un `FLOW` al final. Ambas
+pueden convivir en un mismo archivo. Los nombres
 distinguen mayúsculas y minúsculas; las palabras clave se escriben en mayúsculas.
 Los comentarios comienzan con `//` y terminan al final de la línea.
+
+### Forma lineal
+
+La forma lineal se lee de arriba hacia abajo: empieza con `FROM`, sigue con
+operaciones y termina con `TO`. Cada operación recibe el resultado de la anterior,
+así que no hay que nombrar los pasos ni escribir `FLOW`.
+
+```text
+PIPELINE resumen {
+    FROM CSV(file: "orders.csv") AS TABLE[id: INT, amount: DECIMAL?, status: STRING?];
+    FILL_NULL { amount = 0; }
+    FILTER { WHERE amount > 0; }
+    TO CSV(file: "out/validos.csv");
+    AGGREGATE { GROUP_BY status; SUM(amount) AS total; }
+    TO PARQUET(file: "out/resumen.parquet");
+}
+```
+
+- `FROM conector [AS TABLE[...]];` lee los datos; el esquema es opcional, como en `SOURCE`.
+- `FROM INPUT nombre: TABLE[...];` recibe la tabla de quien use el pipeline
+  (mediante `USE`), como un `INPUT`. El esquema es obligatorio.
+- Las operaciones son las mismas de la tabla de [Operaciones](#operaciones), escritas
+  sin `STEP nombre =`. También se puede escribir `STEP nombre = ...` para darle un
+  nombre propio a un paso.
+- `TO conector;` guarda la tabla actual. La cadena no se corta: la operación
+  siguiente continúa desde el mismo punto, lo que permite guardar resultados
+  intermedios.
+- `TO OUTPUT nombre: TABLE[...];` devuelve la tabla a quien use el pipeline, como
+  un `OUTPUT`; con `TABLE` sin columnas no se fija el esquema.
+- El último elemento debe ser un `TO` (`E_LINEAR_END`), y `JOIN` no está permitido
+  porque necesita dos tablas (`E_LINEAR_JOIN`). Tampoco se admite `USE`. Para
+  esos casos se usa la forma de grafo, que puede usar con `USE` un pipeline
+  escrito en forma lineal.
+
+**Semántica.** La forma lineal es azúcar sintáctica. El constructor del AST la
+traduce a la forma de grafo: `FROM` se vuelve un `SOURCE` llamado `origen`, cada
+operación sin nombre un `STEP` llamado como su operación en minúsculas (`filter`,
+`fill_null`; `filter_2` si se repite) y cada `TO` un `SINK` (`destino`,
+`destino_2`, ...). `FROM INPUT` y `TO OUTPUT` se vuelven `INPUT` y `OUTPUT` con el
+nombre escrito. Un nombre generado nunca coincide con uno escrito por el usuario.
+El `FLOW` conecta cada elemento con la última operación (o con el `FROM`). El nodo
+`Pipeline` del AST marca `linear: true`; a partir de ahí la validación, los tipos,
+la IR, las optimizaciones y el código generado son los mismos que para el
+programa equivalente escrito como grafo.
+
+### Declaraciones de la forma de grafo
 
 ```text
 INPUT entrada: TABLE[id: INT, importe: DECIMAL?];

@@ -15,10 +15,9 @@ from etl_dsl.visitor import NodeVisitor, walk
 
 
 SOURCE = """PIPELINE p {
- INPUT x: TABLE[id: INT];
- STEP y = DERIVE { value = id + 1; }
- OUTPUT o: TABLE;
- FLOW { x -> y -> o; }
+ FROM INPUT x: TABLE[id: INT];
+ DERIVE { value = id + 1; }
+ TO OUTPUT o: TABLE;
 }"""
 
 

@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DATA = {"id": pl.Int64, "x": pl.Float64, "s": pl.String}
 ROWS = [(1, 5.0, "a"), (2, None, None), (3, 50.0, "b"), (4, -1.0, "a"), (5, 500.0, None)]
 
+# Forma de grafo: el código muerto necesita una rama (d -> unused) que la forma lineal no tiene.
 CHAIN = """PIPELINE p {
     INPUT data: TABLE[id: INT, x: DECIMAL?, s: STRING?];
     STEP f1 = FILTER { WHERE TRUE AND x < 10 * 10; }
@@ -43,8 +44,7 @@ def run(source, passes, rows=ROWS):
 
 
 def expr(text):
-    source = f"PIPELINE p {{ INPUT data: TABLE[x: INT?]; STEP f = FILTER {{ WHERE {text}; }} " \
-             "OUTPUT o: TABLE; FLOW { data -> f -> o; } }"
+    source = f"PIPELINE p {{ FROM INPUT data: TABLE[x: INT?]; FILTER {{ WHERE {text}; }} TO OUTPUT o: TABLE; }}"
     return parse(source).pipelines[0].declarations[1].operation.predicate
 
 
@@ -99,7 +99,7 @@ class PassTests(unittest.TestCase):
         self.assertIn("f2", names)
 
     def test_dead_code_keeps_inputs_and_use(self):
-        source = """PIPELINE child { INPUT i: TABLE[id: INT]; SINK s = CSV(file: "x.csv"); FLOW { i -> s; } }
+        source = """PIPELINE child { FROM INPUT i: TABLE[id: INT]; TO CSV(file: "x.csv"); }
             PIPELINE p { INPUT data: TABLE[id: INT]; USE child AS c; STEP gone = SELECT { COLUMNS id; }
             FLOW { data -> c.i; data -> gone; } }"""
         names = [n.name for n in module(source).pipelines[1].nodes]
@@ -112,11 +112,11 @@ class PassTests(unittest.TestCase):
             optimize(lower(parse(CHAIN)), ("magia",))
 
     def test_optimized_results_equal_unoptimized(self):
-        programs = [CHAIN, """PIPELINE p { INPUT data: TABLE[id: INT, x: DECIMAL?, s: STRING?];
-            STEP f1 = FILTER { WHERE NOT (x > 1 + 1) OR x IS NULL; }
-            STEP f2 = FILTER { WHERE FALSE OR s == "a"; }
-            STEP g = AGGREGATE { GROUP_BY s; SUM(x * 1) AS t; COUNT() AS n; }
-            OUTPUT result: TABLE; FLOW { data -> f1 -> f2 -> g -> result; } }"""]
+        programs = [CHAIN, """PIPELINE p { FROM INPUT data: TABLE[id: INT, x: DECIMAL?, s: STRING?];
+            FILTER { WHERE NOT (x > 1 + 1) OR x IS NULL; }
+            FILTER { WHERE FALSE OR s == "a"; }
+            AGGREGATE { GROUP_BY s; SUM(x * 1) AS t; COUNT() AS n; }
+            TO OUTPUT result: TABLE; }"""]
         for source in programs:
             with self.subTest(source=source[:40]):
                 optimized, plain = run(source, DEFAULT), run(source, ())

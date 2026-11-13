@@ -75,6 +75,18 @@ def validate(program: a.Program) -> tuple[Diagnostic, ...]:
                 else:
                     uses_graph[pipe.name].add(decl.pipeline)
 
+        if pipe.linear:
+            joins = [d for d in pipe.declarations if isinstance(d, a.Step) and isinstance(d.operation, a.Join)]
+            for decl in joins:
+                error("E_LINEAR_JOIN", "JOIN combina dos tablas y no cabe en la forma lineal (FROM ... TO): "
+                      "escribe este pipeline con STEP y FLOW.", decl)
+            last = pipe.declarations[-1]
+            if not isinstance(last, (a.Sink, a.Output)):
+                error("E_LINEAR_END", "La forma lineal termina con TO: los pasos después del último TO "
+                      "no se guardan en ningún lado.", last)
+            if joins:
+                continue  # el FLOW deducido no tiene puertos left/right; sus errores serían repetidos
+
         def valid_endpoint(endpoint, producer):
             decl = declarations.get(endpoint.name)
             if decl is None:
