@@ -1,9 +1,8 @@
 // Errores de tipos detectados al compilar, sin leer datos:
 //   python -m etl_dsl demo/tipos.etl --format check
 PIPELINE tipos {
-    SOURCE ventas: TABLE[cliente: STRING, monto: DECIMAL?] = CSV(file: "ventas.csv");
-    STEP caras = FILTER { WHERE monto > "100"; }
-    STEP total = AGGREGATE { GROUP_BY cliente; SUM(cliente) AS total; }
-    SINK salida = CSV(file: "salida.csv");
-    FLOW { ventas -> caras -> total -> salida; }
+    FROM CSV(file: "ventas.csv") AS TABLE[cliente: STRING, monto: DECIMAL?];
+    FILTER { WHERE monto > "100"; }
+    AGGREGATE { GROUP_BY cliente; SUM(cliente) AS total; }
+    TO CSV(file: "salida.csv");
 }

@@ -1,6 +1,7 @@
+// Errores de estructura: comparar con NULL usando == y pasos que no llegan a ningún TO.
 PIPELINE p {
-  SOURCE v = CSV(file: "v.csv");
-  STEP f = FILTER { WHERE monto == NULL; }
-  SINK s = CSV(file: "o.csv");
-  FLOW { v -> f -> x; }
+  FROM CSV(file: "v.csv");
+  FILTER { WHERE monto == NULL; }
+  TO CSV(file: "o.csv");
+  SELECT { COLUMNS monto; }
 }

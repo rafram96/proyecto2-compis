@@ -1,3 +1,6 @@
+// Error de sintaxis: FILTRO no es una operación; el mensaje lista las esperadas.
 PIPELINE p {
-  STEP f = FILTRO { WHERE x > 0; }
+  FROM CSV(file: "v.csv");
+  FILTRO { WHERE x > 0; }
+  TO CSV(file: "o.csv");
 }

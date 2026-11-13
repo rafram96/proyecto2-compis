@@ -15,6 +15,12 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def program(operation="FILTER { WHERE id > 0; }"):
+    return ("PIPELINE demo { FROM INPUT x: TABLE[id: INT, z: DECIMAL?]; "
+            f"{operation} TO OUTPUT out: TABLE; }}")
+
+
+def graph_program(operation="FILTER { WHERE id > 0; }"):
+    """Forma de grafo, para probar FLOW: puertos, conexiones y ramas."""
     return ("PIPELINE demo { INPUT x: TABLE[id: INT, z: DECIMAL?]; "
             f"STEP y = {operation} OUTPUT out: TABLE; "
             "FLOW { x -> y -> out; } }")
@@ -31,8 +37,8 @@ class ParserTests(unittest.TestCase):
 
     def test_schema_types_nullable_and_spans(self):
         source = """PIPELINE p {
- INPUT x: TABLE[i: INT, d: DECIMAL?, s: STRING, b: BOOL, dt: DATE, ts: DATETIME?];
- OUTPUT y: TABLE; FLOW { x -> y; }
+ FROM INPUT x: TABLE[i: INT, d: DECIMAL?, s: STRING, b: BOOL, dt: DATE, ts: DATETIME?];
+ TO OUTPUT y: TABLE;
 }"""
         ast = parse(source)
         schema = ast.pipelines[0].declarations[0].schema
@@ -66,8 +72,8 @@ class ParserTests(unittest.TestCase):
 
     def test_literal_values_and_connector_arguments(self):
         source = r'''PIPELINE p {
- SOURCE x = DUCKDB(file: "a\\b.duckdb", threshold: -1.23456789012345678901234567890123456789, flag: TRUE, empty: NULL);
- OUTPUT out: TABLE; FLOW { x -> out; }
+ FROM DUCKDB(file: "a\\b.duckdb", threshold: -1.23456789012345678901234567890123456789, flag: TRUE, empty: NULL);
+ TO OUTPUT out: TABLE;
 }'''
         connector = parse(source).pipelines[0].declarations[0].connector
         self.assertEqual(connector.arguments[0].value.value, r"a\b.duckdb")
@@ -113,7 +119,8 @@ class ParserTests(unittest.TestCase):
                        program().replace("id > 0", "id > 0 > 1"),
                        program().replace("TABLE[id: INT, z: DECIMAL?]", "TABLE[]"),
                        program('DERIVE { v = "bad\\q"; }'),
-                       program().replace("FLOW { x -> y -> out; }", "FLOW {}")):
+                       graph_program().replace("FLOW { x -> y -> out; }", "FLOW {}"),
+                       program().replace("FROM INPUT", "FROM")):
             with self.subTest(source=source), self.assertRaises(ParseError):
                 parse(source)
 
@@ -148,7 +155,7 @@ class ValidationTests(unittest.TestCase):
                  program("RENAME { id AS v; z AS v; }"),
                  program("SELECT { COLUMNS id, id; }"),
                  program().replace("OUTPUT out", "OUTPUT x"),
-                 'PIPELINE p { SOURCE x = CSV(file: "a", file: "b"); OUTPUT o: TABLE; FLOW { x -> o; } }']
+                 'PIPELINE p { FROM CSV(file: "a", file: "b"); TO OUTPUT o: TABLE; }']
         for source in cases:
             with self.subTest(source=source):
                 self.assertIn("E_DUPLICATE", self.codes(source))
@@ -164,17 +171,17 @@ class ValidationTests(unittest.TestCase):
             ("x -> y -> y -> out;", "E_CYCLE"),
             ("y -> out;", "E_UNUSED_INPUT"),
         ]:
-            source = program().replace("x -> y -> out;", flow)
+            source = graph_program().replace("x -> y -> out;", flow)
             with self.subTest(flow=flow):
                 self.assertIn(code, self.codes(source))
 
     def test_fanout(self):
-        source = program().replace("OUTPUT out: TABLE;", "OUTPUT out: TABLE; OUTPUT other: TABLE;")
+        source = graph_program().replace("OUTPUT out: TABLE;", "OUTPUT out: TABLE; OUTPUT other: TABLE;")
         source = source.replace("x -> y -> out;", "x -> y -> out; y -> other;")
         self.assertEqual(validate(parse(source)), ())
 
     def test_use_forward_reference_ports_and_recursion(self):
-        child = "PIPELINE child { INPUT i: TABLE[id: INT]; OUTPUT o: TABLE; FLOW { i -> o; } }"
+        child = "PIPELINE child { FROM INPUT i: TABLE[id: INT]; TO OUTPUT o: TABLE; }"
         parent = '''PIPELINE parent { SOURCE s = CSV(file: "s.csv");
  USE child AS c; OUTPUT o: TABLE; FLOW { s -> c.i; c.o -> o; } }'''
         self.assertEqual(validate(parse(parent + child)), ())

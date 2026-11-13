@@ -1,0 +1,16 @@
+// Forma lineal: se lee de arriba hacia abajo y cada línea recibe el resultado de la anterior.
+// No hace falta nombrar los pasos ni escribir FLOW. TO guarda la tabla y la cadena sigue.
+PIPELINE resumen_pedidos {
+    FROM CSV(file: "orders.csv") AS TABLE[id: INT, customer_id: INT, amount: DECIMAL?, status: STRING?];
+    FILL_NULL { amount = 0; status = "UNKNOWN"; }
+    FILTER { WHERE amount > 0; }
+    TO CSV(file: "out/pedidos_validos.csv");
+
+    AGGREGATE {
+        GROUP_BY status;
+        COUNT() AS pedidos;
+        SUM(amount) AS total;
+    }
+    SORT { BY total DESC; }
+    TO PARQUET(file: "out/resumen_pedidos.parquet");
+}

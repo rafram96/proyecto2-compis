@@ -11,11 +11,10 @@ from scripts.create_demo_data import create_demo_data
 
 ROOT = Path(__file__).resolve().parents[1]
 VALID = """PIPELINE p {
-    SOURCE v: TABLE[id: INT, x: DECIMAL?] = CSV(file: "v.csv");
+    FROM CSV(file: "v.csv") AS TABLE[id: INT, x: DECIMAL?];
     STEP f = FILTER { WHERE x > 1; }
     STEP g = FILTER { WHERE id > 0; }
-    SINK s = CSV(file: "out/s.csv");
-    FLOW { v -> f -> g -> s; }
+    TO CSV(file: "out/s.csv");
 }"""
 
 
@@ -36,7 +35,7 @@ class CompileSourceTests(unittest.TestCase):
         self.assertEqual(fused[0]["origin"], ["f", "g"])
         self.assertEqual(fused[0]["schema"], "[id: INT, x: DECIMAL?]")
         self.assertEqual(after["pipelines"][0]["edges"][0],
-                         {"from": "v", "from_port": None, "to": "g", "to_port": None})
+                         {"from": "origen", "from_port": None, "to": "g", "to_port": None})
         self.assertEqual(fused[0]["start"]["line"], 3)
         json.dumps(result)  # todo debe ser serializable
 
@@ -50,13 +49,13 @@ class CompileSourceTests(unittest.TestCase):
         self.assertEqual(strip_comments(code), "x = '#no'\ny = 1\n")
 
     def test_errors_keep_previous_stages(self):
-        result = compile_source("PIPELINE p { SOURCE v = CSV(file: \"a\") # ; }")
+        result = compile_source("PIPELINE p { FROM CSV(file: \"a\") # ; }")
         self.assertEqual(codes(result), [("E_LEXICAL", "lexical")])
         self.assertIsNone(result["ast"])
-        result = compile_source("PIPELINE p { STEP f = FILTRO { } }")
+        result = compile_source("PIPELINE p { FROM CSV(file: \"a\"); FILTRO { } }")
         self.assertEqual(codes(result), [("E_SYNTAX", "syntax")])
-        result = compile_source(VALID.replace("g -> s", "g -> x"))
-        self.assertIn(("E_UNKNOWN_NODE", "structure"), codes(result))
+        result = compile_source(VALID.replace('TO CSV(file: "out/s.csv");', ""))
+        self.assertEqual(codes(result), [("E_LINEAR_END", "structure")])
         self.assertIsNotNone(result["ast"])
         self.assertIsNone(result["ir"]["before"])
         result = compile_source(VALID.replace("x > 1", "x > \"1\""))
@@ -69,7 +68,7 @@ class CompileSourceTests(unittest.TestCase):
 
     def test_passes(self):
         nodes = compile_source(VALID, [])["ir"]["after"]["pipelines"][0]["nodes"]
-        self.assertEqual([n["id"] for n in nodes], ["v", "f", "g", "s"])
+        self.assertEqual([n["id"] for n in nodes], ["origen", "f", "g", "destino"])
         with self.assertRaises(ValueError):
             compile_source(VALID, ["magia"])
 
@@ -87,7 +86,7 @@ class RunSourceTests(unittest.TestCase):
     def test_results_are_limited_and_serializable(self):
         result = self.run_program(VALID)
         self.assertTrue(result["ok"], result["diagnostics"])
-        table = result["results"]["p"]["s"]
+        table = result["results"]["p"]["destino"]
         self.assertEqual([c["name"] for c in table["columns"]], ["id", "x"])
         self.assertEqual(table["rows"], [[1, 5.5]])
         self.assertEqual(table["total_rows"], 1)
@@ -134,8 +133,7 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(self.client.get("/api/examples/../pyproject.toml").status_code, 404)
 
     def test_programs_cannot_write_outside_data_dir(self):
-        source = """PIPELINE p { SOURCE v = CSV(file: "orders.csv"); SINK s = CSV(file: "../README.md");
-            FLOW { v -> s; } }"""
+        source = 'PIPELINE p { FROM CSV(file: "orders.csv"); TO CSV(file: "../README.md"); }'
         result = self.client.post("/api/run", json={"source": source}).json()
         self.assertEqual(result["diagnostics"][0]["code"], "E_PATH")
 
@@ -151,7 +149,7 @@ class ServerTests(unittest.TestCase):
         ran = self.client.post("/api/run", json={"source": source, "passes": []}).json()
         self.assertTrue(ran["ok"], ran["diagnostics"])
         self.assertEqual(ran["passes"], [])
-        self.assertEqual(ran["results"]["ventas_por_cliente"]["resultado"]["rows"],
+        self.assertEqual(ran["results"]["ventas_por_cliente"]["destino"]["rows"],
                          [[1, "150.00", 2], [2, "25.00", 1]])
 
     def test_invalid_requests(self):

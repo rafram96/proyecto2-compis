@@ -1,0 +1,14 @@
+// Dos resultados de una misma cadena: todas las líneas devueltas y un resumen por modo de
+// envío. Mide el costo de tener dos TO: hoy cada salida vuelve a leer y filtrar lineitem.
+PIPELINE devoluciones {
+    FROM PARQUET(file: "lineitem.parquet");
+    FILTER { WHERE l_returnflag == "R"; }
+    TO PARQUET(file: "salida/dsl/devoluciones.parquet");
+    AGGREGATE {
+        GROUP_BY l_shipmode;
+        COUNT() AS lineas;
+        SUM(l_extendedprice) AS total;
+    }
+    SORT { BY l_shipmode; }
+    TO PARQUET(file: "salida/dsl/devoluciones_por_envio.parquet");
+}

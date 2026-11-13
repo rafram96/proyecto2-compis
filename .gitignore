@@ -28,9 +28,13 @@ output/*
 /input/*.duckdb.wal
 /input/*.db
 benchmarks/results/
+# Datos TPC-H de los benchmarks (se regeneran con bench/datos.py)
+/bench/datos/
 *.parquet
 *.csv
 !tests/**/*.csv
+# Las mediciones de los benchmarks sí se versionan: son la evidencia del reporte.
+!bench/resultados/**/*.csv
 
 # LaTeX
 *.aux
@@ -51,3 +55,9 @@ Proyecto2_Enunciado-Compis.pdf
 .idea/
 .DS_Store
 Thumbs.db
+
+# Papers de referencia (copias locales; se citan en el reporte)
+papers/
+
+# Zips de resultados para guardar fuera del repositorio
+bench/resultados/*.zip

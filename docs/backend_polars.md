@@ -47,7 +47,7 @@ pipeline optimizaciones (raíz) {
   %ventas    = SOURCE { CSV(file: "../input/orders.csv") : TABLE }
   %pagadas   = FILTER(%ventas) { (amount < 1000) AND (status IS NOT NULL) }  // grandes + pagadas
   %ordenadas = SORT(%pagadas) { amount DESC }
-  %resultado = SINK(%ordenadas) { CSV(file: "../output/optimizaciones.csv") }
+  %resultado = SINK(%ordenadas) { CSV(file: "../input/out/optimizaciones.csv") }
 }
 ```
 

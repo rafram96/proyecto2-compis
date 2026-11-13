@@ -1,15 +1,14 @@
 // Ejecutar scripts/create_demo_data.py antes de correr este pipeline.
 PIPELINE ventas_por_cliente {
-    SOURCE ventas: TABLE[cliente_id: INT, monto: DECIMAL?, fecha: DATETIME]
-        = DUCKDB(file: "ventas.duckdb", table: "ventas");
-    STEP completas = FILL_NULL { monto = 0; }
-    STEP positivas = FILTER { WHERE monto > 0; }
-    STEP resumen = AGGREGATE {
+    FROM DUCKDB(file: "ventas.duckdb", table: "ventas")
+        AS TABLE[cliente_id: INT, monto: DECIMAL?, fecha: DATETIME];
+    FILL_NULL { monto = 0; }
+    FILTER { WHERE monto > 0; }
+    AGGREGATE {
         GROUP_BY cliente_id;
         SUM(monto) AS total;
         COUNT() AS cantidad;
     }
-    STEP ordenadas = SORT { BY total DESC, cliente_id; }
-    SINK resultado = PARQUET(file: "out/ventas_por_cliente.parquet");
-    FLOW { ventas -> completas -> positivas -> resumen -> ordenadas -> resultado; }
+    SORT { BY total DESC, cliente_id; }
+    TO PARQUET(file: "out/ventas_por_cliente.parquet");
 }

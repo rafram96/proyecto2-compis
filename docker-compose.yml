@@ -26,3 +26,13 @@ services:
     build: .
     command: ["python", "-m", "unittest", "discover", "-v"]
     profiles: ["tests"]
+
+  bench:
+    image: etl-dsl:polars
+    build: .
+    # Scripts, datos TPC-H y resultados de los benchmarks quedan en bench/ del repositorio.
+    volumes:
+      - ./bench:/app/bench
+    # Datos, verificación, mediciones y zip; ver bench/README.md.
+    command: ["python", "bench/todo.py"]
+    profiles: ["bench"]

@@ -1,0 +1,20 @@
+// Limpieza de pedidos con datos faltantes y filas repetidas (orders_sucio, ver
+// bench/datos.py): quita pedidos sin prioridad, completa precios nulos con 0, elimina
+// duplicados exactos y resume por prioridad.
+PIPELINE limpieza_pedidos {
+    FROM PARQUET(file: "orders_sucio.parquet");
+    DROP_NULLS { COLUMNS o_orderpriority; }
+    FILL_NULL { o_totalprice = 0; }
+    DISTINCT {
+        COLUMNS o_orderkey, o_custkey, o_orderstatus, o_totalprice,
+                o_orderdate, o_orderpriority, o_clerk, o_shippriority;
+    }
+    AGGREGATE {
+        GROUP_BY o_orderpriority;
+        COUNT() AS pedidos;
+        SUM(o_totalprice) AS total;
+        AVG(o_totalprice) AS promedio;
+    }
+    SORT { BY o_orderpriority; }
+    TO PARQUET(file: "salida/dsl/limpieza_pedidos.parquet");
+}
