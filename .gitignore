@@ -35,6 +35,8 @@ benchmarks/results/
 !tests/**/*.csv
 # Las mediciones de los benchmarks sí se versionan: son la evidencia del reporte.
 !bench/resultados/**/*.csv
+# Resumen por (escala, tarea, configuración) que genera bench/analisis.py.
+!reporte/generado/*.csv
 
 # LaTeX
 *.aux
