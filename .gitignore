@@ -61,3 +61,8 @@ papers/
 
 # Zips de resultados para guardar fuera del repositorio
 bench/resultados/*.zip
+
+# PDFs de investigación descargados para los videos locales
+/docs/fuentes/
+# Caché local de Chromium de Remotion
+/.remotion/

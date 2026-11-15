@@ -617,8 +617,9 @@ async function iniciar() {
   estado.textContent = `${D.cifras.mediciones} mediciones`;
   estado.className = "status ok";
 
-  // El tema del sistema cambia los colores: se vuelven a crear los gráficos con los nuevos.
-  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+  // El tema (del sistema o el elegido con el botón) cambia los colores: se vuelven a crear
+  // los gráficos con los nuevos. theme.js emite "etl-themechange" en ambos casos.
+  window.addEventListener("etl-themechange", () => {
     aplicarTema();
     renders.forEach((r) => r());
   });

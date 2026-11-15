@@ -66,6 +66,34 @@ class CompileSourceTests(unittest.TestCase):
         self.assertEqual(codes(result), [("E_CONNECTOR", "codegen")])
         self.assertEqual(result["diagnostics"][0]["start"]["line"], 2)
 
+    def test_tokens_survive_syntax_errors(self):
+        result = compile_source(VALID)
+        first = result["tokens"][0]
+        self.assertEqual((first["kind"], first["lexeme"], first["start"]["line"]), ("PIPELINE", "PIPELINE", 1))
+        self.assertNotIn("WS", {t["kind"] for t in result["tokens"]})
+        # Con un error de sintaxis el análisis léxico sigue disponible; con uno léxico, no.
+        broken = compile_source("PIPELINE p { FROM CSV(file: \"a\"); FILTRO { } }")
+        self.assertEqual(codes(broken), [("E_SYNTAX", "syntax")])
+        self.assertIn("FILTRO", [t["lexeme"] for t in broken["tokens"]])
+        self.assertIsNone(broken["tree"])
+        self.assertIsNone(compile_source("PIPELINE p { FROM CSV(file: \"a\") # ; }")["tokens"])
+
+    def test_parse_tree_has_rules_tokens_and_spans(self):
+        tree = compile_source(VALID)["tree"]
+        self.assertEqual(tree["rule"], "start")
+        pipeline = tree["children"][0]
+        self.assertEqual(pipeline["start"]["line"], 1)
+        self.assertEqual(pipeline["children"][0], {
+            "token": "NAME", "lexeme": "p",
+            "start": {"line": 1, "column": 10, "offset": 9}, "end": {"line": 1, "column": 11, "offset": 10}})
+
+    def test_nodes_have_structured_columns(self):
+        nodes = compile_source(VALID)["ir"]["before"]["pipelines"][0]["nodes"]
+        self.assertEqual(nodes[0]["columns"], [{"name": "id", "type": "INT", "nullable": False},
+                                               {"name": "x", "type": "DECIMAL", "nullable": True}])
+        untyped = compile_source(VALID.replace(" AS TABLE[id: INT, x: DECIMAL?]", ""))
+        self.assertIsNone(untyped["ir"]["before"]["pipelines"][0]["nodes"][0]["columns"])
+
     def test_passes(self):
         nodes = compile_source(VALID, [])["ir"]["after"]["pipelines"][0]["nodes"]
         self.assertEqual([n["id"] for n in nodes], ["origen", "f", "g", "destino"])
@@ -161,7 +189,8 @@ class ServerTests(unittest.TestCase):
         page = self.client.get("/")
         self.assertEqual(page.status_code, 200)
         self.assertIn("Entorno DSL ETL", page.text)
-        self.assertEqual(self.client.get("/app.js").status_code, 200)
+        for asset in ("/app.js", "/ayuda.js", "/theme.js", "/styles.css"):
+            self.assertEqual(self.client.get(asset).status_code, 200, asset)
 
 
 if __name__ == "__main__":

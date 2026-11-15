@@ -107,9 +107,28 @@ el repositorio local.
 ## Entorno web
 
 Editor Monaco con resaltado del DSL y errores léxicos, sintácticos, estructurales
-y de tipos marcados mientras se escribe. A la derecha muestra el grafo de la IR
-antes y después de optimizar, el AST, la IR en texto, el código Polars generado
-y las tablas que produce cada `SINK` y `OUTPUT` al ejecutar.
+y de tipos marcados mientras se escribe. A la derecha muestra cada fase del
+compilador: el grafo de la IR antes y después de optimizar, los tokens del
+análisis léxico, el árbol de derivación de Lark, el AST, la IR en texto, el
+código Polars generado y las tablas que produce cada `SINK` y `OUTPUT` al ejecutar.
+
+- **Ayuda al pasar el mouse:** sobre una palabra clave, función, columna o paso
+  se muestra qué hace; en una columna, también su tipo. Usa el último análisis con
+  IR, así que sigue funcionando mientras el programa tiene errores.
+- **¿Quisiste decir?:** un `E_COLUMN` con una columna parecida a una existente
+  ofrece la corrección en Problemas y en el menú de arreglos rápidos de Monaco.
+- **Qué cambió el optimizador:** la pestaña IR lista los pasos eliminados,
+  fusionados y simplificados, y resalta las líneas que salen y entran; el grafo
+  «Antes» marca esos mismos nodos.
+- **Árbol y AST como grafos:** el árbol de derivación se dibuja con los tokens
+  alineados abajo (leídos en orden forman el programa) y el AST con tarjetas y
+  aristas con el nombre de cada campo. «Comparar con el árbol» muestra una
+  declaración en ambas formas y lo que cambió el `ASTBuilder`; «Texto» muestra el
+  AST como lista desplegable. Los grafos se navegan como un
+  mapa: arrastrar mueve, `Ctrl`/`⌘` + rueda hace zoom, `M` o «Maximizar» los abre
+  en una ventana grande (ahí la rueda sola hace zoom; `Esc` cierra).
+- **Archivos:** abrir un `.etl` local y descargar el programa o el Python generado.
+- **Tema claro u oscuro** con el botón de la barra superior (por defecto, el del sistema).
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\create_demo_data.py
@@ -126,7 +145,7 @@ escucha solo en este equipo salvo que se indique `--host`.
 
 | Endpoint | Qué hace |
 | --- | --- |
-| `POST /api/compile` | `{"source", "passes"?}` → diagnósticos, AST, IR antes y después con su grafo y esquemas, y código |
+| `POST /api/compile` | `{"source", "passes"?}` → diagnósticos, tokens, árbol de derivación, AST, IR antes y después con su grafo y esquemas (texto y columnas), y código |
 | `POST /api/run` | Lo mismo, más las primeras 100 filas de cada `SINK` y `OUTPUT` |
 | `GET /api/examples` | Programas de `input/` y `demo/` |
 

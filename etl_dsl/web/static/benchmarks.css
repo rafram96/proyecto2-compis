@@ -46,6 +46,28 @@
   }
 }
 
+/* Tema oscuro elegido con el botón (theme.js). */
+:root[data-theme="dark"] {
+  --s-dsl: #3987e5;
+  --s-polars: #d95926;
+  --s-duckdb: #199e70;
+  --s-pandas: #c98500;
+  --s-dsl-suave: #86b6ef;
+  --miss: #5a5955;
+  --grid: #263441;
+  --t-1: #3987e5;
+  --t-2: #256abf;
+  --t-3: #184f95;
+  --t-4: #0d366b;
+  --task-1: #9085e9;
+  --task-2: #2ba52b;
+  --task-3: #c49c94;
+  --task-4: #e66767;
+  --task-5: #c3c2b7;
+  --hero-a: #13263b;
+  --hero-b: #2a1d17;
+}
+
 body.bench { height: auto; min-height: 100vh; display: block; }
 
 .bench-main { max-width: 1160px; margin: 0 auto; padding: 22px 16px 48px; display: grid; gap: 20px; }

@@ -14,7 +14,8 @@ services:
     image: etl-dsl:polars
     build: .
     # Escucha en todas las interfaces del contenedor; compose solo publica el puerto en este equipo.
-    command: ["sh", "-c", "python scripts/create_demo_data.py && python -m etl_dsl.web --host 0.0.0.0"]
+    # Mismo arranque que Render: datos de demo y servidor en 0.0.0.0:$PORT (8000 por defecto).
+    command: ["sh", "scripts/web.sh"]
     ports:
       - "127.0.0.1:8000:8000"
     volumes:

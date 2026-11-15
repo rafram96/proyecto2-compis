@@ -14,18 +14,21 @@ import math
 import re
 import tokenize
 
+from lark import Token as LarkToken, Tree
 import polars as pl
 
 from . import ir
 from .ast import to_dict
 from .backend import CompileError, generate
 from .diagnostics import Diagnostic, ParseError
-from .parser import parse
+from .parser import parse_tree
 from .passes import DEFAULT, PASSES, optimize
 from .runtime import ExecutionError, PolarsRuntime, run_pipelines
+from .scanner import scan
 from .token import Span
 from .typecheck import TypeInfo, check
 from .validation import validate
+from .visitor import ASTBuilder
 
 FILENAME = "programa.etl"
 # Las etiquetas del código generado empiezan con "archivo:línea:columna pipeline.nodo: ".
@@ -42,11 +45,20 @@ def _diagnostic(d: Diagnostic, stage: str) -> dict:
     return {"code": d.code, "message": d.message, "stage": stage, **_span(d.span)}
 
 
+def _columns(schema: ir.Schema) -> list[dict] | None:
+    """Esquema estructurado para el autocompletado del editor; None si las columnas son desconocidas."""
+    if schema is None:
+        return None
+    return [{"name": col.name, "type": col.type.value if col.type else None, "nullable": col.nullable}
+            for col in schema]
+
+
 def _graph(module: ir.Module, types: TypeInfo) -> list[dict]:
     pipelines = []
     for pipe in module.pipelines:
         nodes = [{"id": node.name, "kind": node.kind, "label": ir.body_text(node),
                   "schema": ir.schema_text(types.schemas[pipe.name, node.name]) if node.kind != "USE" else None,
+                  "columns": _columns(types.schemas[pipe.name, node.name]) if node.kind != "USE" else None,
                   "origin": list(node.origin), **_span(node.span)} for node in pipe.nodes]
         edges = [{"from": ref.node, "from_port": ref.port, "to": node.name, "to_port": port}
                  for node in pipe.nodes for port, ref in node.inputs]
@@ -56,6 +68,31 @@ def _graph(module: ir.Module, types: TypeInfo) -> list[dict]:
 
 def _ir(module: ir.Module, types: TypeInfo) -> dict:
     return {"text": ir.format_module(module, types.schemas), "pipelines": _graph(module, types)}
+
+
+def _tokens(source: str) -> list[dict] | None:
+    """Tokens del análisis léxico (sin espacios ni comentarios); None si hay un error léxico.
+
+    No depende de la sintaxis: un programa con errores sintácticos sigue mostrando sus tokens.
+    """
+    try:
+        tokens = scan(source, filename=FILENAME)
+    except ParseError:
+        return None
+    return [{"kind": t.kind, "lexeme": t.lexeme, **_span(t.span)} for t in tokens]
+
+
+def _parse_tree(tree: Tree | LarkToken) -> dict:
+    """Árbol concreto de Lark (árbol de derivación) en JSON: reglas con hijos y tokens como hojas."""
+    if isinstance(tree, LarkToken):
+        return {"token": tree.type, "lexeme": str(tree),
+                **_span(Span(tree.line, tree.column, tree.end_line, tree.end_column, tree.start_pos, tree.end_pos))}
+    node = {"rule": str(tree.data), "children": [_parse_tree(child) for child in tree.children]}
+    meta = tree.meta
+    if not getattr(meta, "empty", True):
+        node.update(_span(Span(meta.line, meta.column, meta.end_line, meta.end_column,
+                               meta.start_pos, meta.end_pos)))
+    return node
 
 
 def strip_comments(code: str) -> str:
@@ -93,14 +130,16 @@ def compile_source(source: str, passes=None, *, base_dir=".") -> dict:
     no del programa).
     """
     passes = resolve_passes(passes)
-    result = {"ok": False, "passes": list(passes), "diagnostics": [], "ast": None,
-              "ir": {"before": None, "after": None}, "code": None}
+    result = {"ok": False, "passes": list(passes), "diagnostics": [], "tokens": _tokens(source),
+              "tree": None, "ast": None, "ir": {"before": None, "after": None}, "code": None}
     try:
-        program = parse(source, filename=FILENAME)
+        tree = parse_tree(source, filename=FILENAME)
     except ParseError as exc:
         stage = "lexical" if exc.diagnostic.code == "E_LEXICAL" else "syntax"
         result["diagnostics"] = [_diagnostic(exc.diagnostic, stage)]
         return result
+    result["tree"] = _parse_tree(tree)
+    program = ASTBuilder().transform(tree)
     result["ast"] = to_dict(program)
     issues = validate(program)
     if issues:
