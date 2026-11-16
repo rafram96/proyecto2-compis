@@ -1,0 +1,7 @@
+Fuente: bench/resultados; selección idéntica a bench/analisis.py.
+SF 1: 2026-11-13_lab-pc1
+SF 10: 2026-11-13_lab-pc1
+SF 20: 2026-11-13_lab-pc1
+SF 30: 2026-11-13_14-01_f96690b55f40
+Mediciones correctas: 2180
+Resumen: mediana y rango intercuartílico; razones de medianas.

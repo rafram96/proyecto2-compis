@@ -1,0 +1,20 @@
+{
+  "started_at": "2026-11-15T23:59:08.716011+00:00",
+  "model_alias": "junie-lite",
+  "samples_per_task_language": 1,
+  "planned_generations": 120,
+  "wrapper": "This is a code-generation benchmark, not a project-editing task.\nAll required language documentation and the task are provided below.\nDo not read files, run commands, search the web, delegate to other agents, or edit\nthe project. No tools are needed. Do not test or repair the program.\nInclude the COMPLETE requested program in your final answer / submit solution_summary,\ninside ONE fenced code block. A description of a solution is not sufficient.\nDo not claim you created or tested files. Return the complete code as text.\n\n",
+  "tools_policy": "PreToolUse denies all except answer/submit; fail closed",
+  "windows_root_certificates": true,
+  "workers": 2,
+  "temperature": "not exposed by this Junie CLI; provider default",
+  "max_steps": 4,
+  "external_integrations_disabled": true,
+  "order_seed": 2026,
+  "retained_generations": 31,
+  "continued_from": "bench-LLM\\resultados\\junie-20261115-completo",
+  "finished_at": "2026-11-16T00:07:19.961598+00:00",
+  "completed_generations": 120,
+  "complete": true,
+  "stopped_on_service_error": false
+}

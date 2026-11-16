@@ -1,0 +1,3 @@
+* text eol=lf
+# Evidencia con hashes de bytes: conservar exactamente los archivos originales.
+resultados/** -text whitespace=cr-at-eol

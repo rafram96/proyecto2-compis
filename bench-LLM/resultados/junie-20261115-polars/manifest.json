@@ -1,0 +1,479 @@
+{
+  "upstream_commit": "540128d90b74c125eb5881f7bb42246d2e89bc7e",
+  "created_at": "2026-11-16T00:15:38.516259+00:00",
+  "selected": [
+    {
+      "task_id": "agg_001",
+      "category": "aggregate",
+      "test_cases": 2,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "agg_002",
+      "category": "aggregate",
+      "test_cases": 2,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "agg_003",
+      "category": "aggregate",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "agg_004",
+      "category": "aggregate",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "agg_005",
+      "category": "aggregate",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "agg_006",
+      "category": "aggregate",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "agg_007",
+      "category": "aggregate",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "agg_008",
+      "category": "aggregate",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "agg_009",
+      "category": "aggregate",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "agg_010",
+      "category": "aggregate",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "filter_001",
+      "category": "filter",
+      "test_cases": 2,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "filter_002",
+      "category": "filter",
+      "test_cases": 2,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "filter_003",
+      "category": "filter",
+      "test_cases": 2,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "filter_004",
+      "category": "filter",
+      "test_cases": 2,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "filter_005",
+      "category": "filter",
+      "test_cases": 2,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "filter_006",
+      "category": "filter",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "filter_007",
+      "category": "filter",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "filter_009",
+      "category": "filter",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "filter_010",
+      "category": "filter",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "fin_001",
+      "category": "finance",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "fin_002",
+      "category": "finance",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "fin_003",
+      "category": "finance",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "fin_004",
+      "category": "finance",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "fin_005",
+      "category": "finance",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "fin_006",
+      "category": "finance",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "fin_007",
+      "category": "finance",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "fin_008",
+      "category": "finance",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "fin_009",
+      "category": "finance",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "fin_010",
+      "category": "finance",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "fin_011",
+      "category": "finance",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "fin_012",
+      "category": "finance",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "fin_013",
+      "category": "finance",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "fin_014",
+      "category": "finance",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "fin_016",
+      "category": "finance",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "fin_017",
+      "category": "finance",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "fin_019",
+      "category": "finance",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "fin_020",
+      "category": "finance",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "hard_001",
+      "category": "hard",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "hard_004",
+      "category": "hard",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "hard_005",
+      "category": "hard",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "hard_006",
+      "category": "hard",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "hard_007",
+      "category": "hard",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "hard_008",
+      "category": "hard",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "hard_009",
+      "category": "hard",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "hard_010",
+      "category": "hard",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "map_001",
+      "category": "map",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "map_002",
+      "category": "map",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "map_003",
+      "category": "map",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "map_005",
+      "category": "map",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "multi_001",
+      "category": "multi_step",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "multi_002",
+      "category": "multi_step",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "multi_003",
+      "category": "multi_step",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "multi_004",
+      "category": "multi_step",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "multi_005",
+      "category": "multi_step",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "multi_006",
+      "category": "multi_step",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "multi_007",
+      "category": "multi_step",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "multi_010",
+      "category": "multi_step",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "str_001",
+      "category": "strings",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "str_002",
+      "category": "strings",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    },
+    {
+      "task_id": "str_003",
+      "category": "strings",
+      "test_cases": 1,
+      "compatibility": "Sin incompatibilidad conocida"
+    }
+  ],
+  "excluded": [
+    {
+      "task_id": "filter_008",
+      "category": "filter",
+      "reason": "CONTAINS no está implementado."
+    },
+    {
+      "task_id": "fin_015",
+      "category": "finance",
+      "reason": "LIMIT y expresiones con conteo de filas fuera de AGGREGATE."
+    },
+    {
+      "task_id": "fin_018",
+      "category": "finance",
+      "reason": "STARTS_WITH y LIMIT no están implementados."
+    },
+    {
+      "task_id": "hard_002",
+      "category": "hard",
+      "reason": "STARTS_WITH para filtrar fechas no está implementado."
+    },
+    {
+      "task_id": "hard_003",
+      "category": "hard",
+      "reason": "Extracción/comparación del año de una fecha no implementada."
+    },
+    {
+      "task_id": "map_004",
+      "category": "map",
+      "reason": "Expresiones condicionales IF no implementadas."
+    },
+    {
+      "task_id": "map_006",
+      "category": "map",
+      "reason": "TO_STRING no está implementado."
+    },
+    {
+      "task_id": "map_007",
+      "category": "map",
+      "reason": "ROUND no está implementado."
+    },
+    {
+      "task_id": "map_008",
+      "category": "map",
+      "reason": "Concatenación de cadenas no implementada."
+    },
+    {
+      "task_id": "map_009",
+      "category": "map",
+      "reason": "PARSE_DATE y DIFF_DAYS no implementados."
+    },
+    {
+      "task_id": "map_010",
+      "category": "map",
+      "reason": "IF y ROUND no implementados."
+    },
+    {
+      "task_id": "multi_008",
+      "category": "multi_step",
+      "reason": "UNION no está implementado."
+    },
+    {
+      "task_id": "multi_009",
+      "category": "multi_step",
+      "reason": "LIMIT no está implementado."
+    },
+    {
+      "task_id": "str_004",
+      "category": "strings",
+      "reason": "Concatenación de cadenas no implementada."
+    },
+    {
+      "task_id": "str_005",
+      "category": "strings",
+      "reason": "LENGTH no está implementado."
+    },
+    {
+      "task_id": "str_006",
+      "category": "strings",
+      "reason": "SUBSTRING no está implementado."
+    },
+    {
+      "task_id": "str_007",
+      "category": "strings",
+      "reason": "REPLACE no está implementado."
+    },
+    {
+      "task_id": "str_008",
+      "category": "strings",
+      "reason": "CONTAINS no está implementado."
+    },
+    {
+      "task_id": "str_009",
+      "category": "strings",
+      "reason": "STARTS_WITH no está implementado."
+    },
+    {
+      "task_id": "str_010",
+      "category": "strings",
+      "reason": "Extracción mediante SPLIT/SUBSTRING no implementada."
+    }
+  ],
+  "corpus_total": 80,
+  "include_unsupported": false,
+  "languages": [
+    "capybara",
+    "polars"
+  ],
+  "baseline": "polars",
+  "templates_sha256": {
+    "capybara": "12c81d24730295e71e36c8ceea47d98b495079f7162c48a8b1184c8e78126ced",
+    "polars": "d0fd1880092842b6e3820ea1ca233b94bd127b1f9601e1b65526b736cf01a008"
+  }
+}

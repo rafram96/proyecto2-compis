@@ -1,0 +1,17 @@
+{
+  "experiment": "refuerzo_del_punto_y_coma_en_el_prompt_de_capybara",
+  "previous_run": "bench-LLM\\resultados\\junie-20261115-polars",
+  "changed_language": "capybara",
+  "capybara_template_before_sha256": "12c81d24730295e71e36c8ceea47d98b495079f7162c48a8b1184c8e78126ced",
+  "capybara_template_after_sha256": "312d8cb304dd442175edb253c4082da5736b1a525a3fdf7148984ce709c8e47e",
+  "polars_template_unchanged": true,
+  "tasks_unchanged": true,
+  "fresh_responses_for_both_languages": true,
+  "changes": [
+    "Regla prioritaria: FROM termina en punto y coma, incluso tras AS TABLE[].",
+    "Ejemplos correcto e incorrecto sobre un esquema ajeno a las tareas.",
+    "Revisión textual final sin herramientas ni ejecución."
+  ],
+  "tuning_note": "La guía se ajustó después de observar errores en la corrida anterior. Es un experimento exploratorio sobre el mismo corpus; no una validación independiente.",
+  "no_compiler_or_expected_output_changes": true
+}

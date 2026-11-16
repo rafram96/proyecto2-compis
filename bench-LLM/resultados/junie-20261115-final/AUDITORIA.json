@@ -1,0 +1,22 @@
+{
+  "raw_files": 120,
+  "languages": [
+    "capybara",
+    "python"
+  ],
+  "response_pairs_unique": true,
+  "session_ids_unique": true,
+  "prompts_verified": true,
+  "original_responses_verified": true,
+  "models": [
+    "Qwen/Qwen3.6-27B-FP8"
+  ],
+  "cli_versions": [
+    "26.11.1 (4020.10)"
+  ],
+  "tool_counts": {
+    "submit": 120
+  },
+  "external_tool_attempts": 0,
+  "generation_errors": 0
+}

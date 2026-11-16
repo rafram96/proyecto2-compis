@@ -1,0 +1,22 @@
+\begin{tabular}{@{}rp{0.46\linewidth}p{0.25\linewidth}l@{}}
+\toprule
+\# & Error & DSL & Polars \\
+\midrule
+01 & Columna mal escrita: mnto en lugar de monto. & \textbf{compilación} {\scriptsize\texttt{E\_COLUMN}} & ejecución \\
+02 & Umbral escrito como texto: se compara un monto con "100". & \textbf{compilación} {\scriptsize\texttt{E\_TYPE}} & ejecución \\
+03 & Se suma la columna de texto canal en lugar del monto. & \textbf{compilación} {\scriptsize\texttt{E\_TYPE}} & ejecución \\
+04 & Buscar montos faltantes con \texttt{==} NULL: en lógica de tres valores nunca es verdadero. & \textbf{compilación} {\scriptsize\texttt{E\_NULL\_COMPARISON}} & \emph{silencioso} \\
+05 & JOIN de un id numérico con el nombre (texto) del cliente. & \textbf{compilación} {\scriptsize\texttt{E\_TYPE}} & ejecución \\
+06 & DERIVE reutiliza el nombre monto y se pierde el monto original. & \textbf{compilación} {\scriptsize\texttt{E\_DUPLICATE\_COLUMN}} & \emph{silencioso} \\
+07 & Se completan los canales faltantes con un número. & \textbf{compilación} {\scriptsize\texttt{E\_TYPE}} & \emph{silencioso} \\
+08 & NOT aplicado a un número en lugar de a una condición. & \textbf{compilación} {\scriptsize\texttt{E\_TYPE}} & ejecución \\
+09 & Dos columnas que solo difieren en mayúsculas: chocan al escribir en SQL o DuckDB. & \textbf{compilación} {\scriptsize\texttt{E\_AMBIGUOUS\_COLUMNS}} & \emph{silencioso} \\
+10 & RENAME a un nombre que ya existe. & \textbf{compilación} {\scriptsize\texttt{E\_AMBIGUOUS\_COLUMNS}} & ejecución \\
+11 & La salida promete una columna total, pero la agregación la llama suma. & \textbf{compilación} {\scriptsize\texttt{E\_SCHEMA}} & \emph{silencioso} \\
+12 & Un paso escrito después del último TO: su resultado nunca se guarda. & \textbf{compilación} {\scriptsize\texttt{E\_LINEAR\_END}} & \emph{silencioso} \\
+13 & COALESCE con un solo argumento no completa nada. & \textbf{compilación} {\scriptsize\texttt{E\_ARITY}} & \emph{silencioso} \\
+14 & El esquema declara monto sin ?, pero los datos traen montos faltantes. & ejecución {\scriptsize\texttt{E\_NULL}} & \emph{silencioso} \\
+15 & Columna mal escrita y sin esquema declarado: al compilar no se conocen las columnas. & ejecución {\scriptsize\texttt{E\_COLUMN}} & ejecución \\
+16 & División entre un descuento que puede ser 0 (SAFE\_DIVIDE devolvería NULL). & no detectado & \emph{silencioso} \\
+\bottomrule
+\end{tabular}

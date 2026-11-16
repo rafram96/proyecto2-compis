@@ -70,7 +70,7 @@ python -m unittest discover                       # pruebas
 | Opción | Efecto |
 | --- | --- |
 | `--format` | `python` (por defecto), `tokens`, `tree`, `ast`, `ir` o `check` |
-| `-O0` | sin optimizaciones |
+| `-O0` | sin optimizaciones de CaPybara; Polars conserva su propio optimizador |
 | `--pases constantes,filtros,codigo_muerto` | elige los pases y su orden |
 | `--run` / `--pipeline nombre` | ejecuta todo o un pipeline |
 
@@ -85,6 +85,49 @@ ejecución. La página `/benchmarks.html` muestra la evaluación experimental.
 Comparación con Polars, Pandas y DuckDB escritos a mano sobre TPC-H, de SF 1 a SF 30.
 Instrucciones para reproducirlos en [bench/README.md](bench/README.md); los resultados están en
 `bench/resultados/`.
+
+### Generación de código con LLMs
+
+[`bench-LLM/`](bench-LLM/README.md) adapta 80 tareas del benchmark de Anka. La evaluación
+principal usa las 60 tareas sin incompatibilidades conocidas con CaPybara y registra las
+20 exclusiones. Compara programas generados por Junie para CaPybara y Python con Polars.
+Cada tarea recibe su esquema y una guía del lenguaje; los tests se ejecutan después,
+sin mostrar sus resultados al modelo ni corregir las respuestas.
+
+| Corrida | CaPybara | Comparador | Errores de CaPybara por omitir `;` |
+| --- | ---: | ---: | ---: |
+| Python puro, guía inicial | 38/60 (63,3 %) | 50/60 (83,3 %) | 16 |
+| Polars, guía inicial | 42/60 (70 %) | 48/60 (80 %) | 12 |
+| Polars, guía reforzada | 50/60 (83,3 %) | 41/60 (68,3 %) | 0 |
+
+Estas corridas usaron Junie Lite (`Qwen/Qwen3.6-27B-FP8`) con una respuesta por tarea y
+lenguaje. El refuerzo del prompt se hizo después de observar errores; los resultados
+son exploratorios e incluyen fallos de formato de Junie. La variación de Polars con el
+mismo prompt impide atribuir toda la diferencia al cambio de guía.
+
+Las [respuestas, evaluaciones y manifiestos](bench-LLM/resultados/) de las tres corridas
+están versionados. Para preparar y revisar prompts sin llamar a un LLM:
+
+```bash
+python bench-LLM/benchmark.py preparar --baseline polars
+python -m unittest discover -s bench-LLM/tests -v
+```
+
+La [guía del benchmark](bench-LLM/README.md) explica cómo exportar solo los prompts,
+evaluar respuestas guardadas y usar Junie desde CMD en sesiones fuera del repositorio,
+con las herramientas externas bloqueadas. Ejecutar `junie_runner.py` sí envía solicitudes
+al servicio; los tests locales anteriores no consumen llamadas al modelo.
+
+## Reporte técnico
+
+La versión actual es [reporte/main_v2.pdf](reporte/main_v2.pdf), con su
+[fuente LaTeX](reporte/main_v2.tex). Incluye diseño, implementación, evaluación TPC-H
+y **usabilidad para LLMs**, con tablas y gráficos generados desde los resultados guardados.
+Esta última sección estudia generación de programas, y se distingue de un estudio con
+personas. El PDF tiene 10 páginas de contenido, más referencias y apéndices.
+
+La [documentación del reporte](reporte/README.md) describe cómo regenerar sus figuras
+y compilar el PDF. La primera versión se conserva en `reporte/main.tex` y `main.pdf`.
 
 ## Estructura
 
@@ -101,8 +144,9 @@ etl_dsl/
 ├── runtime.py       conectores y ejecución
 └── web/             servidor FastAPI y entorno web
 bench/               benchmarks, tareas y corpus de errores
+bench-LLM/           generación con LLMs, evaluación y evidencia de las corridas
 demo/, input/        programas de ejemplo
 docs/                referencia del lenguaje y del backend
-reporte/             reporte técnico (LaTeX)
+reporte/             artículos LaTeX/PDF y generadores de tablas y gráficos
 tests/               pruebas
 ```

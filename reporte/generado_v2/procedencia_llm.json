@@ -1,0 +1,23 @@
+[
+  {
+    "run": "junie-20261115-final",
+    "sha256": "b09f1ad110d81459fab7ebe539463ee2727eccd2acfad81f35efaca5cb4041e2",
+    "capybara_correct": 38,
+    "baseline_correct": 50,
+    "missing_semicolons": 16
+  },
+  {
+    "run": "junie-20261115-polars",
+    "sha256": "8b63f0d0280ba007a77c1a2283dce8f446a29ed9d9e2dab4ee48949a78fbd37d",
+    "capybara_correct": 42,
+    "baseline_correct": 48,
+    "missing_semicolons": 12
+  },
+  {
+    "run": "junie-20261115-polars-punto-coma",
+    "sha256": "6e0ffbb2c73d8db0209cb5a6435d6a49afcae3b461a5180525f29334a25f1d23",
+    "capybara_correct": 50,
+    "baseline_correct": 41,
+    "missing_semicolons": 0
+  }
+]
