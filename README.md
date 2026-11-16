@@ -2,7 +2,18 @@
   <img src="docs/img/capybara.png" alt="Logo de CaPybara" width="220">
 </p>
 
-# CaPybara
+<p align="center">
+  <img src="docs/img/titulo.png" alt="CaPybara" width="420">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/CS3025-Compiladores-00b4f0?labelColor=1f1f1f" alt="CS3025 · Compiladores">
+</p>
+<p align="center">
+  <img src="https://img.shields.io/badge/Gabriel-Vargas%20Urmeneta-8cc2ff" alt="Gabriel Vargas Urmeneta">
+  <img src="https://img.shields.io/badge/Rafael-Ramos%20Huaman%C3%AD-fa6557" alt="Rafael Ramos Huamaní">
+  <img src="https://img.shields.io/badge/Angel-Tribe%C3%B1o%20Hurtado-88f7c7" alt="Angel Tribeño Hurtado">
+</p>
 
 Lenguaje de dominio específico para pipelines ETL que compila a Python y Polars.
 Compilador implementado en Python con Lark y motor de ejecución **Polars**.
