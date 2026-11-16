@@ -38,7 +38,7 @@ def create_app(data_dir: str | Path = "input", example_dirs=None) -> FastAPI:
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
 
-    app = FastAPI(title="Entorno DSL ETL", docs_url="/api/docs", redoc_url=None)
+    app = FastAPI(title="CaPybara", docs_url="/api/docs", redoc_url=None)
 
     @app.get("/api/examples")
     def list_examples() -> list[str]:

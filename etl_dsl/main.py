@@ -53,7 +53,7 @@ def _analyze(path: Path, fmt: str, base_dir=None, passes=DEFAULT) -> str:
 
 
 def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(description="Compilador del DSL ETL para Polars")
+    parser = argparse.ArgumentParser(description="Compilador de CaPybara (DSL ETL para Polars)")
     parser.add_argument("input", nargs="?", type=Path, default=Path("input"),
                         help="Archivo .etl o carpeta de programas (por defecto: input)")
     parser.add_argument("--output", "-o", type=Path,

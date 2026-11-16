@@ -17,9 +17,9 @@
 |---|---|---|---|
 | 1 | Dominio y justificación | ✅ / 🟡 | `Propuesta_DSL.md` §1 |
 | 2 | Trabajos relacionados | 🟡 | `Propuesta_DSL.md` §1 (tabla) |
-| 3 | Sintaxis y gramática | 🟡 | `docs/diseno_lenguaje.md` §2–5 |
-| 4 | Semántica | 🟡 | `docs/diseno_lenguaje.md` §6 |
-| 5 | Sistema de tipos y verificaciones | 🟡 | `docs/diseno_lenguaje.md` §7, `Propuesta_DSL.md` §3 |
+| 3 | Sintaxis y gramática | 🟡 | `docs/lenguaje.md`, `etl_dsl/grammar.lark` |
+| 4 | Semántica | 🟡 | `docs/lenguaje.md` |
+| 5 | Sistema de tipos y verificaciones | 🟡 | `docs/lenguaje.md`, `Propuesta_DSL.md` §3 |
 | 6 | Frontend del compilador (lexer, parser, semántico, diagnósticos) | ⬜ | — |
 | 7 | Representación intermedia | 🟡 | `Propuesta_DSL.md` §4 |
 | 8 | Optimizaciones | 🟡 | `Propuesta_DSL.md` §5 |
@@ -125,7 +125,7 @@
 - ⬜ Fijar la versión de Polars y comprobar su API (`validate=`, `sink_*`, flags del optimizador).
 
 ### 10. Documentación del lenguaje — ⬜
-- ⬜ Especificación de referencia: se puede derivar de `diseno_lenguaje.md`.
+- ⬜ Especificación de referencia (`docs/lenguaje.md`).
 - ⬜ Guía de uso para no técnicos, tipo tutorial paso a paso.
 - ⬜ Programas de ejemplo del dominio: se pueden reutilizar los del corpus.
 

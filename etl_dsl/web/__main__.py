@@ -8,7 +8,7 @@ from .server import create_app
 
 
 def main(argv=None) -> None:
-    parser = argparse.ArgumentParser(description="Entorno web del DSL ETL")
+    parser = argparse.ArgumentParser(description="Entorno web de CaPybara")
     parser.add_argument("--host", default="127.0.0.1",
                         help="Interfaz de red (por defecto solo este equipo: 127.0.0.1)")
     parser.add_argument("--port", type=int, default=8000)

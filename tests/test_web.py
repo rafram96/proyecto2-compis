@@ -160,7 +160,7 @@ class ServerTests(unittest.TestCase):
     def test_page_is_served(self):
         page = self.client.get("/")
         self.assertEqual(page.status_code, 200)
-        self.assertIn("Entorno DSL ETL", page.text)
+        self.assertIn("CaPybara", page.text)
         self.assertEqual(self.client.get("/app.js").status_code, 200)
 
 
