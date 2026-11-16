@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/img/capybara.png" alt="Logo de CaPybara" width="340">
+  <img src="docs/img/capybara.png" alt="Logo de CaPybara" width="420">
 </p>
 
 <p align="center">
