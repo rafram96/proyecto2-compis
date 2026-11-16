@@ -188,7 +188,7 @@ class ServerTests(unittest.TestCase):
     def test_page_is_served(self):
         page = self.client.get("/")
         self.assertEqual(page.status_code, 200)
-        self.assertIn("Entorno DSL ETL", page.text)
+        self.assertIn("CaPybara", page.text)
         for asset in ("/app.js", "/ayuda.js", "/theme.js", "/styles.css"):
             self.assertEqual(self.client.get(asset).status_code, 200, asset)
 

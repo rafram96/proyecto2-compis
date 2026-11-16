@@ -1,5 +1,10 @@
-# DSL ETL para Polars
+<p align="center">
+  <img src="docs/img/capybara.png" alt="Logo de CaPybara" width="220">
+</p>
 
+# CaPybara
+
+Lenguaje de dominio específico para pipelines ETL que compila a Python y Polars.
 Compilador implementado en Python con Lark y motor de ejecución **Polars**.
 Genera Python legible con expresiones de Polars (`LazyFrame`). Usa la sintaxis
 ETL-DSL v0.3: bloques `PIPELINE` en dos formas, una **lineal** (`FROM`,
@@ -217,7 +222,7 @@ proyecto2-compis/
 │   └── diagnostics.py      # Diagnósticos
 ├── tests/
 ├── scripts/                # Datos reproducibles de demo
-└── docs/                   # Lenguaje, backend, enunciado y propuesta inicial
+└── docs/                   # Lenguaje, backend y propuesta inicial
 ```
 
 Los módulos se mantienen dentro de `etl_dsl` para evitar conflictos con los
@@ -264,5 +269,4 @@ verifican al compilar cuando los esquemas se conocen; quedan pendientes los pase
 [docs/backend_duckdb.md](docs/backend_duckdb.md), el backend DuckDB anterior (commit 4109895).
 
 La referencia de sintaxis y las decisiones para el backend están en
-[docs/lenguaje.md](docs/lenguaje.md). Los requisitos académicos están en
-[docs/Enunciado_DSL.md](docs/Enunciado_DSL.md).
+[docs/lenguaje.md](docs/lenguaje.md).

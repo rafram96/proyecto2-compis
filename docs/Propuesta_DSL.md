@@ -1,7 +1,7 @@
 # Propuesta aterrizada — DSL para pipelines ETL → Python + Polars
 
 > Versión de trabajo. Parte de la propuesta del grupo y del estado del arte recopilado
-> (ETLCL, ETL-PL, Jayvee, pygrametl, Anka). Requisitos del curso en `Enunciado_DSL.md`.
+> (ETLCL, ETL-PL, Jayvee, pygrametl, Anka).
 
 ---
 

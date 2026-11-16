@@ -1,0 +1,3 @@
+# Los scripts de shell se ejecutan dentro de contenedores Linux: siempre con fin de línea LF,
+# aunque se clonen en Windows con core.autocrlf.
+*.sh text eol=lf
