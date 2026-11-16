@@ -1,0 +1,22 @@
+{
+  "demo": "presentacion/ventas.etl",
+  "resultados": [
+    {
+      "cliente": "Ana",
+      "total": 150
+    },
+    {
+      "cliente": "Luis",
+      "total": 80
+    }
+  ],
+  "diagnostico_columna_inexistente": "E_COLUMN: Columna inexistente: mnto; disponibles: ['cliente', 'monto'].",
+  "escenario_minutos": "ilustrativo, no medido",
+  "fuentes": [
+    "reporte/generado_v2/tablas/rendimiento.tex",
+    "reporte/generado_v2/tablas/expresividad.tex",
+    "reporte/generado_v2/tablas/errores.tex",
+    "bench-LLM/resultados/junie-20261115-polars/evaluacion.json",
+    "bench-LLM/resultados/junie-20261115-polars-punto-coma/evaluacion.json"
+  ]
+}

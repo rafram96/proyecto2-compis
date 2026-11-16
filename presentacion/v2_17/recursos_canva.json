@@ -1,0 +1,66 @@
+[
+  {
+    "name": "expresividad",
+    "source": "reporte/generado_v2/figuras/expresividad.png",
+    "media_id": "MAHbCzHXc5s",
+    "width": 687,
+    "height": 374,
+    "sha256": "9fa52e2f6a7d15a284777dd09f1462afe1c3316f9b5573e36107fb3a367fefac"
+  },
+  {
+    "name": "escalabilidad",
+    "source": "reporte/generado_v2/figuras/escalabilidad.png",
+    "media_id": "MAHbC5IDZnE",
+    "width": 1428,
+    "height": 499,
+    "sha256": "d9e1958d9130ea0eb7f9573a7d10d933129267a283de1acc4c5fb155f68c486b"
+  },
+  {
+    "name": "panorama",
+    "source": "reporte/generado_v2/figuras/panorama.png",
+    "media_id": "MAHbC_8aeG8",
+    "width": 636,
+    "height": 553,
+    "sha256": "cd1683e25d34526ea615a521783dce3b641ab1eccbe9ec5794bc4928a808021e"
+  },
+  {
+    "name": "relativo",
+    "source": "reporte/generado_v2/figuras/relativo.png",
+    "media_id": "MAHbC0KrrFk",
+    "width": 685,
+    "height": 513,
+    "sha256": "6c8f90027bdca33842698c4aa31a4f2311f6199230aba15838dc6bb5be713132"
+  },
+  {
+    "name": "memoria",
+    "source": "reporte/generado_v2/figuras/memoria.png",
+    "media_id": "MAHbC1W5F2Q",
+    "width": 636,
+    "height": 522,
+    "sha256": "943d5b167b3c76e0863fbcc35757b7087f89f139c325d84f2fb1ffe7f2881f98"
+  },
+  {
+    "name": "optimizaciones",
+    "source": "reporte/generado_v2/figuras/optimizaciones.png",
+    "media_id": "MAHbC63EkA0",
+    "width": 646,
+    "height": 628,
+    "sha256": "e4eede3cbd2094278d622cf6473f23b44ab7140e1d64cb22cb279783271166f9"
+  },
+  {
+    "name": "errores",
+    "source": "reporte/generado_v2/figuras/errores.png",
+    "media_id": "MAHbCxojsP0",
+    "width": 659,
+    "height": 293,
+    "sha256": "1aace657de1107b4fbc1ddd87fa60c20804a5186d3aa45b4cada9389b1772fc1"
+  },
+  {
+    "name": "usabilidad_llm",
+    "source": "reporte/generado_v2/figuras/usabilidad_llm.png",
+    "media_id": "MAHbC28x0bQ",
+    "width": 693,
+    "height": 329,
+    "sha256": "be9f77cea731a4a2759d34a18918ccdf63f4ce6484dacce2a629e0b83a99dad1"
+  }
+]

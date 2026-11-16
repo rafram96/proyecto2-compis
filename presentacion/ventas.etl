@@ -1,0 +1,11 @@
+PIPELINE ventas {
+  FROM CSV(file: "ventas.csv")
+    AS TABLE[cliente: STRING, monto: DECIMAL?];
+  FILL_NULL { monto = 0; }
+  FILTER { WHERE monto > 0; }
+  AGGREGATE {
+    GROUP_BY cliente;
+    SUM(monto) AS total;
+  }
+  TO PARQUET(file: "resumen.parquet");
+}

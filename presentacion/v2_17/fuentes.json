@@ -1,0 +1,29 @@
+[
+  {
+    "file": "2512.23214v1.pdf",
+    "title": "Anka: A Domain-Specific Language for Reliable LLM Code Generation",
+    "authors": "Saif Khalfan Saif Al Mazrouei",
+    "year": "2025",
+    "url": "https://arxiv.org/abs/2512.23214",
+    "pages_consulted": "1, 6–7",
+    "sha256": "98b1e75e385abca3608c53c0def5ac5660116e7298988608bc9cd45c0ece4ea3"
+  },
+  {
+    "file": "peerj-cs-1835.pdf",
+    "title": "A domain-specific language for managing ETL processes",
+    "authors": "Aleksandar Popović, Vladimir Ivković, Nikola Trajković, Ivan Luković",
+    "year": "2024",
+    "url": "https://doi.org/10.7717/peerj-cs.1835",
+    "pages_consulted": "1–3, 19, 21–22",
+    "sha256": "52ea35c283e96a6e094c99ed4a114b36f9f484dfb06bce05c8fc04564db6f8c7"
+  },
+  {
+    "file": "2505.16764v2.pdf",
+    "title": "Can a Domain-Specific Language Improve Program Structure Comprehension of Data Pipelines? A Mixed-Methods Study.",
+    "authors": "Philip Heltweg, Georg-Daniel Schwarz, Dirk Riehle",
+    "year": "2025",
+    "url": "https://arxiv.org/abs/2505.16764",
+    "pages_consulted": "1, 12–13",
+    "sha256": "a7658df5db70d3b0b15e2cd2a2c7607875353c1da64062b8f0438ba7199ff4cc"
+  }
+]

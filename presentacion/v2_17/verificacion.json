@@ -1,0 +1,12 @@
+{
+  "diapositivas": 17,
+  "figuras_originales": 8,
+  "fuentes_pdf": 3,
+  "hashes_de_figuras_verificados": true,
+  "ejemplo": "../ventas.etl, validado anteriormente con el runtime",
+  "estado": "guardado en Canva tras aprobación explícita",
+  "pdf_paginas": 17,
+  "pptx_diapositivas": 17,
+  "exportaciones_verificadas": true,
+  "autores_y_antecedentes_presentes": true
+}
